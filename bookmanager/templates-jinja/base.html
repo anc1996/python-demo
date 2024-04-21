@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+{#jinja2没有多行注释#}
+{#标签block：用于在父模板中预留区域，留给子模板填充差异性的内容，名字不能相同。 #}
+{#为了更好的可读性，建议给endblock标签写上名字，这个名字与对应的block名字相同。#}
+{#父模板中也可以使用上下文中传递过来的数据。#}
+
+{% block header %}
+    <h1>顶部</h1>
+{% endblock header %}
+
+
+{% block main %}
+    <h1>我是主要部分</h1>
+{% endblock  %}
+
+
+{% block footer %}
+    <h1>底部</h1>
+{% endblock footer %}
+</body>
+</html>

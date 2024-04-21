@@ -1,0 +1,45 @@
+{#把继承的模板写在最上边#}
+{% extends 'base.html' %}
+
+{#需要改哪里，重写父模板的block#}
+{% block title %}
+    详情页面
+{% endblock %}
+
+{% block main %}
+    <h1>欢迎来到Python Web开发，这里是jinja2模板，同时重写 base.html 的main block</h1>
+   <p>你的名字是：{{ username| default("nothing") }}</p>
+    <hr>
+    <p>你的年龄是{{ age }}</p>
+    <hr>
+    <p>你的朋友名字是{{ friends }}</p>
+    <p>你共有{{ friends | length }}个朋友</p>
+    <hr>
+    <p>你的girl朋友是{{ friends.2 }}</p>
+    <hr>
+    <ul>
+        {% for item in friends %}
+            <li>第{{ loop.index }}个索引，朋友名字{{ item }}</li>
+        {% endfor %}
+    </ul>
+    <ul>
+    {% for year, salary in money.items() %}
+        <li>{{ year }}年月薪: {{ salary }}</li>
+    {% endfor %}
+        <li>你第一年的月薪是{{ money.2019 }}</li>
+    </ul>
+
+    <hr>
+        {% if age > 10 %} 我的年龄大于10岁
+        {% elif age == 10 %}  我的年龄=10岁
+        {% else %} 我的年龄小于10岁
+        {% endif %}
+    <hr>
+    现在时间：{{ date(localtime,"Y 年 m 月 d 日 H:i:s") }}
+    <hr>
+    这是脚本允许运行{{ desc|safe }}
+    <hr>
+    我没有定义的变量{{ abcde|default("~~~~~~~~") }}
+{% endblock main %}
+
+{#不需要某个block，直接继承#}
