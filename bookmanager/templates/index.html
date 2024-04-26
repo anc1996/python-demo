@@ -52,6 +52,9 @@
     这是脚本允许运行{{ desc|safe }}
     <hr>
     我没有定义的变量{{ abcde|default:':~~~~~~' }}
+    {% load static %}
+    <hr>
+    <img src="{% static '1.jpg' %}" alt="Image" width="20%" height="20%">
 {% endblock main %}
 
 {#不需要某个block，直接继承#}

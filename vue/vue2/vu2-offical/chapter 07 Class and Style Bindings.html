@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<script src="vue.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+	<!--操作元素的 class 列表和内联样式是数据绑定的一个常见需求。
+	因为它们都是 attribute，所以我们可以用 v-bind 处理它们：只需要通过表达式计算出字符串结果即可。
+	不过，字符串拼接麻烦且易错。因此，在将 v-bind 用于 class 和 style 时，Vue.js 做了专门的增强。
+	表达式结果的类型除了字符串之外，还可以是对象或数组。-->
+<div id="app">
+<!--	你可以在对象中传入更多字段来动态切换多个 class。此外，v-bind:class 指令也可以与普通的 class attribute 共存-->
+	<!--	我们可以把一个数组传给 v-bind:class，以应用一个 class 列表：-->
+	<div 
+	class="test" 
+	v-bind:class="[ isActive ? 'active' : '', isGreen ? 'green' : '']" 
+	style="width:200px; height:200px; text-align:center; line-height:200px;">
+		hi vue
+	</div>
+	
+	<div 
+	:style="{color:color, fontSize:size, background: isRed ? '#FF0000' : ''}">
+		hi vue
+	</div>
+</div>
+<script type="text/javascript">
+var vm = new Vue({
+	el : "#app",
+	data : {
+		isActive : true,
+		isGreen : true,
+		color : "#FFFFFF",
+		size : '50px',
+		isRed : true
+	}
+});
+</script>
+<style>
+.test{font-size:30px;}
+.green{color:#00FF00;}
+.active{background:#FF0000;}
+</style>
+</body>
+</html>

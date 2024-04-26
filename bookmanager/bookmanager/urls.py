@@ -75,9 +75,8 @@ urlpatterns = [
     # include返回  return (urlconf_module, app_name, namespace)
     re_path(r'^book/',include(('book.urls','book'),namespace='book')  ),
     # 方法二：用path
-    # path("book/", include(('book.urls','book'),namespace='book')    ),
     # 转到pay子应用路由
-    path('pay/',include('pay.urls')),
+    path('pay/',include(('pay.urls','book') ,'book')   ),
 
 
 

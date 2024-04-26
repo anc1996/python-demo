@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<script src="vue.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+<div id="app">
+	<button-counter title="title1"></button-counter>
+	<test></test>  <!--调用test局部注册组件-->
+</div>
+<script type="text/javascript">
+	// 在注册一个组件的时候，我们始终需要给它一个名字。比如在全局注册的时候我们已经看到了：
+	// 该组件名就是 Vue.component 的第一个参数。
+	// 语法：Vue.component('button-counter', { /* ... */ })
+		// 1、当使用 kebab-case (短横线分隔命名) 定义一个组件时，你也必须在引用这个自定义元素时使用 kebab-case，例如 <button-counter>。
+
+		// 2、使用 PascalCase语法：Vue.component('button-counter', { /* ... */ })
+		// 当使用 PascalCase (首字母大写命名) 定义一个组件时，你在引用这个自定义元素时两种命名法都可以使用。
+	// 也就是说 <button-counter> 和 <ButtonCounter>都是可接受的。注意，尽管如此，直接在 DOM (即非字符串的模板) 中使用时只有 kebab-case 是有效的。
+
+//这些组件是全局注册的。也就是说它们在注册之后可以用在任何新创建的 Vue 根实例 (new Vue) 的模板中
+Vue.component('button-counter', { // 全局注册
+	props: ['title'],
+	data: function () {
+		return {}
+	},
+	template: '<div><h1>h1...{{title}}..h1</h1></div>',
+	methods:{
+		
+	}
+})
+
+var vm = new Vue({
+	el : "#app",
+	data : {
+		
+	},
+	methods:{
+		clicknow : function (e) {
+			console.log(e);
+		}
+	},
+	// 对于 components 对象中的每个 property 来说，其 property 名就是自定义元素的名字，其 property 值就是这个组件的选项对象。
+	components:{ //声明局部注册
+		// 下面注册组件的名称为test
+		test : {
+			template:"<h2>h2...</h2>",
+		}
+	}
+});
+</script>
+<style type="text/css">
+
+</style>
+</body>
+</html>

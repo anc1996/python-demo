@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<script src="vue.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+<div id="app">
+<!--	因为 v-if 是一个指令，所以必须将它添加到一个元素上。但是如果想切换多个元素呢？
+此时可以把一个 <template> 元素当做不可见的包裹元素，并在上面使用 v-if。
+最终的渲染结果将不包含 <template> 元素。-->
+	<div v-if="type === 'A'">
+	  A
+	</div>
+	<div v-else-if="type === 'B'">
+	  B
+	</div>
+	<div v-else-if="type === 'C'">
+	  C
+	</div>
+	<div v-else>
+	  Not A/B/C
+	</div>
+<!--	不同的是带有 v-show 的元素始终会被渲染并保留在 DOM 中。v-show 只是简单地切换元素的 CSS property display。-->
+	<h1 v-show="ok">Hello!</h1>
+</div>
+<script type="text/javascript">
+var vm = new Vue({
+	el : "#app",
+	data : {
+		type : "B",
+		ok : false
+	}
+});
+</script>
+<style type="text/css">
+
+</style>
+</body>
+</html>

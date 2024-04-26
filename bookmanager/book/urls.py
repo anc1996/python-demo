@@ -60,4 +60,6 @@ urlpatterns = [
     path('home/',HomeView.as_view(),name='home'),
     # JinjiaView，jinja模板语法
     path('jinja/',JinjaView.as_view(),name='jinja'),
+    # vue模板
+    path('vue/',VueView.as_view(),name='vue'),
 ]

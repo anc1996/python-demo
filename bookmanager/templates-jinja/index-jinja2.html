@@ -9,6 +9,7 @@
 {% block main %}
     <h1>欢迎来到Python Web开发，这里是jinja2模板，同时重写 base.html 的main block</h1>
    <p>你的名字是：{{ username| default("nothing") }}</p>
+    <img src="{{ static('1.jpg') }}" alt="Image" width="20%" height="20%">
     <hr>
     <p>你的年龄是{{ age }}</p>
     <hr>

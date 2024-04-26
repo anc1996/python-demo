@@ -1,5 +1,7 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
+from django.db.models.functions import Abs
+
 from book.models import BookInfo,PeopleInfo
 from django.db.models import *
 from django.core.paginator import Paginator
@@ -127,7 +129,7 @@ books=BookInfo.objects.exclude(id=3)# 返回列表
 # 查询编号等于3的图书
 books=BookInfo.objects.filter(id__exact=3)
 # 不区分大小写的完全匹配java
-books=BookInfo.objects.filter(name__iexact='java')
+books=BookInfo.objects.filter(name__iexact='Python')
 
 
 #### 时间
@@ -190,9 +192,9 @@ books=BookInfo.objects.filter(readcount__gte=F('commentcount'))
 books=BookInfo.objects.filter(readcount__gte=F('commentcount')*2)
 
 # 与注解一起使用
-# 查询每本书的阅读量和评论量
+# 查询每本书的阅读量之间评论量大于100的
 # annotate()函数会将这些值添加到返回的每个BookInfo对象中，你可以像访问普通属性一样访问这些注解值
-books=BookInfo.objects.annotate(chazhi=F('readcount')-F('commentcount'))
+books=BookInfo.objects.annotate(chazhi=Abs(F('readcount')-F('commentcount'))).filter(chazhi__gt=100 )
 books[0].chazhi
 
 # 对书本阅读量降排序

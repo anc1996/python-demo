@@ -230,6 +230,7 @@ def response1(request):
     #           audio/mp3   audio/mp4
     #           video/mp4   video/avi
     #           application/pdf application/zip
+    #           application/msword
     context=json.dumps(data)
     return HttpResponse(content=context,status=200,content_type='application/json')
 
@@ -269,15 +270,15 @@ def redirect2(request):
     return HttpResponseRedirect('/book/index1/')
 
     '''
-    HttpResponseRedirect 301
-    HttpResponsePermanentRedirect 302
-    HttpResponseNotModified 304
-    HttpResponseBadRequest 400
-    HttpResponseNotFound 404
-    HttpResponseForbidden 403
-    HttpResponseNotAllowed 405
-    HttpResponseGone 410
-    HttpResponseServerError 500
+    HttpResponseRedirect 301:永久重定向
+    HttpResponsePermanentRedirect 302:临时重定向
+    HttpResponseNotModified 304:未修改
+    HttpResponseBadRequest 400:请求错误
+    HttpResponseNotFound 404:未找到
+    HttpResponseForbidden 403:禁止访问
+    HttpResponseNotAllowed 405:不允许的方法
+    HttpResponseGone 410:已经不存在
+    HttpResponseServerError 500:服务器错误
     '''
 
 
@@ -542,3 +543,12 @@ class JinjaView(View):
             'desc': '<script>alert("这是脚本")</script>'  # 脚本，留意
         }
         return render(request, 'index-jinja2.html', context=context)
+
+
+
+class VueView(View):
+    def get(self,request):
+        return render(request, 'index-vue.html')
+
+    def post(self,request):
+        pass

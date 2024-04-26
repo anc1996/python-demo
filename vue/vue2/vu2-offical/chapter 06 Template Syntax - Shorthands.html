@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<script src="vue.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+<div id="app">
+<!--	指令 (Directives) 是带有 v- 前缀的特殊 attribute。指令 attribute 的值预期是单个 JavaScript 表达式
+(v-for 是例外情况，稍后我们再讨论)。指令的职责是，当表达式的值改变时，将其产生的连带影响，响应式地作用于 DOM。-->
+	<p v-if="seen">现在你看到我了</p>
+<!--	一些指令能够接收一个“参数”，在指令名称之后以冒号表示,在这里 href 是参数，
+告知 v-bind 指令将该元素的 href attribute 与表达式 url 的值绑定。-->
+	<a v-bind:href="url">...</a>
+	<div @click="click1">
+		<div @click.stop="click2">
+			click me
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+var vm = new Vue({
+	el : "#app",
+	data : {
+		seen : false,
+		url : "https://cn.vuejs.org/v2/guide/syntax.html#%E6%8C%87%E4%BB%A4"
+	},
+	methods:{
+		click1 : function () {
+			console.log('click1......');
+		},
+		click2 : function () {
+			console.log('click2......');
+		}
+	}
+});
+</script>
+<style type="text/css">
+
+</style>
+</body>
+</html>

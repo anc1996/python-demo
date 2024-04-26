@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<script src="vue.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+<div id="app">
+	<!--	组件是可复用的 Vue 实例，且带有一个名字：在这个例子中是 <button-counter>。
+	我们可以在一个通过 new Vue 创建的 Vue 根实例中，把这个组件作为自定义元素来使用：-->
+	<!-- 组件title属性赋值title1 -->
+	<button-counter title="title1 : " @clicknow="clicknow">
+		<h1>hi...h1</h1>
+	</button-counter>
+	<button-counter title="title2 : " @clicknow="clicknow"></button-counter>
+</div>
+
+
+
+<script type="text/javascript">
+	// 定义一个名为 button-counter 的新组件
+Vue.component('button-counter', {
+	//为组件定义属性
+	props: ['title'],
+	// data 必须是一个函数,因此每个实例可以维护一份被返回对象的独立的拷贝：
+	data: function () {
+		return {
+		  count: 0
+		}
+	},
+	template: '<div> <h2>h2...h2</h2><button v-on:click="clickfun">{{title}} You clicked me {{ count }} times.</button><slot></slot>  </div>',
+	methods:{
+		clickfun : function () {
+			this.count ++;
+			// 触发当前实例上的事件。附加参数都会传给监听器回调。子组件参数传值给父组件
+			this.$emit('clicknow', this.count);
+		}
+	}
+})
+var vm = new Vue({
+	el : "#app",
+	data : {
+		
+	},
+	methods:{
+		// button1＆button2触发次方法
+		clicknow : function (e) {
+			console.log(e);
+		}
+	}
+});
+</script>
+
+
+
+
+<style type="text/css">
+
+</style>
+</body>
+</html>

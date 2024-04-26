@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>后端组件</title>
+    <script src="{{ static('js/vue.js') }}"></script>
+    <script src="{{ static('js/axios.js') }}"></script>
+</head>
+<body>
+    <div id="app">
+        <!--vue语法与django和flask的模板语法冲突了-->
+        [[ message ]]
+        <br>
+           <button @click="login">点击我get请求</button>
+              <ul>
+                <li v-for="(value,key) in jsondict">
+                    [[key]]:[[ value ]]
+                </li>
+           </ul>
+        <form>
+        <label for="username">用户名:</label>
+        <input type="text" name="username" v-model="username" required>
+        <br>
+        <label for="password">密码:</label>
+        <input type="password"  name="password1" v-model="password1" required>
+        <input type="password"  name="password2" v-model="password2" required>
+        <br>
+        <input type="button" value="提交" @click="submit1">
+        </form>
+    </div>
+        <script>
+       var vm= new Vue({
+           el: '#app',
+           <!--vue语法与django和flask的模板语法冲突了-->
+           delimiters: ['[[', ']]'],
+            data: {
+                message: 'Hello Vue.js!',
+                jsondict:{},
+                username:'',
+                password1:'',
+                password2:'',
+            },
+           methods:{
+               login:function(){
+                   // 发送axios请求
+                   var that=this
+                   axios.get('/book/jsonresponse/').then(function(response){
+                       console.log(response.data);
+                       that.jsondict=response.data
+                   })
+                       .catch(function(error){
+                       console.log(error);
+                   });
+               },
+               submit1:function (){
+              {#范例：http://127.0.0.1:8000/book/post_json/#}
+              {#在body选raw的json，输入下面参数json格式：#}
+              {#    "name":"itcast",#}
+              {#    "password":"cdde"#}
+                   if(this.password1!=this.password2){
+                       alert('两次密码不一致')
+                       return
+                   }
+                  axios.post('/book/post_json/',{
+                            'username':this.username,
+                            'password':this.password1
+                          }).then(function(response){
+                            console.log(response);
+                          }).catch(function(error){
+                            console.log(error);
+                          });
+               }
+           }
+        });
+        </script>
+</body>
+</html>

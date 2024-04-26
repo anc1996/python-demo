@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- 1.导入vue开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="js/vue.js"></script>
+</head>
+<body>
+<!-- 2.定义一个标签需要给一个 标签添加id-->
+<div id="app">
+    <a :href="url">{{message}}</a>
+    <span>{{hello}}</span>
+    <hr>
+    <hr>
+    <!--v-bind 指令指示 Vue 将元素的 href attribute 与组件的 url 属性保持一致-->
+    <a v-bind:href="url">baidu</a>
+    <br>
+    <span v-bind:title="showmessage">鼠标放在这里，悬停显示时间</span>
+    <!-- v-bind简写 -->
+    <span :title="showmessage">悬停这里显示时间2</span>
+<!--    布尔型 attribute 依据 true / false 值来决定 attribute 是否应该存在于该元素上-->
+    <button :disabled="isButtonDisabled">Button</button>
+    <br>
+    <hr>
+    <!-- v-if条件渲染  -->
+    <a href="#" v-if="isLogin">你登录了</a>
+    <hr>
+    <a href="#" v-if="level==1">男</a>
+    <a href="#" v-else-if="level==0">女</a>
+    <a href="#" v-else>身份未知</a>
+    <hr>
+    <span v-if="seen">v-if</span>
+    <!--当v-show为false时，v-show 就简单得多——不管初始条件是什么，元素总是会被渲染，并且只是简单地基于 CSS 进行切换。-->
+    <span v-show="seen">v-show</span>
+    <hr>
+    <!-- v-for列表渲染 -->
+    <ul>
+        <!--数组循环-->
+        <li v-for="(item,index) in items">{{index+1}}--{{item}}</li>
+    </ul>
+    <hr>
+    <ol>
+        <!--字段对象循环-->
+        <li v-for="(todo,index) in todos">{{todo.text}}--{{index}}</li>
+    </ol>
+    <hr>
+    <!--对对象进行便利-->
+    <ul>
+        <li v-for="(value,key) in object">{{key}}:{{value}}</li>
+    </ul>
+    <hr>
+    <ul>
+        <li v-for="list in listdict">{{list.title}}--{{list.author}}--{{list.publishedAt}}</li>
+    </ul>
+    <!-- methods事件-->
+    <hr>
+    <!--   v-on用法:绑定事件监听器。事件类型由参数指定。表达式可以是一个方法的名字或一个内联语句，如果没有修饰符也可以省略。
+                语法: Function | Inline Statement | Object
+    -->
+    <button v-on:click="login">登录</button>
+    <br>
+    <!--    v-on: 简写 @-->
+    <a href="javascript:;" @click="register">注册</a>
+    <br>
+    <!--    函数传参-->
+    <button @click="addnum(counter)">点击+{{counter}}</button>
+    <br>
+    <!--    model创建双向数据绑定。它会根据控件类型自动选取正确的方法来更新元素。-->
+    <table>
+        <tr><td>用品名</td><td><input type="text" name="username" v-model="username" @blur="checkusername"></td></tr>
+        <tr><td>密码</td><td><input type="password" name="password1" v-model="password1"></td></tr>
+        <tr><td>确认密码</td><td><input type="password" name="password2" v-model="password2"></td></tr>
+        <tr><td>性别</td>
+            <td>
+            男<input type="radio" name="sex" value="boy" v-model="sex">
+            女<input type="radio" name="sex" value="girl" v-model="sex">
+            </td>
+        </tr>
+         <tr><td>爱好</td>
+        <td>
+          足球 <input type="checkbox" name="like" value="足球" v-model="like">
+          篮球 <input type="checkbox" name="like" value="篮球" v-model="like">
+          兵乓球<input type="checkbox" name="like" value="兵乓球" v-model="like">
+        </td>
+      </tr>
+         <tr><td>所在城市</td>
+        <td>
+          <select name="city" v-model="city">
+            <option value="北京">北京</option>
+            <option value="上海">上海</option>
+            <option value="广州">广州</option>
+            <option value="深圳">深圳</option>
+          </select>
+        </td>
+      </tr>
+         <tr><td>个人简介</td>
+             <td><textarea name="desc" v-model="desc"></textarea> </td>
+         </tr>
+    </table>
+    <button v-on:click="register1">注册</button>
+    <br>
+    <hr>
+    <span>{{message1}}</span>
+    <hr>
+    <input type="text" name="todoitem" v-model="newitem">
+    <button @click="add">添加</button>
+    <ul>
+        <li v-for="(value,index) in classevent">
+            <a  href="javascript:;" @click="up(index)">↑</a>
+            {{index}}--{{value}}
+        <a href="javascript:;" v-on:click="deleteclassevent(index)">删除</a>
+            <a href="javascript:;" @click="down(index)">↓</a>
+        </li>
+    </ul>
+</div>
+</body>
+<!--3.创建一个vue示例-->
+<script src="js/data.js"></script>
+</html>
