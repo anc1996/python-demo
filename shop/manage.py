@@ -6,7 +6,10 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "shop.settings")
+    # 设置DJANGO_SETTINGS_MODULE环境变量
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "shop.settings.dev_settings")
+    # 生成环境变量
+    # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "shop.settings.product_settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
