@@ -14,7 +14,7 @@ function get_query_string(name) {
     return null;
 }
 
-// 生成uuid
+// 生成uuid，唯一校验码
 function generateUUID() {
     let d = new Date().getTime();
     if(window.performance && typeof window.performance.now === "function"){

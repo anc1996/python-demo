@@ -19,6 +19,10 @@ from django.urls import path,re_path,include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # users
+    # users：用户
     re_path(r'^',include(('users.urls','users'),namespace='users')),
+    # contents:广告
+    re_path(r'^', include(('contents.urls', 'contents'), namespace='contents')),
+    # verifications：图形验证码
+    re_path(r'^', include(('verifications.urls','verifications'),namespace='verifications')),
 ]

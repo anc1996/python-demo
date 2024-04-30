@@ -67,7 +67,8 @@ INSTALLED_APPS = [
 
     # 注册apps下子应用的user，用户模块
     'users',  # 用户模块
-    # 'shop.apps.users'
+    'contents', # 首页广告模块
+    'verifications', # 验证码模块
 ]
 
 
@@ -166,7 +167,7 @@ DATABASES = {
 # Django 默认可以使用任何 cache backend 作为 session backend,
 # 将 django-redis 作为 session 储存后端不用安装任何额外的 backend
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+SESSION_CACHE_ALIAS = "session"
 
 # redis分库缓存
 CACHES = {
@@ -308,6 +309,24 @@ LOGGING = {
             "handlers": ['console', 'file'], # 处理方法
             "propagate": True,# 是否传递给父日志器
             'level': 'INFO',  # 日志器接收的最低日志级别
+        },
+        # 定义了一个名为verifications的日志器,监控子应用verifications
+        'verifications': {
+            'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
+            'propagate': True,  # 是否继续传递日志信息
+            'level': 'DEBUG',  # 日志器接收的一般的系统信息,DEBUG：排查故障时使用的低级别系统信息
+        },
+        # 定义了一个名为users的日志器,监控子应用users
+        'users': {
+            'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
+            'propagate': True,  # 是否继续传递日志信息
+            'level': 'DEBUG',  # 日志器接收的一般的系统信息,DEBUG：排查故障时使用的低级别系统信息
+        },
+        # 定义了一个名为carts的日志器
+        'carts': {
+            'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
+            'propagate': True,  # 是否继续传递日志信息
+            'level': 'DEBUG',  # 日志器接收的一般的系统信息,DEBUG：排查故障时使用的低级别系统信息
         },
     },
 }
