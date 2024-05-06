@@ -25,4 +25,8 @@ urlpatterns = [
     re_path(r'^', include(('contents.urls', 'contents'), namespace='contents')),
     # verifications：图形验证码
     re_path(r'^', include(('verifications.urls','verifications'),namespace='verifications')),
+    # oauth:第三方登录
+    re_path(r'^', include(('oauth.urls','oauth'),namespace='oauth')),
+    # areas
+    re_path(r'^', include(('areas.urls','areas'), namespace='areas' )),
 ]

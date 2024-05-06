@@ -16,7 +16,7 @@ import requests
 import time
 import json
 import traceback
-from verifications.libs.ronglian_sms_sdk import algorithm
+from celery_tasks.send_sms_code.ronglian_sms_sdk import algorithm
 
 class SmsSDK:
     """短信SDK"""

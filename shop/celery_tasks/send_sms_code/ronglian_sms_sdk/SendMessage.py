@@ -1,6 +1,6 @@
 import json
 
-from verifications.libs.ronglian_sms_sdk.SmsSDK import SmsSDK
+from celery_tasks.send_sms_code.ronglian_sms_sdk import SmsSDK
 
 
 # 说明：主账号，登陆云通讯网站后，可在"控制台-应用"中看到开发者主账号ACCOUNT SID

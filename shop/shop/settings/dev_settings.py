@@ -36,7 +36,7 @@ DEBUG = True
 
 # 允许以哪个主机的形式访问后端
 # 默认情况下，ALLOWED_HOSTS 是一个空列表，表示不允许外网任何主机访问后端。
-ALLOWED_HOSTS = ['*',]
+ALLOWED_HOSTS = ['*']
 
 
 
@@ -69,6 +69,8 @@ INSTALLED_APPS = [
     'users',  # 用户模块
     'contents', # 首页广告模块
     'verifications', # 验证码模块
+    'oauth',# oauth模块注册（第三方登录）：QQ登录、
+    'areas', # 省市区三级联动模块
 ]
 
 
@@ -312,21 +314,60 @@ LOGGING = {
         },
         # 定义了一个名为verifications的日志器,监控子应用verifications
         'verifications': {
-            'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
-            'propagate': True,  # 是否继续传递日志信息
-            'level': 'DEBUG',  # 日志器接收的一般的系统信息,DEBUG：排查故障时使用的低级别系统信息
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
         },
         # 定义了一个名为users的日志器,监控子应用users
         'users': {
-            'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
-            'propagate': True,  # 是否继续传递日志信息
-            'level': 'DEBUG',  # 日志器接收的一般的系统信息,DEBUG：排查故障时使用的低级别系统信息
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
         },
-        # 定义了一个名为carts的日志器
-        'carts': {
+        # 定义了一个名为oauth的日志器,监控子应用oauth
+        'oauth': {
             'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
-            'propagate': True,  # 是否继续传递日志信息
-            'level': 'DEBUG',  # 日志器接收的一般的系统信息,DEBUG：排查故障时使用的低级别系统信息
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        # 定义了一个名为send_email的日志器
+        'send_email': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        # 定义了一个名为areas的日志器
+        'areas': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
         },
     },
 }
+
+
+# 指定自定义的用户认证后端，用于多用户登录
+AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
+
+# 判断用户是否登录，指定未登录用户重定向的地址
+LOGIN_URL="/login/"
+
+
+# QQ登录参数
+# 申请QQ登录成功后，分配给应用的appid。
+QQ_CLIENT_ID = '102016086'
+# 申请QQ登录成功后，分配给应用的appkey。
+QQ_CLIENT_SECRET = 'FPM55xe8PSIuITSE'  # FPM55xe8PSIuITSE
+# 成功授权后的回调地址，必须是注册appid时填写的主域名下的地址，建议设置为网站首页或网站的用户中心。
+QQ_REDIRECT_URI = 'http://ov-vo.cn/oauth_callback'
+
+
+# QQ配置邮箱
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # 指定邮件后端
+EMAIL_HOST = 'smtp.qq.com' # 发邮件主机
+EMAIL_PORT = 465 # 发邮件端口， smtp.qq.com，使用SSL，端口号465或587
+EMAIL_HOST_USER = '834195283@qq.com' # 授权的邮箱
+EMAIL_HOST_PASSWORD = 'tenvbaybutbubdff' # 邮箱授权时获得的密码，非注册登录密码
+EMAIL_FROM = 'shop<834195283@qq.com>' # 发件人抬头
+EMAIL_USE_SSL = True # 是否使用SSL加密，qq邮箱需要使用
+EMAIL_VERIFY_URL = 'http://192.168.20.2/emails/verification/' # 邮箱验证链接

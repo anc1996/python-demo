@@ -4,8 +4,7 @@
 from celery import Celery
 import os
 
-# 为celery使用django配置文件进行设置
-print('DJANGO_SETTINGS_MODULE路径:',os.getenv('DJANGO_SETTINGS_MODULE'))
+# 为celery使用django配置文件进行设置，目前（email，）模块需要
 if not os.getenv('DJANGO_SETTINGS_MODULE'):
     os.environ['DJANGO_SETTINGS_MODULE'] = 'shop.settings.dev_settings'
 
@@ -14,8 +13,8 @@ celery_app=Celery('producer')
 # 加载配置文件的路径
 celery_app.config_from_object('celery_tasks.config')
 
-# 注册任务列表
-celery_app.autodiscover_tasks(['celery_tasks.send_sms_code',])
+# # 注册任务列表，方法一
+# celery_app.autodiscover_tasks(['celery_tasks.send_sms_code',])
 #
 ## 消费者为celery，启动进程
 

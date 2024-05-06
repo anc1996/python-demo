@@ -4,7 +4,7 @@ from celery_tasks.send_sms_code import constants
 from celery_tasks.main import celery_app
 
 # 使用装饰器异步任务，保证celery识别任务
-# bind：保证task对象会作为第一个参数自动传入
+# bind：bind=True：当bind=True时，任务将绑定到当前实例，这意味着你可以在任务中访问self，以及任务实例的属性和方法。
 # name：异步任务别名
 # retry_backoff：异常自动重试的时间间隔 第n次(retry_backoff×2^(n-1))s
 # max_retries：异常自动重试次数的上限
