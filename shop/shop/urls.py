@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,re_path,include
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     # users：用户
@@ -29,4 +30,8 @@ urlpatterns = [
     re_path(r'^', include(('oauth.urls','oauth'),namespace='oauth')),
     # areas
     re_path(r'^', include(('areas.urls','areas'), namespace='areas' )),
+    # goods
+    re_path(r'^', include(('goods.urls','goods'), namespace='goods')),
+    # haystack，搜索模块
+    re_path(r'^search/',include('haystack.urls')),
 ]

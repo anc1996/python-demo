@@ -70,7 +70,7 @@ urlpatterns = [
     # 转到book子应用路由
 
     # 两种方法：
-    # 方法一：用re_path中include((子应用的urls.py文件名, 子应用的urls.py文件名), namespace='子应用的urls.py文件名')
+    # 方法一：用re_path中include((urlconf_module, app_name), namespace='子应用的urls.py文件名')
     # namespace为实例命名空间，通常在创建实例，即 **path(route, include())** 函数中指定；
     # include返回  return (urlconf_module, app_name, namespace)
     re_path(r'^book/',include(('book.urls','book'),namespace='book')  ),

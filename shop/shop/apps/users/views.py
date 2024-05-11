@@ -11,8 +11,9 @@ from django.db import DatabaseError
 from django_redis import get_redis_connection
 from django.urls.base import reverse
 
+from goods.models import SKU
 from shop.utils.views import LoginRequiredJSONMixin
-from .constants import USER_ADDRESS_COUNTS_LIMIT
+from .constants import USER_ADDRESS_COUNTS_LIMIT, USER_BROWSING_HISTORY_COUNTS_LIMIT, USER_BROWSING_HISTORY_EXPIRES
 from .models import User, Address
 from shop.utils.response_code import RETCODE
 from .utils import generate_verify_email_url, check_verify_email_token
@@ -577,3 +578,78 @@ class ChangePasswordView(LoginRequiredMixin, View):
         response.delete_cookie('username')
         # 响应密码修改结果：重定向到登录界面
         return response
+
+class UserBrowseHistory(LoginRequiredJSONMixin, View):
+    """用户浏览记录"""
+
+    def post(self, request):
+        """保存用户浏览记录"""
+        # 接收参数
+        json_dict = json.loads(request.body.decode())
+        sku_id = json_dict.get('sku_id')
+        user_id=request.user.id
+        # 校验参数
+        try:
+            sku=SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return HttpResponseForbidden('浏览商品不存在')
+        # 保存sku_id到redis
+        redis_conn = get_redis_connection('history')
+        pl = redis_conn.pipeline()  # 管道一次性操作
+        # 先去重,用于从列表 key 中删除前 count 个值等于 element 的元素。
+        # count > 0: 从头到尾删除值为 value 的元素。
+        # count = 0: 移除所有值为 value 的元素。
+        pl.lrem('history_%s' % user_id, 0, sku_id)
+        # 再存储,将一个或多个值插入到列表key 的头部。
+        # LPUSH mylist a b c，返回的列表是 c 为第一个元素， b 为第二个元素， a 为第三个元素。
+        pl.lpush('history_%s' % user_id, sku_id)
+        # 最后截取,用于修剪(trim)一个已存在的 list，这样 list 就会只包含指定范围的指定元素。
+        pl.ltrim('history_%s' % user_id, 0, USER_BROWSING_HISTORY_COUNTS_LIMIT)
+        # 设置history_user_id键的过期时间为6个月
+        pl.expire('history_%s' % user_id, USER_BROWSING_HISTORY_EXPIRES)
+        pl.execute()
+        # 响应结果
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+    def get(self, request):
+        """获取用户浏览记录"""
+        '''
+        {
+            "code": "0",
+            "errmsg": "OK",
+            "skus": [
+                {
+                    "id": 6,
+                    "name": "Apple iPhone 8 Plus (A1864) 256GB 深空灰色 移动联通电信4G手机",
+                    "default_image_url": "****/group1/M00/00/02/CtM3BVrRbI2ARekNAAFZsBqChgk3141998",
+                    "price": "7988.00"
+                },
+                ......
+            ]
+        }
+        '''
+        user_id=request.user.id
+        # 获取Redis存储的sku_id列表信息
+        redis_conn = get_redis_connection('history')
+        # 从Redis中获取用户的历史浏览记录
+        # 返回列表中指定区间内的元素，区间以偏移量 START 和 END 指定。
+        # 其中 0 表示列表的第一个元素， -1 表示列表的最后第一个元素
+        sku_id_list=redis_conn.lrange('history_%s' % user_id, 0,-1)
+        # 根据sku_ids列表数据，查询出商品sku信息
+        sku_list = []
+        for sku_id in sku_id_list:
+            try:
+                sku=SKU.objects.get(id=sku_id)
+                sku_list.append(
+                    {
+                        "id": sku.id,
+                        "name": sku.name,
+                        "default_image_url": sku.default_image.url,
+                        "price": sku.price
+                    })
+            except Exception as e:
+                logger.error(e)
+                redis_conn.lrem('history_%s' % user_id, 0, sku_id)
+                continue
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': sku_list})

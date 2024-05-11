@@ -71,6 +71,8 @@ INSTALLED_APPS = [
     'verifications', # 验证码模块
     'oauth',# oauth模块注册（第三方登录）：QQ登录、
     'areas', # 省市区三级联动模块
+    'goods', # 商品模块
+    'haystack',# 全文检索框架
 ]
 
 
@@ -197,6 +199,15 @@ CACHES = {
     "VerifyCode": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": "123456"
+        }
+    },
+    # 存储用户浏览记录history
+    "history": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/3",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": "123456"
@@ -342,6 +353,12 @@ LOGGING = {
             'propagate': True,
             'level': 'DEBUG',
         },
+        # 定义了一个名为goods的日志器
+        'goods': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
     },
 }
 
@@ -371,3 +388,25 @@ EMAIL_HOST_PASSWORD = 'tenvbaybutbubdff' # 邮箱授权时获得的密码，非�
 EMAIL_FROM = 'shop<834195283@qq.com>' # 发件人抬头
 EMAIL_USE_SSL = True # 是否使用SSL加密，qq邮箱需要使用
 EMAIL_VERIFY_URL = 'http://192.168.20.2/emails/verification/' # 邮箱验证链接
+
+# 指定自定义的Django文件存储类
+DEFAULT_FILE_STORAGE = "shop.utils.fastdfs.fdfs_storage.FastDFSStorage"
+
+# FastDFS相关参数
+FDFS_BASE_URL = 'http://192.168.20.2:8888/'
+
+
+# Haystack
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
+        'URL': 'http://192.168.20.2:9200/', # Elasticsearch服务器ip地址，端口号固定为9200
+        'INDEX_NAME': 'shop', # Elasticsearch建立的索引库的名称
+    },
+}
+
+# 当添加、修改、删除数据时，自动生成索引,配置项保证了在Django运行起来后，有新的数据产生时，Haystack仍然可以让Elasticsearch实时生成新数据的索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+# 控制每页显示数量
+HAYSTACK_SEARCH_RESULTS_PER_PAGE=20
