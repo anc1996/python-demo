@@ -34,4 +34,6 @@ urlpatterns = [
     re_path(r'^', include(('goods.urls','goods'), namespace='goods')),
     # haystack，搜索模块
     re_path(r'^search/',include('haystack.urls')),
+    # carts
+    re_path(r'^', include(('carts.urls', 'goods'), namespace='carts')),
 ]

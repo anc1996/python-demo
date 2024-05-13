@@ -139,14 +139,14 @@ let vm = new Vue({
 			}
 		},
         // 加入购物车
-        add_carts(){
+        add_carts () {
             let url = '/carts/';
             axios.post(url, {
                 sku_id: parseInt(this.sku_id),
                 count: this.sku_count
             }, {
                 headers: {
-                    'X-CSRFToken':getCookie('csrftoken')
+                    'X-CSRFToken': getCookie('csrftoken')
                 },
                 responseType: 'json',
                 withCredentials: true

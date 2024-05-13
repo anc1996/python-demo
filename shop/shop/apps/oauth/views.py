@@ -8,6 +8,7 @@ from django.views import View
 from django.conf import settings
 from django_redis import get_redis_connection
 
+from carts.utils import merge_cart_cookie_to_redis
 from users.models import User
 from .QQLoginTool.QQtool import OAuthQQ
 from shop.utils.response_code import RETCODE
@@ -85,7 +86,7 @@ class QQAuthUserView(View):
             response.set_cookie('username', oauth_qq_user.user.username, max_age=3600 * 24 * 15)
 
             # 用户登录成功，合并cookie购物车到redis购物车
-            # response = merge_cart_cookie_to_redis(request=request, user=oauth_user.user, response=response)
+            response = merge_cart_cookie_to_redis(request=request, user=oauth_qq_user.user, response=response)
 
             return response
 
@@ -146,7 +147,7 @@ class QQAuthUserView(View):
         response.set_cookie('username', oauth_qq_user.user.username, max_age=3600 * 24 * 15)
 
         # 用户登录成功，合并cookie购物车到redis购物车
-        # response = merge_cart_cookie_to_redis(request=request, user=oauth_qq_user.user, response=response)
+        response = merge_cart_cookie_to_redis(request=request, user=oauth_qq_user.user, response=response)
 
         return response
 

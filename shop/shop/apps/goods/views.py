@@ -6,6 +6,7 @@ from django.http import HttpResponseNotFound, JsonResponse, HttpResponseForbidde
 from django.shortcuts import render
 from django.views import View
 from django.utils import timezone
+from django.db import transaction
 
 from contents.utils import get_categories, get_breadcrumb
 from goods.models import GoodsCategory, SKU, GoodsVisitCount
@@ -202,20 +203,23 @@ class DetailVisitView(View):
         # datetime.strftime() 时间对象转字符串，format="%a %b %d %H:%M:%S %Y"
         today_date = datetime.strptime(today_str, '%Y-%m-%d')
 
-        # 判断当天中指定的分类商品对应的记录是否存在
-        try:
-            # 统计指定分类商品的访问量
-            counts_data = GoodsVisitCount.objects.get(category=category,date=today_date)
-        except GoodsVisitCount.DoesNotExist:
-            # 如果该类别的商品在今天没有过访问记录，就新建一个访问记录
-            counts_data = GoodsVisitCount()
-        try:
-            counts_data.category = category
-            counts_data.count += 1
-            counts_data.save()
-        except Exception as e:
-            logger.error(e)
-            return HttpResponseServerError('统计失败')
+        # 使用 Django 的 transaction.atomic() 来确保数据库操作的原子性
+        with transaction.atomic():
+            try:
+                # 尝试获取指定分类商品的访问量记录
+                counts_data = GoodsVisitCount.objects.select_for_update().get(category=category, date=today_date)
+            except GoodsVisitCount.DoesNotExist:
+                # 如果不存在，则创建新的记录
+                counts_data = GoodsVisitCount(category=category, date=today_date, count=1)
+            else:
+                # 如果存在，则更新 count 字段
+                counts_data.count += 1
+            try:
+            # 保存更新后的记录
+                counts_data.save()
+            except Exception as e:
+                logger.error(e)
+                return HttpResponseServerError('统计失败')
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
 

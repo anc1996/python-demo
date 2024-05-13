@@ -11,6 +11,7 @@ from django.db import DatabaseError
 from django_redis import get_redis_connection
 from django.urls.base import reverse
 
+from carts.utils import merge_cart_cookie_to_redis
 from goods.models import SKU
 from shop.utils.views import LoginRequiredJSONMixin
 from .constants import USER_ADDRESS_COUNTS_LIMIT, USER_BROWSING_HISTORY_COUNTS_LIMIT, USER_BROWSING_HISTORY_EXPIRES
@@ -148,6 +149,9 @@ class RegisterView(View):
         response=redirect(reverse('contents:index'))
         # 为了实现在首页的右上角展示用户名信息，我们需要将用户名缓存到cookie中,有效期15天
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+
+        # 用户登录成功，合并cookie购物车到redis购物车
+        response=merge_cart_cookie_to_redis(request=request, user=user, response=response)
         return response
 
 
@@ -213,7 +217,7 @@ class LoginView(View):
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
 
         # 用户登录成功，合并cookie购物车到redis购物车
-        # response=merge_cart_cookie_to_redis(request=request, user=user, response=response)
+        response=merge_cart_cookie_to_redis(request=request, user=user, response=response)
         return response
 
 
@@ -653,3 +657,5 @@ class UserBrowseHistory(LoginRequiredJSONMixin, View):
                 redis_conn.lrem('history_%s' % user_id, 0, sku_id)
                 continue
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': sku_list})
+
+

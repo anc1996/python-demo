@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'areas', # 省市区三级联动模块
     'goods', # 商品模块
     'haystack',# 全文检索框架
+    'carts',# 购物车
 ]
 
 
@@ -208,6 +209,15 @@ CACHES = {
     "history": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": "123456"
+        }
+    },
+    # 购物车
+    "carts": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/4",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": "123456"
