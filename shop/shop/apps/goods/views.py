@@ -108,8 +108,12 @@ class HotGoodsView(View):
         hot_skus = []
         for sku in skus:
             hot_skus.append(
-                {'id':sku.id,'default_image_url':sku.default_image.url,
-                 'name':sku.name,'price':sku.price}
+                {'id':sku.id,
+                 'default_image_url':sku.default_image.url,
+                 'name':sku.name,
+                 'price':sku.price,
+                 'comments':sku.comments,
+                 'sales':sku.sales}
             )
         return JsonResponse({"code": RETCODE.OK,"errmsg": "OK","hot_skus":hot_skus})
 

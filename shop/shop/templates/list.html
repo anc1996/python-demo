@@ -32,7 +32,9 @@
 					<span>|</span>
 					<a href="{{ url('carts:info') }}">我的购物车</a>
 					<span>|</span>
-					<a href="user_center_order.html">我的订单</a>
+					<a href="{{ url('orders:settlement') }}">我的订单</a>
+                    <span>|</span>
+					<a href="{{ url('orders:info', args=(1, )) }}" class="active">全部订单</a>
 				</div>
 			</div>
 		</div>
@@ -115,7 +117,11 @@
                     <li v-for="sku in hot_skus">
                         <a :href="sku.url"><img :src="sku.default_image_url"></a>
                         <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
-                        <div class="price">￥[[ sku.price ]]</div>
+                        <div class="operate">
+                            <span class="price">￥[[ sku.price ]]</span>
+                            <span class="unit">[[ sku.sales ]]销量</span>
+                            <span>[[ sku.comments]]评价</span>
+                        </div>
                     </li>
 				</ul>
 			</div>
@@ -134,7 +140,8 @@
 					<div class="operate">
 						<span class="price">￥{{ sku.price }}</span>
 						<span class="unit">台</span>
-						<a href="#" class="add_goods" title="加入购物车"></a>
+                        <span>{{ sku.comments }}评价</span>
+						<a href="{{ url('goods:detail',args=(sku.id,)) }}" class="add_goods" title="加入购物车"></a>
 					</div>
 				</li>
                 {% endfor %}

@@ -28,12 +28,16 @@ urlpatterns = [
     re_path(r'^', include(('verifications.urls','verifications'),namespace='verifications')),
     # oauth:第三方登录
     re_path(r'^', include(('oauth.urls','oauth'),namespace='oauth')),
-    # areas
+    # areas，区域
     re_path(r'^', include(('areas.urls','areas'), namespace='areas' )),
-    # goods
+    # goods，商品模块
     re_path(r'^', include(('goods.urls','goods'), namespace='goods')),
     # haystack，搜索模块
     re_path(r'^search/',include('haystack.urls')),
-    # carts
+    # carts，购物车模块
     re_path(r'^', include(('carts.urls', 'goods'), namespace='carts')),
+    # orders，订单模块
+    re_path(r'^', include(('orders.urls', 'orders'), namespace='orders')),
+    # payment，支付模块
+    re_path(r'^', include(('payment.urls', 'payment'), namespace='payment')),
 ]

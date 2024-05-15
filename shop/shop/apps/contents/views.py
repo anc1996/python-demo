@@ -3,9 +3,8 @@ from collections import OrderedDict
 from django.shortcuts import render
 from django.views import View
 
-from contents.models import ContentCategory
 from contents.utils import get_categories, get_content
-from goods.models import GoodsChannelGroup,GoodsChannel,GoodsCategory
+
 # Create your views here.
 class IndexView(View):
     '''

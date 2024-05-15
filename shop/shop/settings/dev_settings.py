@@ -74,6 +74,8 @@ INSTALLED_APPS = [
     'goods', # 商品模块
     'haystack',# 全文检索框架
     'carts',# 购物车
+    'orders',# 订单模块
+    'payment',# 支付模块
 ]
 
 
@@ -369,6 +371,18 @@ LOGGING = {
             'propagate': True,
             'level': 'DEBUG',
         },
+        # 定义了一个名为goods的日志器
+        'orders': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        # payment支付日志
+        'payment': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
     },
 }
 
@@ -420,3 +434,16 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 # 控制每页显示数量
 HAYSTACK_SEARCH_RESULTS_PER_PAGE=20
+
+
+
+# 支付宝支付参数
+# 应用ID
+ALIPAY_APPID = "9021000136698047"
+# 调试
+ALIPAY_DEBUG = True
+# 输出调试数据
+ALIPAY_VERBOSE=True
+# 支付宝网关
+ALIPAY_URL = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do'
+ALIPAY_RETURN_URL = 'http://ov-vo.cn/payment/status/'
