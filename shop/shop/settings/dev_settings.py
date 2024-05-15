@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'carts',# 购物车
     'orders',# 订单模块
     'payment',# 支付模块
+    'django_crontab', # 定时任务
 ]
 
 
@@ -169,7 +170,18 @@ DATABASES = {
         'PASSWORD': '123456',  # 密码
         'NAME': 'shop',  # 指定数据库
     },
+    'slave': {  # 读
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': '127.0.0.1',  # 主机
+        'PORT': '4306',  # 端口号
+        'USER': 'root',  # 用户名
+        'PASSWORD': '123456',  # 密码
+        'NAME': 'shop',  # 指定数据库
+    }
 }
+
+# mysql读写分离路由，在执行数据库查询时，将用于确定使用哪个数据库的路由器列表。
+DATABASE_ROUTERS = ['shop.utils.db_router.MasterSlaveDBRouter']
 
 # Django 默认可以使用任何 cache backend 作为 session backend,
 # 将 django-redis 作为 session 储存后端不用安装任何额外的 backend
@@ -447,3 +459,21 @@ ALIPAY_VERBOSE=True
 # 支付宝网关
 ALIPAY_URL = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do'
 ALIPAY_RETURN_URL = 'http://ov-vo.cn/payment/status/'
+
+# 定时任务
+CRONJOBS = [
+    # 每1分钟生成一次首页静态文件
+    # * * * * *
+    # 分 时 日 月 周
+    # 每分钟的第1分钟执行一次generate_static_index_html函数
+    ('*/10 * * * *', 'contents.crons.generate_static_index_html', '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log')),
+]
+# 指定中文编码格式
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+## 添加定时任务到系统中
+# $ python manage.py crontab add
+# 显示已激活的定时任务
+# $ python manage.py crontab show
+# 移除定时任务
+# $ python manage.py crontab remove
