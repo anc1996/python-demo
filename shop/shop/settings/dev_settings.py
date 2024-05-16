@@ -477,3 +477,7 @@ CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
 # $ python manage.py crontab show
 # 移除定时任务
 # $ python manage.py crontab remove
+
+
+# 配置收集静态文件存放的目录
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'nginx_static')

@@ -134,17 +134,18 @@ class DetailView(View):
         breadcrumb = get_breadcrumb(sku.category)
 
         # 1.构建当前商品的规格键，
-        # 获取当前显示商品的所有规格，例如sku=2
+        # 获取当前显示商品的所有规格选项
         sku_specs = sku.specs.order_by('spec_id')
         sku_key = []
+        # sku-key对应规格选项option_id为[1，3，7]->[13.3英寸,银色,core i5/8G内存/512G存储]
         for spec in sku_specs:
-            # 添加该规格的所有选项 ，sku-key对应规格id为[1，3，7]
             sku_key.append(spec.option.id)
 
         # 2.获取当前商品的所有SKU
         skus = sku.spu.sku_set.all()
         # 构建不同规格参数（选项）的sku字典
         spec_sku_map = {}
+        # 构造每个商品的规格选项对应{(*,*,*):sku_id}
         for s in skus:
             # 获取sku的规格参数
             s_specs = s.specs.order_by('spec_id')
@@ -156,21 +157,27 @@ class DetailView(View):
             spec_sku_map[tuple(key)] = s.id
         # spec_sku_map --> {(1,4,7):1,(1,3,7):2}
 
-        # 获取当前商品的这一类所有的规格信息
+        # 获取sku当前商品这一类的商品的所有的规格
+        # 如sku的外键spu_id=1，goods_specs(1,2,3)->(屏幕尺寸,颜色,版本)
         goods_specs = sku.spu.specs.order_by('id')
         # 若当前sku的规格信息不完整，则不再继续
         if len(sku_key) < len(goods_specs):
             return
-        # 遍历当前商品的规格信息
+
+        # 给当前spu下面的每个规格绑定上对应的选项
+        # 遍历当前商品的规格信息，做页面渲染
         for index, spec in enumerate(goods_specs):
             # 复制当前sku的规格键
+            # key = sku_key[index:spec]
             key = sku_key[:]
-            # 该规格的选项
+            # 该规格的选项,
+            # select * from tb_specification_option where spec_id=1
             spec_options = spec.options.all()
             # 遍历该规格的选项
             for option in spec_options:
                 # 在规格参数sku字典中查找符合当前规格的sku
                 key[index] = option.id
+                # 每个选项绑定一个sku-id
                 option.sku_id = spec_sku_map.get(tuple(key))
             # 将规格选项赋值给spec
             spec.spec_options = spec_options
