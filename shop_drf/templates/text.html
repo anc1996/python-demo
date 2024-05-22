@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Hello Ming</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div><h1> [[ name ]]</h1></div>
+        <button @click='user_login'>登录</button>
+        <button @click='book'>获取图书</button>
+    </div>
+    <script>
+        new Vue({
+            el:'#app',
+            delimiters: ['[[', ']]'],
+            data:{
+                id:'',
+                name:'',
+                btitle:'',
+                message:'',
+                book_list:[]
+            },
+
+            mounted(){
+            this.getData();
+        },
+            methods:{
+                getData(){
+                 axios.get('http://192.168.20.2:8000/book/index2/')
+                 .then(response =>{
+                     this.name=response.data.name
+                })
+                 .catch(error =>{
+                     alert('加载异常：'+error)
+                 })
+             },
+                user_login:function(){
+                  axios.get('http://192.168.20.2:8000/book/login?username=python').then(
+                      response=>{
+                          this.message=response.data.message
+                          alert(this.message)
+                      }
+                  ).catch(error =>{
+                        alert(error)
+                    })
+                },
+                book:function(){
+                    axios.get('http://192.168.20.2:8000/book/2/')
+                    .then(response =>{
+                    this.id=response.data.id
+                    this.btitle=response.data.btitle
+                    alert(this.btitle+":"+this.id)
+                    location.href
+                })
+                    .catch(error =>{
+                        alert(error)
+                    })
+                }
+            }
+        })
+           
+    </script>
+</body>
+</html>

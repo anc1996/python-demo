@@ -427,7 +427,8 @@ EMAIL_VERIFY_URL = 'http://192.168.20.2/emails/verification/' # 邮箱验证链�
 
 # 指定自定义的Django文件存储类
 DEFAULT_FILE_STORAGE = "shop.utils.fastdfs.fdfs_storage.FastDFSStorage"
-
+# FDFS客户端的配置文件. 用于指定FDFS客户端的配置文件路径
+FDFS_CLIENT_CONF = os.path.join(BASE_DIR, 'utils/fastdfs/client.conf')
 # FastDFS相关参数
 FDFS_BASE_URL = 'http://192.168.20.2:8888/'
 

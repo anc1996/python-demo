@@ -129,7 +129,7 @@ TEMPLATES = [
     },
 ]
 
-#
+## WSGI_APPLICATION 是一个 WSGI 兼容的 Web 服务器的入口点，它是一个 Python 字符串，指向您的项目的 WSGI 应用程序。
 WSGI_APPLICATION = "bookmanager.wsgi.application"
 
 

@@ -62,7 +62,7 @@ class PaymentView(LoginRequiredJSONMixin, View):
             biz_content={
                 "out_trade_no": order_id,
                 "total_amount": str(order.total_amount),
-                "subject":  "SHOP订单%s" % order_id,
+                "subject":  "SHOP订单 % s" % order_id,
                 "product_code": "FAST_INSTANT_TRADE_PAY"
             },
             return_url=settings.ALIPAY_RETURN_URL,  # this is optional

@@ -1,5 +1,7 @@
 from django.core.files.storage import Storage
 from django.conf import settings
+from fdfs_client.client import Fdfs_client
+
 
 class FastDFSStorage(Storage):
     """自定义文件存储系统"""
@@ -29,18 +31,43 @@ class FastDFSStorage(Storage):
         """
         pass
 
-    def _save(self,name, content):
+    def save(self, name, content, max_length=None):
         """
-        将来管理后台系统中，需要实现文件上传。
-    调用者 Storage.save() . name 意志已经经过 get_valid_name() 了 和 get_available_name() ，
-     content 意志本身就是一个 File 对象。
+        Save new content to the file specified by name. The content should be
+        a proper File object or any Python file-like object, ready to be read
+        from the beginning.
+        """
+        # Get the proper name for the file, as it will actually be saved.
+        # 我们需要将文件上传到 FastDFS 上面.
+        # 创建客户端对象:
+        client=Fdfs_client(settings.FDFS_CLIENT_CONF)
+        # 调用上传函数, 进行上传:
+        # 我们这里调用的是上面说过的, 根据文件内容上传方法.
+        result=client.upload_by_buffer(content.read())
+        # 判断是否上传成功:
+        if result.get('Status') != 'Upload successed.':
+            raise Exception('上传文件到FDFS系统失败')
 
-在调用Storage.save()方法时，文件名已经经过get_valid_name()和get_available_name()方法处理，确保文件名符合要求且不会覆盖其他文件。
-        :param name:文件路径
-        :param content:文件二进制内容
-        :return:None，应返回保存的文件的实际名称（通常是 name 传入的文件，但如果存储需要更改文件名，则返回新名称）。
-        """
-        pass
+        # 上传成功: 返回 file_id:
+        file_id = result.get('Remote file_id')
+
+        # 这个位置返回以后, django 自动会给我们保存到表字段里.
+        return file_id
+
+
+#     def _save(self,name, content):
+#         """
+#         将来管理后台系统中，需要实现文件上传。
+#     调用者 Storage.save() . name 意志已经经过 get_valid_name() 了 和 get_available_name() ，
+#      content 意志本身就是一个 File 对象。
+#
+# 在调用Storage.save()方法时，文件名已经经过get_valid_name()和get_available_name()方法处理，确保文件名符合要求且不会覆盖其他文件。
+#         :param name:文件路径
+#         :param content:文件二进制内容
+#         :return:None，应返回保存的文件的实际名称（通常是 name 传入的文件，但如果存储需要更改文件名，则返回新名称）。
+#         """
+#
+#         pass
 
     def url(self,name):
         """
@@ -49,3 +76,11 @@ class FastDFSStorage(Storage):
         :return: 返回文件的全路径，http://***.**.**.**:8888/group1/M00/00/00/wKhnnlxw_gmAcoWmAAEXU5wmjPs35.jpeg
         """
         return self.fdfs_base_url+name
+
+    # 我们再添加一个新的方法
+    # 该方法会在我们上传之前,判断文件名称是否冲突
+    def exists(self, name):
+        # 根据上面的图片我们可知,
+        # fdfs 中的文件名是由 fdfs 生成的, 所以不可能冲突
+        # 我们返回 False: 永不冲突
+        return False

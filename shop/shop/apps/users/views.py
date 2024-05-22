@@ -3,6 +3,7 @@ import re,logging
 
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sessions.backends.base import UpdateError
 from django.http import HttpResponseForbidden, HttpResponse, JsonResponse, HttpResponseBadRequest, \
     HttpResponseServerError
 from django.shortcuts import render, redirect
@@ -529,11 +530,8 @@ class UpdateTitleAddressView(LoginRequiredJSONMixin, View):
             return HttpResponseForbidden('缺少title名字')
         # 查询当前要更新的地址
         try:
-            address=Address.objects.get(id=address_id)
-            # 设置新的地址标题
-            address.title=title
-            address.save()
-        except Exception as e:
+            Address.objects.filter(id=address_id).update(title=title)
+        except UpdateError  as e:
             logger.error(e)
             return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '设置地址标题失败'})
         # 响应结果
