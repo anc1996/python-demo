@@ -49,6 +49,8 @@ INSTALLED_APPS = [
 
     "corsheaders" , # 跨域请求
     "rest_framework",# django rest framework
+    'django_filters',# 过滤器
+    'drf_yasg',# drf-yasg(Swagger升级版)
 
     "book.apps.BookConfig", # 前后端django模板渲染
     "books.apps.BooksConfig", # drf 返回json图书增删改成
@@ -231,7 +233,22 @@ LOGGING = {
             'level': 'INFO',  # 日志器接收的最低日志级别
         },
         # 定义了一个名为verifications的日志器,监控子应用verifications
-        'verifications': {
+        'book_drf': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        'BasicAPIView': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        'GenericAPI_Mixin': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        'BasicViewSet': {
             'handlers': ['console', 'file'],
             'propagate': True,
             'level': 'DEBUG',
@@ -243,3 +260,77 @@ LOGGING = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 # 默认主键类型
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# 这里是全局配置，如果需要局部配置，可以在视图中配置
+REST_FRAMEWORK = {
+    '''
+    如果认证成功 BasicAuthentication 提供以下信息。
+        request.user 将是一个 Django User 实例。
+        request.auth 将是 None。
+    如果成功验证，SessionAuthentication 提供以下凭据。
+        request.user 是一个 Django User 实例。
+        request.auth 是 None。
+    '''
+    # 这里需要创建用户才能体现
+    # 认证
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 基本认证，此身份验证方案使用 HTTP 基本身份验证，根据用户的用户名和密码进行签名。基本身份验证通常仅适用于测试。
+        'rest_framework.authentication.BasicAuthentication',
+        # 会话认证，此认证方案使用Django的默认session后端进行身份验证。Session身份验证适用于与你的网站在相同的Session环境中运行的AJAX客户端。
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+
+    # 权限，可以使用该 DEFAULT_PERMISSION_CLASSES 设置全局设置默认权限策略
+    'DEFAULT_PERMISSION_CLASSES': [
+        #  第1种权限：API 仅供注册用户访问，则此权限适用。
+        # 'rest_framework.permissions.IsAuthenticated',
+        # 第2种权限：如果未指定，则此设置默认为允许不受限制的访问：
+        # 'rest_framework.permissions.AllowAny',
+        # 第3种：IsAdminUser 权限类将仅供一部分受信任的管理员访问和 user.is_staff True 在这种情况下将允许权限。
+        'rest_framework.permissions.IsAdminUser',
+        # 第4种：IsAuthenticatedOrReadOnly 权限类将允许已经通过身份验证的用户进行任何请求，而未经身份验证的用户只能进行 GET、HEAD 或 OPTIONS 请求。
+        # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+
+    # 全局限流,用于控制客户端可以向 API 发出的请求速率。
+    'DEFAULT_THROTTLE_CLASSES': [
+        # 只会 AnonRateThrottle 限制未经身份验证的用户。传入请求的 IP 地址用于生成要限制的唯一密钥。
+        'rest_framework.throttling.AnonRateThrottle',
+        # 只会 UserRateThrottle 限制经过身份验证的用户。传入请求的用户 ID 用于生成要限制的唯一密钥。
+        # 注意：未经身份验证的请求将回退到使用传入请求的 IP 地址来生成要限制的唯一密钥。
+        'rest_framework.throttling.UserRateThrottle',
+        # 限制用户对于每个视图的访问频次，使用ip或user id。例如：对multifunction.otherfeatures.bookview局部限流。
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    # 限流速率
+    'DEFAULT_THROTTLE_RATES': {
+        # 未经身份验证的用户每天可以进行 100 次请求。
+        'anon': '100/day',
+        # 经过身份验证的用户每天可以进行 1000 次请求。
+        'user': '1000/day',
+        # 局部视图限流,例如：对multifunction.otherfeatures.bookview局部限流。
+        'bookview': '5/day',
+        'bookorder':'8/day',
+    },
+
+    # 全局过滤
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+
+    # 全局分页器，用的不多
+    # 第1种：此分页样式接受请求查询参数中的单个数字页码。列如：/***/?page=4
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # 第2种：此分页样式反映了查找多个数据库记录时使用的语法。客户端包括“limit”和“offset”查询参数。该限制表示要返回的最大项目数，与其他样式中的限制相同 page_size 。偏移量表示要跳过的项目数。
+    # 例如：?limit=100&offset=400
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
+
+    # 异常，默认为 REST 框架提供的标准异常处理程序：
+    # 'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    # 自定义异常
+    'EXCEPTION_HANDLER': 'book_drf.CustomExceptions.utils.custom_exception_handler',
+
+    # 指定用于支持coreapi的Schema
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+}
+

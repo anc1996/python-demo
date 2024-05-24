@@ -41,11 +41,8 @@ class BooksView(View):
     def post(self,request):
         # 1.请求体获取数据
         '''
-          第2种：在body的form-data传输数据
-        '''
-        # post=request.POST
-        '''
-            第2种：在body的raw传输数据,用json传输
+          第1种：在body的form-data传输数据
+          第2种：在body的raw传输数据,用json传输
             {
                 "name":"php入门",
                 "pub_date":"2022-12-23",
@@ -53,7 +50,10 @@ class BooksView(View):
                 "commentcount":"1233"
             }
         '''
-        post=json.loads(request.body.decode())
+        if request.POST.get('name') is not None:
+            post=request.POST
+        else:
+            post=json.loads(request.body.decode())
         name=post.get('name')
         pub_date=post.get('pub_date')
         readcount=post.get('readcount')

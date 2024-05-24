@@ -15,7 +15,7 @@ class BookInfo(models.Model):
     # 默认创建的主键列属性为id，可以使用pk代替，pk全拼为primary key。
     # 属性名=属性类型(选项)
     # CharField：一个字符串字段，适用于小到大的字符串。
-    name=models.CharField(max_length=10,unique=True,verbose_name='名字')
+    name=models.CharField(max_length=50,unique=True,verbose_name='名字')
     # 发布日期
     # DateField：一个日期字段，适用于日期。
     pub_date=models.DateField(null=True,verbose_name='发布日期')
@@ -45,7 +45,7 @@ class PeopleInfo(models.Model):
     # on_delete
 
     # 默认创建的主键列属性为id，可以使用pk代替，pk全拼为primary key。
-    name = models.CharField(max_length=20, verbose_name='名称')
+    name = models.CharField(max_length=50, verbose_name='名称')
     # 性别
     # 有序字典
     GENDER_CHOICES = (
