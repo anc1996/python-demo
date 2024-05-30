@@ -10,7 +10,7 @@ class Books(ListCreateAPIView):
     '''ListCreateAPIView继承
         GenericAPIView,CreateModelMixin,ListModelMixin'''
     # 1、要指定当前类视图使用的查询数据
-    queryset = BookInfo.objects.all().filter(is_delete=False)
+    queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
 
@@ -23,7 +23,7 @@ class BookView(RetrieveUpdateDestroyAPIView):
         GenericAPIView,UpdateModelMixin,DestroyModelMixin,RetrieveModelMixin'''
 
     # 1、要指定当前类视图使用的查询数据
-    queryset = BookInfo.objects.all().filter(is_delete=False)
+    queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
 

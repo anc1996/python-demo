@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 
 
 """
-类似于 ipython的东西可以用来操作数据库
+类似于 ipython的东西,模拟终端，可以用来操作数据库
 python manage.py shell
 """
 

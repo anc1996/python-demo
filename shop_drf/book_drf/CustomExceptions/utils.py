@@ -7,8 +7,10 @@ from rest_framework.response import Response
 from django.db import DatabaseError
 
 def exception_handler(exc, context):
+    # 返回应用于任何给定异常的响应。如果没有提供自定义处理程序，则使用默认处理程序。
     response = drf_exception_handler(exc, context)
 
+    # 在此处补充自定义的异常处理
     if response is None:
         view = context['view']
         if isinstance(exc, DatabaseError):

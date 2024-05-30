@@ -21,8 +21,8 @@ class CustomUserRateThrottle(UserRateThrottle):
 class LimitOff(LimitOffsetPagination):
     '''
         这种分页样式反映了查找多个数据库记录时使用的语法。客户端包括“limit”和“offset”查询参数。
-            limit指示在数据库要返回的项目的最大数目，这相当于其他样式中的 page_size。
-            offset指示在数据库查询相对于完整的未分页项的起始位置。
+            limit - 指示在数据库要返回的项目的最大数目，这相当于其他样式中的 page_size。
+            offset - 指示在数据库查询相对于完整的未分页项的起始位置。
         例如：/**/?limit=100&offset=500
             limit=100：指定每页返回 100 条记录。
             offset=500：跳过前 500 条记录，从第 501 条记录开始返回。

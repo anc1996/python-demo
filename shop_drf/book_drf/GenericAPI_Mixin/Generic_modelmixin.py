@@ -34,7 +34,7 @@ class Books(GenericAPIView,CreateModelMixin,ListModelMixin):
         lookup_url_kwarg - 应用于对象查找的URL关键字参数。它的 URL conf 应该包括一个与这个值相对应的关键字参数。如果取消设置，默认情况下使用与 lookup_field相同的值。
     """
     # 1、要指定当前类视图使用的查询数据
-    queryset = BookInfo.objects.all().filter(is_delete=False)
+    queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
     def get(self,request):

@@ -32,7 +32,7 @@ class Books(ViewSet):
         """# 自定义方法名，代替get方法,在urls路由匹配对应方法名"""
         # 1、查询所有图书对象
         print('这个是django view类原来request.data数据返回的内容:',request.query_params)
-        books = BookInfo.objects.all().filter(is_delete=False)
+        books = BookInfo.objects.filter(is_delete=False)
         bookserializer = BookSerializer(books, many=True)
         return Response(bookserializer.data)
 

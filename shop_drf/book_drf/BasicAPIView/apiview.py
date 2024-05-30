@@ -17,7 +17,8 @@ class Books(APIView):
 
     APIView与View的不同之处在于：
         1、被传入到处理方法的请求不会是Django的HttpRequest类的实例，而是REST framework的Request类的实例。
-        2、处理方法可以返回REST framework的Response，而不是Django的HttpRequest。视图会管理内容协议，给响应设置正确的渲染器。
+        2、处理方法可以返回REST framework的Response，而不是 Django 的 HttpRequest。
+            视图会管理内容协议，给响应设置正确的渲染器。
         3、任何APIException异常都会被捕获，并且传递给合适的响应。
         4、进入的请求将会经过认证，合适的权限和（或）节流检查会在请求被派发到处理方法之前运行。
     支持定义的属性：
@@ -31,7 +32,7 @@ class Books(APIView):
         # request.query_params 是 的更正确命名的 request.GET 同义词。
         # /book_drf/apibooks?a=233&b=333&c=332123
         print('这个是django view原来的request.data数据返回内容:',request.query_params) #  <QueryDict: {'a': ['233'], 'b': ['333'], 'c': ['332123']}>
-        books=BookInfo.objects.all().filter(is_delete=False)
+        books=BookInfo.objects.filter(is_delete=False)
         bookserializer=BookSerializer(books,many=True)
         # Response(data) ：响应的序列化数据。
         return Response(bookserializer.data)

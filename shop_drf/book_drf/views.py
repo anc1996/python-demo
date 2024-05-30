@@ -18,7 +18,7 @@ class Books(View):
     """查询所有图书"""
     def get(self,request):
         # 1、查询所有图书对象
-        books=BookInfo.objects.all().filter(is_delete=False)
+        books=BookInfo.objects.filter(is_delete=False)
         # 2、序列化：将数据结构或对象状态转换为一个可以存储或传输的格式的过程
         books_Serializer=BookSerializer(books,many=True)
         # 3、

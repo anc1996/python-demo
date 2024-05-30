@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- 生产环境版本，优化了尺寸和速度 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <App>
+
+        </App>
+    </div>
+    <!--在通过webpack对项目进行打包时，需要指定相应的配置文件，同过配置文件对单文件组件
+        中的各个内容进行解析，生成一个index.js的压缩文件，在index.html只需引该文件就可进行页面加载渲染    -->
+    <!-- 打包指令npm run build -->
+    <!-- 启动项目 指令 .\node_modules\.bin\webpack-dev-server -->
+    <script src="./index.js"></script>
+</body>
+</html>

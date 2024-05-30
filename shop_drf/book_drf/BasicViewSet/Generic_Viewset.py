@@ -23,7 +23,7 @@ class Books(GenericViewSet):
         并提供了 get_object， get_queryset 方法和其他通用视图基本行为的默认配置，但默认情况不包括任何操作。
     """
     # 1、要指定当前类视图使用的查询数据
-    queryset = BookInfo.objects.all().filter(is_delete=False)
+    queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
     def list(self,request):

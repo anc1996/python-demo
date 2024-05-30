@@ -23,6 +23,7 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     # 具体定义详见 [Swagger/OpenAPI 规范](https://swagger.io/specification/#infoObject)
+    # 该对象用于定义API的元数据, 如API的标题, 版本, 描述, 联系方式, 许可证等信息
     openapi.Info(
         title="Shop_drf API",
         default_version='v1',

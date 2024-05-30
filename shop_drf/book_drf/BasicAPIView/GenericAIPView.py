@@ -16,17 +16,17 @@ class Books(GenericAPIView):
     GenericAPIView扩展了REST框架的 APIView 类，为标准list和detail view 添加了通常需要的行为。
     支持定义的属性：
     列表视图与详情视图通用：
-        queryset 用于从视图返回对象的查询结果集。通常，你必须设置此属性或者重写 get_queryset() 方法
-        serializer_class 用于验证和反序列化输入以及用于序列化输出的Serializer类。 通常，你必须设置此属性或者重写get_serializer_class() 方法。
+        queryset - 用于从视图返回对象的查询结果集。通常，你必须设置此属性或者重写 get_queryset() 方法
+        serializer_class - 用于验证和反序列化输入以及用于序列化输出的Serializer类。 通常，你必须设置此属性或者重写get_serializer_class() 方法。
     列表视图使用：
-        pagination_class 当分页列出结果时应使用的分页类。。默认值与 DEFAULT_PAGINATION_CLASS 设置的值相同
-        filter_backends 用于过滤查询集的过滤器后端类的列表。默认值与DEFAULT_FILTER_BACKENDS 设置的值相同。
+        pagination_class - 当分页列出结果时应使用的分页类。。默认值与 DEFAULT_PAGINATION_CLASS 设置的值相同
+        filter_backends - 用于过滤查询集的过滤器后端类的列表。默认值与DEFAULT_FILTER_BACKENDS 设置的值相同。
     详情页视图使用：
         lookup_field - 用于执行各个model实例的对象查找的model字段。默认为 'pk'。 请注意，在使用超链接API时，如果需要使用自定义的值，你需要确保在API视图和序列化类都设置查找字段。
         lookup_url_kwarg - 应用于对象查找的URL关键字参数。它的 URL conf 应该包括一个与这个值相对应的关键字参数。如果取消设置，默认情况下使用与 lookup_field相同的值。
     """
     # 1、要指定当前类视图使用的查询数据
-    queryset = BookInfo.objects.all().filter(is_delete=False)
+    queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
     def get(self,request):

@@ -8,6 +8,7 @@ from books.models import BookInfo,PeopleInfo
 
 class PeopleInfoSerializer(serializers.Serializer):
     # 字段选项验证，里面的参数对数据验证，给与通过。
+    # help_text:用于HTML展示API接口页面时，显示的字段帮助提示信息
     id = serializers.IntegerField(label='ID', read_only=True)
     gender_text = serializers.SerializerMethodField(help_text='性别')
     name=serializers.CharField(label='英雄名称',max_length=20, help_text='英雄名称')
@@ -57,7 +58,7 @@ class BookSerializer(serializers.Serializer):
 
     # 方法二：返回关联人物模型类__str__方法值:模型类定义了：return self.name
     '''
-            "peopleinfo_set": ["郭靖","黄蓉","黄药师", "欧阳锋","梅超风"]
+        "peopleinfo_set": ["郭靖","黄蓉","黄药师", "欧阳锋","梅超风"]
     '''
     # peopleinfo_set=serializers.StringRelatedField(read_only=True,many=True)
 

@@ -86,8 +86,6 @@ MIDDLEWARE = [
 # 可以修改，默认不修改
 ROOT_URLCONF = "shop_drf.urls"
 
-
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
