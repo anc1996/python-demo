@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     'haystack',  # 全文检索框架
     'rest_framework', # drf框架
     'django_filters',  # 过滤器
+    'drf_yasg',  # drf-yasg(Swagger升级版)
 
     # 注册apps下子应用的user，用户模块
     'users',  # 用户模块
@@ -539,26 +540,23 @@ REST_FRAMEWORK = {
         # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     #
-    # # 全局限流,用于控制客户端可以向 API 发出的请求速率。
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     # 只会 AnonRateThrottle 限制未经身份验证的用户。传入请求的 IP 地址用于生成要限制的唯一密钥。
-    #     'rest_framework.throttling.AnonRateThrottle',
-    #     # 只会 UserRateThrottle 限制经过身份验证的用户。传入请求的用户 ID 用于生成要限制的唯一密钥。
-    #     # 注意：未经身份验证的请求将回退到使用传入请求的 IP 地址来生成要限制的唯一密钥。
-    #     'rest_framework.throttling.UserRateThrottle',
-    #     # 限制用户对于每个视图的访问频次，使用ip或user id。例如：对multifunction.otherfeatures.bookview局部限流。
-    #     'rest_framework.throttling.ScopedRateThrottle',
-    # ],
-    # # 限流速率
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     # 未经身份验证的用户每天可以进行 100 次请求。
-    #     'anon': '100/day',
-    #     # 经过身份验证的用户每天可以进行 1000 次请求。
-    #     'user': '1000/day',
-    #     # 局部视图限流,例如：对multifunction.otherfeatures.bookview局部限流。
-    #     'bookview': '5/day',
-    #     'bookorder':'8/day',
-    # },
+    # 全局限流,用于控制客户端可以向 API 发出的请求速率。
+    'DEFAULT_THROTTLE_CLASSES': [
+        # 只会 AnonRateThrottle 限制未经身份验证的用户。传入请求的 IP 地址用于生成要限制的唯一密钥。
+        'rest_framework.throttling.AnonRateThrottle',
+        # 只会 UserRateThrottle 限制经过身份验证的用户。传入请求的用户 ID 用于生成要限制的唯一密钥。
+        # 注意：未经身份验证的请求将回退到使用传入请求的 IP 地址来生成要限制的唯一密钥。
+        'rest_framework.throttling.UserRateThrottle',
+        # 限制用户对于每个视图的访问频次，使用ip或user id。例如：对multifunction.otherfeatures.bookview局部限流。
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    # 限流速率
+    'DEFAULT_THROTTLE_RATES': {
+        # 未经身份验证的用户每天可以进行 100 次请求。
+        'anon': '100/day',
+        # 经过身份验证的用户每天可以进行 1000 次请求。
+        'user': '1000/day',
+    },
     #
     # # 全局过滤
     # 'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -570,14 +568,12 @@ REST_FRAMEWORK = {
     # # 例如：?limit=100&offset=400
     # # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     # 'PAGE_SIZE': 100,
-    #
-    # # 异常，默认为 REST 框架提供的标准异常处理程序：
-    # # 'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
-    # # 自定义异常
-    # 'EXCEPTION_HANDLER': 'book_drf.CustomExceptions.utils.custom_exception_handler',
-    #
+
+    # 异常，默认为 REST 框架提供的标准异常处理程序：
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+
     # # 指定用于支持coreapi的Schema
-    # 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
 
 

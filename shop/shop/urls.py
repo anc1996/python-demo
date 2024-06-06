@@ -17,7 +17,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,re_path,include
 
-
 urlpatterns = [
     path("admin/", admin.site.urls),
     # users：用户
@@ -42,4 +41,5 @@ urlpatterns = [
     re_path(r'^', include(('payment.urls', 'payment'), namespace='payment')),
     # shop_admin
     re_path(r'^shop_admin/', include(('shop_admin.urls','shop_admin'),namespace='shop_admin')),
+
 ]

@@ -1,11 +1,34 @@
 ﻿#!/user/bin/env python3
 # -*- coding: utf-8 -*-
 from django.urls import path,re_path,include
+from rest_framework import permissions
+from rest_framework.documentation import include_docs_urls
 from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
 
 from shop_admin.views import statistical, UsersView, SpecsViewSet, imageViewSet, SkuViewSet, ChannelsViewSet, \
     BrandsViewSet, SpusViewSet, OptionsViewSet, OrdersViewSet, PermissionViewSet, GroupViewSet,AdminViewSet
+
+
+schema_view = get_schema_view(
+    # 具体定义详见 [Swagger/OpenAPI 规范](https://swagger.io/specification/#infoObject)
+    # 该对象用于定义API的元数据, 如API的标题, 版本, 描述, 联系方式, 许可证等信息
+    openapi.Info(
+        title="Shop API",
+        default_version='v1',
+        description="Test description",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="contact@snippets.local"),
+        license=openapi.License(name="BSD License"),
+    ),
+    # public 表示文档完全公开, 无需针对用户鉴权
+    public=True,
+    # 可以传递 drf 的 BasePermission
+    permission_classes=(permissions.IsAdminUser,),
+)
 
 urlpatterns = [
     # 后台登录，由于django4.1版本In this file, replace ugettext with --> gettext
@@ -61,6 +84,24 @@ urlpatterns = [
     re_path(r'^permission/simple/$', GroupViewSet.GroupView.as_view({'get': 'simple'})),
     # 管理员管理-获取分组表数据
     re_path(r'^permission/groups/simple/$', AdminViewSet.AdminView.as_view({'get': 'simple'})),
+
+    # drf认证：用于用户认证
+    path(r'api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+   # ------------api接口对接---------------------
+    # coreapi 接口文档
+    re_path(r'^coreapi/', include_docs_urls(title='shop title')),
+
+    # drf_yasg
+    # SchemaView.without_ui(cache_timeout, cache_kwargs): 返回无UI的视图函数, 该函数可以返回json/yaml格式的swagger文档
+    # cache_timeout: 用于指定缓存的生存时间
+    # cache_kwargs: 用于指定缓存的参数
+    # 例如：http://192.168.20.2:8000/swagger.json
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-spec'),
+    # SchemaView.with_ui(renderer, cache_timeout, cache_kwargs): 返回使用指定UI渲染器的视图函数, 可选的UI渲染器有: swagger, redoc。
+
+    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    re_path(r'^swagger-docs/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
 
 # --规格表路由---

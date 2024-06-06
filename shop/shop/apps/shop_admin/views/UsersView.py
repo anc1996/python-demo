@@ -31,9 +31,12 @@ class UserView(ListCreateAPIView):
         # 请求方式是GET，则是获取用户数据返回UserSerializer
         if self.request.method == 'GET':
             return User_serializer.UserSerializer
-        else:
+        elif self.request.method == 'POST' or self.request.method == 'PUT' or self.request.method == 'PATCH':
             # POST请求，完成保存用户，返回UserAddSerializer
             return User_serializer.UserAddSerializer
+        else:
+            # 其他请求，返回UserSerializer
+            return User_serializer.UserSerializer
 
 
 

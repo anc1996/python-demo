@@ -44,7 +44,7 @@ class Books(ModelViewSet):
         # SessionAuthentication，此认证方案使用Django的默认session后端进行身份验证。Session身份验证适用于与你的网站在相同的Session环境中运行的AJAX客户端。
     authentication_classes = [BasicAuthentication,SessionAuthentication]
     # 权限，局部会覆盖全局的权限
-    permission_classes = [AllowAny]  # AllowAny 设置默认为允许不受限制的访问：
+    permission_classes = [AllowAny,]  # AllowAny 设置默认为允许不受限制的访问：
 
     # 局部视图，用户限流。
     throttle_classes = [CustomAnonRateThrottle,CustomUserRateThrottle]
