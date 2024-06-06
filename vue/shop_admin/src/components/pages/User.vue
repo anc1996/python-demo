@@ -1,16 +1,16 @@
 <template>
   <div class="user_wrap">
-    <BreadCrumb crumb="用户管理"></BreadCrumb>  
+    <BreadCrumb crumb="用户管理"></BreadCrumb>
     <div class="top_bar">
-        <el-row>
-          <el-col :span="8">
-            <el-input placeholder="请输入搜索内容" v-model="keyword" class="input-with-select" size="small">
-              <el-button slot="append" icon="el-icon-search" @click="fnGetData(1)"></el-button>
-            </el-input>
-          </el-col>
-          <el-col :span="8" :offset="8"><AddUser @fnSetKey="fnGetKey" class="pull-right"></AddUser></el-col>
-        </el-row>             
-    </div>    
+      <el-row>
+        <el-col :span="8">
+          <el-input placeholder="请输入搜索内容" v-model="keyword" class="input-with-select" size="small">
+            <el-button slot="append" icon="el-icon-search" @click="fnGetData(1)"></el-button>
+          </el-input>
+        </el-col>
+        <el-col :span="8" :offset="8"><AddUser @fnSetKey="fnGetKey" class="pull-right"></AddUser></el-col>
+      </el-row>
+    </div>
     <UserTable :users="aUserList"></UserTable>
     <el-pagination
       background
@@ -19,7 +19,7 @@
       :current-page="page"
       style="text-align:center;margin-top:10px"
       @current-change="fnGetPage"
-      >
+    >
     </el-pagination>
   </div>
 </template>
@@ -44,7 +44,7 @@ export default {
   components:{
     BreadCrumb,
     AddUser,
-    UserTable    
+    UserTable
   },
   mounted(){
     this.fnGetData(1);
@@ -53,29 +53,30 @@ export default {
     fnGetData:function(num){
       let token = localStorage.token;
       this.axios.get(cons.apis + '/users/', {
-          headers: {
-            'Authorization': 'JWT ' + token
-          },
-          responseType: 'json',
-          params:{
-            page:num,
-            pagesize:this.pagesize,
-            keyword:this.keyword
-          }
+        headers: {
+          // 'Content-Type': 'application/json',
+          'Authorization': 'JWT ' + token
+        },
+        responseType: 'json',
+        params: {
+          page: num,
+          pagesize: this.pagesize,
+          keyword: this.keyword
+        }
       })
-      .then(dat=>{
+        .then(dat => {
           this.aUserList = dat.data.lists;
           this.page = dat.data.page;
           this.pages = dat.data.pages;
-      }).catch(err=>{
-         console.log(err);
+        }).catch(err => {
+        console.log(err);
       });
     },
-    fnGetKey:function(dat){
-       this.keyword = dat;
-       this.fnGetData(1);
+    fnGetKey: function (dat) {
+      this.keyword = dat;
+      this.fnGetData(1);
     },
-    fnGetPage:function(dat){
+    fnGetPage: function (dat) {
       this.page = dat;
       this.fnGetData(this.page);
     }
@@ -84,9 +85,9 @@ export default {
 </script>
 
 <style scoped>
-.top_bar{
-    width:95.2%;
-    overflow:hidden;
-    margin:10px auto 10px;
-  }
+.top_bar {
+  width: 95.2%;
+  overflow: hidden;
+  margin: 10px auto 10px;
+}
 </style>

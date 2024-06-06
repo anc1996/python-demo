@@ -14,6 +14,7 @@ result_serializer= 'json'
 imports   = [     # 指定导入的任务模块,可以指定多个，方法二
     'celery_tasks.send_sms_code.tasks',
     'celery_tasks.email.tasks',
+    'celery_tasks.static_details.tasks',
 ]
 
 

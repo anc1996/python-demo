@@ -76,10 +76,10 @@ def get_super_user_by_account(account):
     try:
         if re.match(r'^1[3-9]\d{9}$', account):
             # username为手机号
-            user = User.objects.get(mobile=account,is_superuser=True)
+            user = User.objects.get(mobile=account,is_staff=True)
         else:
             # username为用户名
-            user = User.objects.get(username=account,is_superuser=True)
+            user = User.objects.get(username=account,is_staff=True)
     except User.DoesNotExist:
         return None
     else:
@@ -102,17 +102,13 @@ class UsernameMobileAuthBackend(ModelBackend):
         # 校验username参数是否是用户名还是手机号
         # 如果request不为空，则前台登录
         if request:
-            # 使用账号查询用户
+            # 使用普通账号查询用户
             user=get_user_by_account(username)
-            # 如果可以查询到用户，以便于需要校验密码是否正确
-            if user and user.check_password(password):
-                return user
-            else:
-                return None
         else:
             # 如果request为空，则后台登录
             user = get_super_user_by_account(username)
-            if user and user.check_password(password):
-                return user
-            else:
-                return None
+        # 如果可以查询到用户，以便于需要校验密码是否正确
+        if user and user.check_password(password):
+            return user
+        else:
+            return None

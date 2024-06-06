@@ -50,7 +50,8 @@ class FastDFSStorage(Storage):
 
         # 上传成功: 返回 file_id:
         file_id = result.get('Remote file_id')
-
+        if '\\' in file_id:
+            file_id = file_id.replace('\\', '//')
         # 这个位置返回以后, django 自动会给我们保存到表字段里.
         return file_id
 

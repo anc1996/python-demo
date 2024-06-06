@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import datetime
 # Django 项目的配置文件。
 # 开发环境
 from pathlib import Path
@@ -38,7 +39,28 @@ DEBUG = True
 # 默认情况下，ALLOWED_HOSTS 是一个空列表，表示不允许外网任何主机访问后端。
 ALLOWED_HOSTS = ['*']
 
+'''
+在 Django 设置中配置中间件的行为。您必须至少设置以下三个设置之一：
+    CORS_ALLOWED_ORIGINS
+    CORS_ALLOWED_ORIGIN_REGEXES
+    CORS_ALLOW_ALL_ORIGINS
+'''
 
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:80',
+    'http://192.168.20.2:80',
+    "http://127.0.0.1:8050",
+    "http://192.168.20.2:8050",
+    "http://192.168.20.2:8111",
+    "http://127.0.0.1:8111",
+    "http://192.168.20.2:8051",
+    "http://127.0.0.1:8051",
+]
+# 允许携带cookie
+CORS_ALLOW_CREDENTIALS = True
+
+# 或者，允许所有来源的跨域请求。
+# CORS_ORIGIN_ALLOW_ALL = True
 
 # 查看导包路径
 print('查看导包路径sys:',sys.path) # 包含'/root/anaconda3/envs/shop/lib/python3.9/site-packages'
@@ -65,6 +87,12 @@ INSTALLED_APPS = [
     #一个用于处理静态文件的的应用程序。
     "django.contrib.staticfiles",
 
+    # 导报模块
+    "corsheaders",  # 跨域请求
+    'haystack',  # 全文检索框架
+    'rest_framework', # drf框架
+    'django_filters',  # 过滤器
+
     # 注册apps下子应用的user，用户模块
     'users',  # 用户模块
     'contents', # 首页广告模块
@@ -72,11 +100,11 @@ INSTALLED_APPS = [
     'oauth',# oauth模块注册（第三方登录）：QQ登录、
     'areas', # 省市区三级联动模块
     'goods', # 商品模块
-    'haystack',# 全文检索框架
     'carts',# 购物车
     'orders',# 订单模块
     'payment',# 支付模块
     'django_crontab', # 定时任务
+    'shop_admin',# 管理员模块
 ]
 
 
@@ -97,6 +125,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     # 用于处理请求和响应的会话。
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # 要做CommonMiddleware之前，处理跨域资源共享（CORS）的Web应用程序中间件。
+    "corsheaders.middleware.CorsMiddleware",
     # 用于处理一些通用的请求处理，例如处理请求头、请求方法等。
     "django.middleware.common.CommonMiddleware",
     # 这是因为Django框架在处理POST请求时，会检测CSRF令牌。如果没有检测到CSRF令牌，它会返回一个403 Forbidden错误。
@@ -482,3 +512,82 @@ CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
 
 # 配置收集静态文件存放的目录
 STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'nginx_static')
+
+
+
+# 这里是全局配置，如果需要局部配置，可以在视图中配置
+REST_FRAMEWORK = {
+    # 认证
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # JWT认证
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        # 基本认证，此身份验证方案使用 HTTP 基本身份验证，根据用户的用户名和密码进行签名。基本身份验证通常仅适用于测试。
+        'rest_framework.authentication.BasicAuthentication',
+        # 会话认证，此认证方案使用Django的默认session后端进行身份验证。Session身份验证适用于与你的网站在相同的Session环境中运行的AJAX客户端。
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+
+    # 权限，可以使用该 DEFAULT_PERMISSION_CLASSES 设置全局设置默认权限策略
+    'DEFAULT_PERMISSION_CLASSES': [
+        #  第1种权限：API 仅供注册用户访问，则此权限适用。
+        'rest_framework.permissions.IsAuthenticated',
+        # 第2种权限：如果未指定，则此设置默认为允许不受限制的访问：
+        # 'rest_framework.permissions.AllowAny',
+        # 第3种：IsAdminUser 权限类将仅供一部分受信任的管理员访问和 user.is_staff True 在这种情况下将允许权限。
+        # 'rest_framework.permissions.IsAdminUser',
+        # 第4种：IsAuthenticatedOrReadOnly 权限类将允许已经通过身份验证的用户进行任何请求，而未经身份验证的用户只能进行 GET、HEAD 或 OPTIONS 请求。
+        # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    #
+    # # 全局限流,用于控制客户端可以向 API 发出的请求速率。
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     # 只会 AnonRateThrottle 限制未经身份验证的用户。传入请求的 IP 地址用于生成要限制的唯一密钥。
+    #     'rest_framework.throttling.AnonRateThrottle',
+    #     # 只会 UserRateThrottle 限制经过身份验证的用户。传入请求的用户 ID 用于生成要限制的唯一密钥。
+    #     # 注意：未经身份验证的请求将回退到使用传入请求的 IP 地址来生成要限制的唯一密钥。
+    #     'rest_framework.throttling.UserRateThrottle',
+    #     # 限制用户对于每个视图的访问频次，使用ip或user id。例如：对multifunction.otherfeatures.bookview局部限流。
+    #     'rest_framework.throttling.ScopedRateThrottle',
+    # ],
+    # # 限流速率
+    # 'DEFAULT_THROTTLE_RATES': {
+    #     # 未经身份验证的用户每天可以进行 100 次请求。
+    #     'anon': '100/day',
+    #     # 经过身份验证的用户每天可以进行 1000 次请求。
+    #     'user': '1000/day',
+    #     # 局部视图限流,例如：对multifunction.otherfeatures.bookview局部限流。
+    #     'bookview': '5/day',
+    #     'bookorder':'8/day',
+    # },
+    #
+    # # 全局过滤
+    # 'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    #
+    # # 全局分页器，用的不多
+    # # 第1种：此分页样式接受请求查询参数中的单个数字页码。列如：/***/?page=4
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # # 第2种：此分页样式反映了查找多个数据库记录时使用的语法。客户端包括“limit”和“offset”查询参数。该限制表示要返回的最大项目数，与其他样式中的限制相同 page_size 。偏移量表示要跳过的项目数。
+    # # 例如：?limit=100&offset=400
+    # # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    # 'PAGE_SIZE': 100,
+    #
+    # # 异常，默认为 REST 框架提供的标准异常处理程序：
+    # # 'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    # # 自定义异常
+    # 'EXCEPTION_HANDLER': 'book_drf.CustomExceptions.utils.custom_exception_handler',
+    #
+    # # 指定用于支持coreapi的Schema
+    # 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+}
+
+
+# JWT认证
+JWT_AUTH = {
+    # JWT指定有效期
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1), # JWT_EXPIRATION_DELTA 指明token的有效期
+    # 负责控制登录或刷新后返回的响应数据。当前路径为
+    'JWT_RESPONSE_PAYLOAD_HANDLER':'shop_admin.utils.jwt_response_payload_handler',
+}
+
+# 上传的配置文件
+FASTDFS_PATH=os.path.join(BASE_DIR,'utils/fastdfs/client.conf')

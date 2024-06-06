@@ -14,7 +14,11 @@ celery_app=Celery('producer')
 celery_app.config_from_object('celery_tasks.config')
 
 # # 注册任务列表，方法一
-# celery_app.autodiscover_tasks(['celery_tasks.send_sms_code',])
+# celery_app.autodiscover_tasks([     # 指定导入的任务模块,可以指定多个，方法二
+#     'celery_tasks.send_sms_code',
+#     'celery_tasks.email',
+#     'celery_tasks.static_details',
+# ])
 #
 ## 消费者为celery，启动进程
 

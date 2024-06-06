@@ -12,8 +12,8 @@ module.exports = {
     proxyTable: {
     },
     // Various Dev Server settings
-    host: '192.168.20.2', // can be overwritten by process.env.HOST
-    port: 8080, // 可以被 process.env.PORT 覆盖，如果端口正在使用中，将确定一个空闲的
+    host: '127.0.0.1', // can be overwritten by process.env.HOST
+    port: 8051, // 可以被 process.env.PORT 覆盖，如果端口正在使用中，将确定一个空闲的
     autoOpenBrowser: false, // 是否自动打开浏览器
     errorOverlay: true,  // 是否显示错误
     notifyOnErrors: true, // 是否显示错误

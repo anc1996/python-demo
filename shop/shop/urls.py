@@ -40,4 +40,6 @@ urlpatterns = [
     re_path(r'^', include(('orders.urls', 'orders'), namespace='orders')),
     # payment，支付模块
     re_path(r'^', include(('payment.urls', 'payment'), namespace='payment')),
+    # shop_admin
+    re_path(r'^shop_admin/', include(('shop_admin.urls','shop_admin'),namespace='shop_admin')),
 ]
