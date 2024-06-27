@@ -9,14 +9,14 @@ class ChannelGroupSerializer(serializers.ModelSerializer):
     """频道组序列化器类"""
     class Meta:
         model = GoodsChannelGroup
-        fields = ('id', 'name')
+        fields = ['id', 'name']
 
 
 class CategorySimpleSerializer(serializers.ModelSerializer):
     """商品分类序列化器类"""
     class Meta:
         model = GoodsCategory
-        fields = ('id', 'name')
+        fields = ['id', 'name']
 
 class ChannelSerializer(serializers.ModelSerializer):
     """频道序列化器类"""
