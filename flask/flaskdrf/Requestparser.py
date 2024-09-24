@@ -19,20 +19,21 @@ def mobile(mobile_str):
 
 class RequestParserResource(Resource):
 
-
-
     def get(self):
         # /users/request?name=hello&age=18&phone=13355554444&phone=13355554445&email=173@qq.com
-        # 1、创建一个RequestParser对象
+        # 1、创建一个RequestParser对象,用来帮助我们检验和转换请求数据。
         parser = RequestParser()
         # 2、添加需要验证的参数。这个方法需要三个参数：参数的名称，传递参数的方式，以及验证参数的函数或类型
-        # args: 从请求中提取参数
-        # type: 参数的类型
-        # help: 参数检验错误时返回的错误描述信息
-        # required: 是否必须提供参数，默认为True,若异常，则返回400。
-        # action: 参数的动作，
-                #   append表示将参数的值添加到一个列表中
-                #   store表示保留第一个,默认值
+        '''
+        add_argument(args, type=None, required=False, help=None, default=None, location=None, store_missing=True, trim=False, nullable=True, ignore=False,)
+            args: 从请求中提取参数
+            type: 参数的类型
+            help: 参数检验错误时返回的错误描述信息
+            required: 是否必须提供参数，默认为True,若异常，则返回400。
+            action: 参数的动作。
+                  append：表示将参数的值添加到一个列表中
+                  store：表示保留第一个,默认值
+        '''
         parser.add_argument('name', type=str, help='name error', required=True)
         parser.add_argument('age', type=inputs.int_range(0,200), help='age error', required=False)
         parser.add_argument('email', type=inputs.regex(r'^[a-zA-Z0-9_]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'),
@@ -42,8 +43,8 @@ class RequestParserResource(Resource):
         request_dict=parser.parse_args()
         # 4、获取验证后的数据
         name=request_dict.get('name')
-        age=request_dict.get('age',None)
-        phone=request_dict['phone'] # list
+        age=request_dict.get('age', None)
+        phone=request_dict['phone']     # list
         email=request_dict['email']
         context={'name':name,'age':age,'phone':phone,'email':email}
         return context
@@ -53,12 +54,12 @@ class RequestParserResource(Resource):
         parser = RequestParser()
 
         # 2、添加需要验证的参数。这个方法需要三个参数：参数的名称，传递参数的方式，以及验证参数的函数或类型
-        # location: 从哪里获取参数
-        # Look only in the POST body
+        # location: 从哪个位置获取参数
+        #仅在 POST 正文中查看
         # parser.add_argument('name', type=int, location='form', help='name not in form', required=False)
-        # # Look only in the querystring
+        # 仅在查询字符串中查找
         parser.add_argument('PageSize', type=int, location='args',help='PageSize not in args', required=False)
-        # From the request headers
+        # 从请求标头
         parser.add_argument('User-Agent', location='headers', help='User-Agent not in headers', required=False)
         # # From http cookies
         parser.add_argument('session_id', location='cookies', help='session_id not in cookies', required=False)

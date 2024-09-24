@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>过滤器的使用</title>
+        <style>
+        .a {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<!--
+    % ... 用于语句
+    {... 用于打印到模板输出的
+    # .表示未包含在模板输出
+-->
+<div>用户信息展示</div>
+当前用户共:{{ girls | length }}人
+{# {{ girls }} #}
+<ul>
+    {% for girl in girls %}
+        {% if girl | length >= 3 %}
+            <li class="a">{{ girl }}</li>
+        {% else %}
+            <li>{{ girl }}</li>
+        {% endif %}
+    {% endfor %}
+</ul>
+----------
+<!-- 创建一个表格,设置边框为1,单元格内边距为0,单元格间距为0,宽度为50% -->
+<table border="1" cellpadding="0" cellspacing="0" width="50%">
+    <!-- 使用Jinja2模板语法,遍历users列表 -->
+    {% for user in users %}
+        <!-- 创建表格行 -->
+        <!-- 如果是第3行(loop.index == 3),则设置背景色为深粉色 -->
+        <tr {% if loop.index == 3 %} style="background-color: deeppink" {% endif %} >
+        {#loop.index: 当前迭代的索引，从1开始。#}
+        {#loop.index0: 当前迭代的索引，从0开始。#}
+        {#loop.revindex: 到循环结束的剩余项数，从1开始。#}
+        {#loop.revindex0: 到循环结束的剩余项数，从0开始。#}
+        {#loop.first: 如果是第一次迭代，则为True。#}
+        {#loop.last: 如果是最后一次迭代，则为True。#}
+        {#loop.length: 序列中项目的总数。#}
+        {#loop.cycle: 在一组序列值之间循环。例如：{{ loop.cycle('odd', 'even') }}。#}
+        {#loop.depth: 当前循环的嵌套深度。#}
+        {#loop.depth0: 当前循环的嵌套深度，从0开始。#}
+        {#loop.parent: 当前循环的父级循环。#}
+        {#loop.previtem: 上一次迭代的项（在第一次迭代中是undefined）。#}
+        {#loop.nextitem: 下一次迭代的项（在最后一次迭代中是undefined）。#}
+        {#loop.changed(*val): 检查自上次迭代以来给定的值是否发生了变化。#}
+            <!-- 显示当前循环的索引 -->
+            <td>{{ loop.index }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.password }}</td>
+            <td>{{ user.addr }}</td>
+            <td>{{ user.phone }}</td>
+        </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

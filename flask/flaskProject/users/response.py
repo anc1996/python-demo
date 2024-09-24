@@ -69,7 +69,7 @@ def delete_cookie():
 
 @users.route('/set_session')
 def set_session():
-    # 设置session,同时需要设置SECRET_KEY，否则会报错
+    # 设置session,需要先设置SECRET_KEY，否则会报错
     session['username'] = 'python'
     return 'set session is OK '
 

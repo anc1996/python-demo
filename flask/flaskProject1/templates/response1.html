@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    用make_response函数的网页
+<div>
+{# 如果是表单提交则必须在表单的元素上添加name属性 #}
+    <form action="/make_response2" method="get">
+        <p><input type="text" name='username' placeholder="请输入用户名"></p>
+        <p><input type="text" name="password" placeholder="密码"></p>
+        <p><input type="text" name="repassword" placeholder="密码"></p>
+        <p><input type="submit" value="提交"></p>
+    </form>
+
+    {# 如果是表单提交则必须在表单的元素上添加name属性 #}
+    <form action="/make_response2" method="post">
+        <p><input type="text" name='username' placeholder="请输入用户名"></p>
+        <p><input type="text" name="password" placeholder="密码"></p>
+        <p><input type="text" name="repassword" placeholder="密码"></p>
+        <p><input type="submit" value="提交"></p>
+    </form>
+</div>
+</body>
+</html>

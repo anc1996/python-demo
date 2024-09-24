@@ -11,7 +11,7 @@ class User(object):
         self.name = name
         self.age = age
 
-# 用来声明序列化处理的字段
+# 用来声明序列化处理的字段，用来帮助我们将数据序列化为特定格式的字典数据，以便作为视图的返回值。
 resoure_fields = {
         'user_id': fields.Integer,
         'name': fields.String,
@@ -25,6 +25,9 @@ resoure_fields = {
 '''
 
 class ResponseResource1(Resource):
+
+    # marshal_with(fields=resoure_fields,envelope='data')是一个装饰器，用来将返回的数据序列化成json格式
+        # envelope='data'表示将返回的数据对象包装在data中
     @marshal_with(resoure_fields)
     def get(self):
         # 1、创建一个User对象

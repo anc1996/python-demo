@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>过滤器的使用</title>
+</head>
+<body>
+{# 过滤器的使用 ,|: 管道符号，用于过滤器的使用 #}
+<ul>
+  <li>
+    {# 标记内容为"安全"，允许渲染 HTML 内容而不进行转义。 #}
+    运行渲染：{{ msg | safe }}
+  </li>
+  <li>{{ n1 }}</li>
+  <li>
+    {#  capitalize: 首字母大写 #}
+    首字母大写：{{ n1 | capitalize }}
+  </li>
+  <li>
+    {#  upper: 全部大写 #}
+    全部大写：{{ n1 | upper }}
+  </li>
+  <li>
+    {#  lower: 全部小写 #}
+    全部小写：{{ n1 | lower }}
+  </li>
+  <li>
+    {#  reverse: 字符串反转 #}
+    字符串反转：{{ n1 | reverse }}
+  </li>
+  {#  format: 格式化字符串 #}
+  <li>{{ '%s is %d years old' | format('lily',18) }}</li>
+    {#  truncate: 截取字符串 #}
+  <li>{{ 'hello world' | truncate(5) }}</li>
+</ul>
+<hr>
+{# 列表过滤器的使用 #}
+<ul>
+    <li>
+        {#  first: 返回列表的第一个元素 #}
+        {{ girls | first }}
+    </li>
+    <li>
+        {#  last: 返回列表的最后一个 #}
+        {{ girls | last }}
+    </li>
+    <li>
+        {#  length: 返回列表的长度 #}
+        当前用户共:{{ girls | length }}人
+    </li>
+</ul>
+<hr>
+{#{{ girls | sum }} 整型的计算 #}
+[1,3,5,7,9]求和：{{ [1,3,5,7,9] | sum }}<br>
+[1,8,5,7,3]排序：{{ [1,8,5,7,3] | sort }}<br>
+
+<p>
+users[0]:{{ users.0 }}
+<table border="1" style="border-collapse: collapse;">
+    <tr>
+        {% for k in users.0.keys() %}
+            <th>{{ k }}</th>
+        {% endfor %}
+    </tr>
+    <tr>
+        {% for v in users.0.values() %}
+            <td>{{ v }}</td>
+        {% endfor %}
+    </tr>
+</table>
+<hr>
+{#  items: 返回字典的键值对 #}
+{% for k,v in users.0.items() %}
+    <p>{{ k }}---{{ v }}</p>
+{% endfor %}
+</body>
+</html>

@@ -206,7 +206,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'HOST': '127.0.0.1',  # 主机
         'PORT': '4306',  # 端口号
-        'USER': 'root',  # 用户名
+        'USER': 'shop',  # 用户名
         'PASSWORD': '123456',  # 密码
         'NAME': 'shop',  # 指定数据库
     }

@@ -1,0 +1,10 @@
+{# 定义宏:
+    1。把它看作是jinja2的一个函数，这个函数可以返回一个HTML字符串
+    2。目的：代码可以复用，避免代码冗余 #}
+{% macro form(action,value='注册',method='post') %}
+    <form action="{{ action }}" method={{ method }}>
+        <input type="text" name="username" placeholder="请输入用户名"><br>
+        <input type="password" name="password" placeholder="请输入密码"><br>
+        <input type="submit" value="{{ value }}"><br>
+    </form>
+{% endmacro %}

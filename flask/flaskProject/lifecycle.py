@@ -16,6 +16,7 @@ def before_request():
     """
     # TODO 此处利用鉴权机制（如cookie、session、jwt等）鉴别用户身份信息
     # if 已登录用户，用户有身份信息
+    # g 作为 flask 程序全局的一个临时变量，充当中间媒介的作用，我们可以通过它在一次请求调用的多个函数间传递一些数据。每次请求都会重设这个变量。
     g.user_id = 123
     g.user_name = 'itcast'
     # else 未登录用户，用户无身份信息

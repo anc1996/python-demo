@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>宏的使用2</title>
+</head>
+<body>
+{#  引入宏 #}
+{% import 'macro/macro.html' as f %}
+
+{# 调用宏 #}
+{{ f.form('/register_macro',value='注册') }}
+
+</body>
+</html>

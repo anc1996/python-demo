@@ -1,7 +1,7 @@
 ﻿#!/user/bin/env python3
 # -*- coding: utf-8 -*-
 import json
-
+# 首先我们导入了 Flask 类。该类的实例将会成为我们的 WSGI 应用。
 from flask import Flask, Blueprint,g,abort
 from config import DefaultConfig
 from werkzeug.routing import BaseConverter
@@ -11,6 +11,8 @@ from users import users
 from flask_context import context_bp
 from flask_context1 import context_bp1
 
+
+# 接着我们创建一个该类的实例。第一个参数是应用模块或者包的名称。 __name__ 是一个适用于大多数情况的快捷方式。有了这个参数， Flask 才能知道在哪里可以找到模板和静态文件等东西。
 # 创建 Flask 实例
 # Flask程序所在的包(模块)，传 __name__ 就可以其可以决定 Flask 在访问静态文件时查找的路径:寻找工程目录下的 static 和 templates 目录
 #     import_name: 应用的导入名称，通常为app或application。
@@ -26,6 +28,8 @@ from flask_context1 import context_bp1
 
 # 环境变量要写：export FLASK_APP=app:app
 app = Flask(__name__, static_url_path='/static', static_folder='static', template_folder='templates')
+
+
 # 环境变量要写：export FLASK_APP=app:app1
 app1 = Flask(__name__, static_url_path='/static', static_folder='static', template_folder='templates')
 
@@ -47,7 +51,8 @@ import lifecycle
 '''第二种方式：'''
 # 从 setting.py 文件中加载配置信息
 # silent 参数设置为 True，如果没有找到配置文件，则不会报错
-app.config.from_pyfile('setting.py',silent=True)
+# app.config.from_pyfile('setting.py', silent=True)
+
 
 
 '''第三种方式：'''
@@ -65,7 +70,8 @@ app.config.from_pyfile('setting.py',silent=True)
 app.config.from_envvar('PROJECT_SETTING', silent=True)
 
 
-
+# 检查配置信息是否加载成功
+print(f"app.config:{app.config}")
 
 # 使用 route() 装饰器告诉 Flask 触发函数的 URL
 # 该函数将返回一个字符串，表示用户访问网站时看到的内容
@@ -82,16 +88,16 @@ print(app.url_map)
 def route_map():
     # 遍历所有路由信息
     rules_iterator = app.url_map.iter_rules()
-    return json.dumps([{'name': rule.endpoint, 'path': rule.rule} for rule in rules_iterator ])
+    return json.dumps([{'name': rule.endpoint, 'path': rule.rule} for rule in rules_iterator])
 
 
 @app.route("/itcast1", methods=["POST"])
 def view_func_1():
-    return "hello world 1"
+    return "hello world 1 "
 
-@app.route("/itcast2", methods=["GET", "POST"])
+@app.route("/itcast2", methods=["GET", "POST" ])
 def view_func_2():
-    return "hello world 2"
+    return "hello world 2 "
 
 # 创建蓝图对象
 user_bp = Blueprint('user', __name__)
@@ -125,6 +131,7 @@ def show_mobile(mobile_num):
 
 
 def db_query():
+    # g 作为 flask 程序全局的一个临时变量，充当中间媒介的作用，我们可以通过它在一次请求调用的多个函数间传递一些数据。每次请求都会重设这个变量。
     user_id = g.user_id
     user_name = g.user_name
     print('user_id={} user_name={}'.format(user_id, user_name))
@@ -132,7 +139,6 @@ def db_query():
 
 @app.route('/g')
 def get_user_profile():
-    # g是一个全局对象，用来保存用户的信息，可以在一个请求中的多个函数中使用
     return db_query()
 
 

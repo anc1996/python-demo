@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}
+	首页
+{% endblock %}
+{% block head_css %}
+    <style>
+        #middle{
+            background-color: deeppink;
+            color: white;
+            font-weight: bold;
+        }
+        .div1{
+            width: 33%;
+            height: 500px;
+            float: left;
+            border: 1px solid red;
+        }
+    </style>
+    {#  static: /static/*
+     /static/<filename> #}
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
+{% endblock %}
+
+{% block middle %}
+    <button id="btn">我是中间部分</button>
+    <div class="div1" id="d1"> </div>
+    <div class="div1"> </div>
+    {#  url_for（）函数可以生成静态文件的url #}
+    <img src="{{ url_for('static',filename='images/a1.png') }}" alt="">
+{% endblock %}
+
+
+{% block foot_bottom %}
+    <script>
+            btn = document.getElementById('btn')
+            btn.onclick=function(){
+                alert('别点我啊！')
+            }
+    </script>
+{% endblock %}

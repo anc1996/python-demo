@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}
+	用户页面
+{% endblock %}
+
+{% block header %}
+	<script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+{% endblock %}
+{% block middle %}
+    <h1>所有用户信息</h1>
+    <span>当前用户人数是：{{ users |length }} 人</span>
+    {% if users %}
+        <table border="1" cellspacing="0" width="60%">
+        <tr>
+            <th>序号</th>
+            <th>用户名</th>
+            <th>手机号</th>
+            <th>邮箱</th>
+            <th>注册时间</th>
+            <th>操作</th>
+        </tr>
+        {% for user in users %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.phone }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.register_time }}</td>
+                <td>
+                    <a href="{{ url_for('user.update', id=user.id) }}">修改</a>
+                    <a href="{{ url_for('user.delete', id=user.id) }}">删除</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+        <h2>暂无用户信息</h2>
+    {% endif %}
+{% endblock %}
+

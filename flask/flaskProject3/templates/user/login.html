@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}
+	登录页面
+{% endblock %}
+
+{% block middle %}
+    <p style="color: red">{{ msg }}</p>
+    <form action="/user/login" method="post">
+        <p><input type="text" name="username" placeholder="用户名"></p>
+        <p><input type="password" name="password" placeholder="密码"></p>
+        <p><input type="submit" value="登录"></p>
+    </form>
+{% endblock %}
