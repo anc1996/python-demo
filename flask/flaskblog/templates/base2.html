@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} 首页 {% endblock %}</title>
+    <style>
+        :root {
+            --primary-color: #333;
+            --secondary-color: #555;
+            --text-color: white;
+            --background-color: #f4f4f4;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        #head {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 60px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 0 20px;
+        }
+
+        #head ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+
+        #head ul li {
+            margin: 0 10px;
+        }
+
+        #head ul li a {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 10px 20px;
+            display: block;
+            transition: background-color 0.3s ease;
+        }
+
+        #head ul li a:hover {
+            background-color: var(--secondary-color);
+        }
+
+        #middle {
+            min-height: 900px;
+            background-color: var(--background-color);
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #foot {
+            height: 50px;
+            line-height: 50px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            text-align: center;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+    <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+    {% block header %}
+
+    {% endblock %}
+</head>
+<body>
+<div id="head">
+    <ul>
+        <li><a href="#">首页</a></li>
+        <li><a href="#">博客</a></li>
+        <li><a href="#">写博客</a></li>
+        <li><a href="#">个人中心</a></li>
+        <li><a href="#">登录</a></li>
+        <li><a href="#">注册</a></li>
+        <li><a href="#">搜索</a></li>
+    </ul>
+</div>
+<div id="middle">
+    {% block middle %}
+    {% endblock %}
+</div>
+<div id="foot">
+    © 2023 Your Website Name. All rights reserved.
+</div>
+{% block footer %}{% endblock %}
+</body>
+</html>

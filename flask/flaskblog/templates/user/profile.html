@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}
+	用户信息修改
+{% endblock %}
+
+{% block content %}
+<main class="row content__page">
+    <section class="column large-full entry format-standard">
+      <h2>用户信息修改</h2>
+        {#由于要文件上传，所以要存文件#}
+        <form action="{{ url_for('user.update_user_info') }}" method="post" enctype="multipart/form-data">
+            <div>
+                <label for="sampleInput">用户名：</label>
+                <input class="full-width" id="inputUsername" type="text" placeholder="{{ user.username }}" name="username">
+                <span></span>
+             </div>
+            <div>
+                <label for="sampleInput">密码：</label>
+                <p><input class="full-width" type="password" name="password" placeholder="密码"></p>
+            </div>
+            <div>
+                <label for="sampleInput">手机号码：</label>
+                <input class="full-width" id="inputPhone" type="number" name="phone" placeholder="{{ user.phone }}">
+                <span></span>
+            </div>
+            <div>
+                <label for="sampleInput">邮箱：</label>
+                <input class="full-width" id="inputEmail" type="email" name="email" placeholder="{{ user.email }}">
+                <span></span>
+            </div>
+            <div>
+                <label for="sampleInput">真实姓名：</label>
+                 <input class="full-width" id="inputRealname" type="text" name="realname" placeholder="{{ user_info.realname if user_info else '' }}">
+                <span></span>
+            </div>
+            <div>
+                <label for="sampleInput">年龄：</label>
+                <input class="full-width" id="inputAge" type="number" name="age" placeholder="{{ user_info.age if user_info else '' }}">
+                <span></span>
+            </div>
+            <div class="form-group">
+                <label for="user-sex">性别：</label>
+                <select id="inputSex" name="sex" id="inputSex">
+                        <option value="1" {% if user_info and user_info.sex == 1 %}selected{% endif %}>男</option>
+                        <option value="2" {% if user_info and user_info.sex == 2 %}selected{% endif %}>女</option>
+                        <option value="3" {% if user_info and user_info.sex == 3 %}selected{% endif %}>保密</option>
+                </select>
+            </div>
+            <div>
+                <label for="sampleInput">头像：</label>
+                <img width="120" height="120" class="pull-left" alt="sample-image"
+                     src="
+                        {% if user.icon %}
+                            {{ url_for('static', filename='upload/icon/'+user.icon) }}
+                        {% else %}
+                            {{ url_for('static', filename='images/sample-image.jpg') }}
+                        {% endif %}
+                             ">
+                {# 上传头像 #}
+                <input type="file" id="exampleInputFile" name="icon">
+                <span></span>
+            </div>
+                <input class="btn--primary full-width" type="submit" value="用户信息修改">
+        </form>
+        {# 错误提示 #}
+        {% if profile_error_msg %}
+            <div class="alert-box alert-box--error hideit">
+                {{ profile_error_msg }}。
+                <i class="fa fa-times alert-box__close" aria-hidden="true"></i>
+            </div><!-- end error -->
+        {% endif %}
+    </section>
+</main>
+{% endblock %}
+
+
+{% block footer %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/user.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+
+            // 检查用户名是否可用
+            $('#inputUsername').blur(function () {
+                let username = $(this).val();
+                let username_error = $(this).next('span');
+                let isUsernameValid=checkEmptyInput('#inputUsername','span','用户名不能为空');
+                if (isUsernameValid) {
+                    $.get('{{ url_for('user.check_username') }}', {username: username}, function (data) {
+                        if (!data.exists) {
+                            username_error.css({'color': 'red', 'font-size': '10px'});
+                            username_error.text(data.error_msg);
+                        } else {
+                            username_error.css({'color': 'green', 'font-size': '10px'});
+                            username_error.text('用户名可用');
+                        }
+                    });
+                }
+            });
+
+            // 检查邮箱是否可用
+            $('#inputEmail').blur(function() {
+                let email = $(this).val();
+                let email_error = $(this).next('span');
+                let isEmailValid=checkEmailFormat('#inputEmail','span');
+                if (isEmailValid){
+                    $.get('{{ url_for('user.check_email') }}', { email: email }, function(data) {
+                        if (!data.exists) {
+                                email_error.css({ 'color': 'red', 'font-size': '10px' });
+                                email_error.text(data.error_msg);
+                            } else {
+                                email_error.css({ 'color': 'green', 'font-size': '10px' });
+                                email_error.text('邮箱可用');
+                            }
+                    });
+                }
+            });
+
+
+            // 检查手机号是否可用
+            $('#inputPhone').blur(function() {
+                let phone = $(this).val();
+                let phone_error = $(this).next('span');
+                let isPhoneValid=checkPhoneFormat('#inputPhone','span');
+                if (isPhoneValid){
+                    $.get('{{ url_for('user.check_phone') }}', { phone: phone }, function(data) {
+                            if (!data.exists) {
+                                phone_error.css({ 'color': 'red', 'font-size': '10px' });
+                                phone_error.text(data.error_msg);
+                            } else {
+                                phone_error.css({ 'color': 'green', 'font-size': '10px' });
+                                phone_error.text('手机号码可用');
+                            }
+                    });
+                }
+            });
+
+            // 检查年龄格式
+            $('#inputAge').blur(function() {
+                let isAgeValid=checkAgeFormat('#inputAge','span');
+            });
+
+        });
+
+    </script>
+{% endblock %}

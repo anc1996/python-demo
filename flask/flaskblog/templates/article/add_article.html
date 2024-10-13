@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}
+    添加文章
+{% endblock %}
+
+{% block middle %}
+    <div id="error-msg" style="color: red; font-weight: bold;">
+        {% if error_msg %}
+            {{ error_msg }}
+        {% endif %}
+    </div>
+    <form action="{{ url_for('article.publish_article') }}" method="post">
+    {# placeholder: 用于在输入框中显示提示文本 #}
+        <p><input type="text" name="title" placeholder="请输入标题"></p>
+        <p>
+            <textarea name="content" id="" cols="50" rows="10" placeholder="请输入文章内容"></textarea>
+        </p>
+        <p>
+           用户：<select name="user_id" id="">
+                <option value="0">请选择用户</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+                </select>
+        </p>
+        <p><input type="submit" value="发布文章"></p>
+    </form>
+{% endblock %}

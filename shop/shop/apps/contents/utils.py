@@ -76,6 +76,8 @@ def get_content():
         contents[contentCategory.key]=content_list
 
     return contents
+
+
 def get_breadcrumb(category):
     """
      获取面包屑导航

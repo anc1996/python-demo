@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+    <!--- 基本页面需求
+    ================================================== -->
+    <meta charset="utf-8">
+    <title>Typerite</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- mobile specific metas:移动特定元素
+    ================================================== -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSS:样式表
+    ================================================== -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+    <!-- script:脚本
+    ================================================== -->
+    <script src="{{ url_for('static', filename='js/modernizr.js') }}"></script>
+
+    <!-- favicons:网站图标
+    ================================================== -->
+    <link rel="apple-touch-icon" sizes="180x180" type="image/png"
+          href="{{ url_for('static', filename='images/baseicon/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32"
+          href="{{ url_for('static', filename='images/baseicon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16"
+          href="{{ url_for('static', filename='images/baseicon/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+</head>
+
+<body>
+
+<!-- preloader
+================================================== -->
+<div id="preloader">
+    <div id="loader" class="dots-fade">
+        <div>preloader1</div>
+        <div>preloader2</div>
+        <div>preloader3</div>
+    </div>
+</div>
+
+<div id="top" class="s-wrap site-wrapper">
+
+    <!-- site header:站点头部
+    ================================================== -->
+    <header class="s-header">
+
+        <div class="header__top">
+            <div class="header__logo">
+                <a class="site-logo" href="#">
+                    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Homepage">
+                </a>
+            </div>
+        </div> <!-- end header__top -->
+
+        {#   头部导航     #}
+        <nav class="header__nav-wrap">
+
+            <ul class="header__nav">
+                <li class="current"><a href="#" title="">主页</a></li>
+                <li class="has-children">
+                    <a href="#" title="">分类</a>
+                    <ul class="sub-menu">
+                        <li><a href="#">blog</a></li>
+                        <li><a href="#">旅行</a></li>
+                        <li><a href="#">书单</a></li>
+                        <li><a href="#">音乐</a></li>
+                        <li><a href="#">视频</a></li>
+                        <li><a href="#">大课件</a></li>
+                    </ul>
+                </li>
+                <li class="has-children">
+                    <a href="#" title="">博客</a>
+                    <ul class="sub-menu">
+                        <li><a href="#">Video Post</a></li>
+                        <li><a href="#">Audio Post</a></li>
+                        <li><a href="#">Gallery Post</a></li>
+                        <li><a href="#">Standard Post</a></li>
+                    </ul>
+                </li>
+                <li><a href="#" title="">用户中心</a></li>
+                <li><a href="#" title="">注册</a></li>
+                <li><a href="#" title="">登录</a></li>
+            </ul> <!-- end header__nav -->
+
+            {# 下面导航图标 #}
+            <ul class="header__social">
+                <li class="ss-facebook">
+                    <a href="#">
+                        <span class="screen-reader-text">Facebook</span>
+                    </a>
+                </li>
+                <li class="ss-twitter">
+                    <a href="#">
+                        <span class="screen-reader-text">Twitter</span>
+                    </a>
+                </li>
+                <li class="ss-dribbble">
+                    <a href="#">
+                        <span class="screen-reader-text">GitHub</span>
+                    </a>
+                </li>
+                <li class="ss-pinterest">
+                    <a href="#0">
+                        <span class="screen-reader-text">telegram</span>
+                    </a>
+                </li>
+            </ul>
+
+        </nav> <!-- end header__nav-wrap -->
+
+        <!-- menu toggle：切换主要菜单 -->
+        <a href="#0" class="header__menu-toggle">
+            <span>菜单</span>
+        </a>
+
+    </header> <!-- end s-header -->
+
+
+    <!-- search：搜索框
+    ================================================== -->
+    <div class="s-search">
+
+        <div class="search-block">
+
+            <form role="search" method="get" class="search-form" action="#">
+                <label>
+                    <span class="hide-content">查询内容:</span>
+                    <input type="search" class="search-field" placeholder="关键字" value="" name="s"
+                           title="Search for:" autocomplete="off">
+                </label>
+                <input type="submit" class="search-submit" value="Search">
+            </form>
+
+            <a href="#0" title="Close Search" class="search-close">关闭</a>
+
+        </div>  <!-- end search-block -->
+
+        <!-- search modal trigger：搜索模式触发器 -->
+        <a href="#0" class="search-trigger">
+            <svg xmlns="#" width="24" height="24" viewBox="0 0 24 24"
+                 style="fill:rgba(0, 0, 0, 1);transform:;-ms-filter:">
+                <path d="M10,18c1.846,0,3.543-0.635,4.897-1.688l4.396,4.396l1.414-1.414l-4.396-4.396C17.365,13.543,18,11.846,18,10 c0-4.411-3.589-8-8-8s-8,3.589-8,8S5.589,18,10,18z M10,4c3.309,0,6,2.691,6,6s-2.691,6-6,6s-6-2.691-6-6S6.691,4,10,4z"></path>
+            </svg>
+            <span>Search</span>
+        </a>
+        <span class="search-line"></span>
+
+    </div> <!-- end s-search -->
+
+
+    <!-- site content：网站内容
+    ================================================== -->
+    <div class="s-content">
+
+        <div class="masonry-wrap">
+
+            <div class="masonry">
+
+                <div class="grid-sizer"></div>
+                <!-- 第一种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/jump-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/woodcraft-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/woodcraft-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+                    <!-- 第一种用法... -->
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第一种用法.</a>
+                            </h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">设计</a>
+                                        <a href="#">子算起</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 29, 2019</a>
+                                    </span>
+                            </div>
+
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem ipsum Sed eiusmod esse aliqua sed incididunt aliqua incididunt mollit id et sit
+                                proident dolor nulla sed commodo est ad minim elit reprehenderit nisi officia aute
+                                incididunt velit sint in aliqua...
+                            </p>
+                        </div>
+                    </div>
+                </article> <!-- end article -->
+
+                <!-- 第二种用法... -->
+                <article class="masonry__brick entry format-quote animate-this">
+                    <div class="entry__thumb">
+                        <blockquote>
+                            <p>第二种用法.Good design is making something intelligible and memorable. Great design is making something memorable and meaningful</p>
+                            <cite>Dieter Rams</cite>
+                        </blockquote>
+                    </div>
+                </article> <!-- end article -->
+
+                <!-- 第三种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/tulips-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/tulips-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/tulips-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第三种用法：
+                                Caffeine.</a></h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Health</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 28, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem ipsum Sed eiusmod esse aliqua ...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第四种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/tulips-600.jpg') }}"
+                                srcset="{{ url_for('static', filename='images/thumbs/masonry/tulips-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/tulips-1200.jpg') }} 2x"  alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第四种用法：.</a>
+                            </h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Lifestyle</a>
+                                        <a href="#">Health</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 28, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem ipsum Sed eiusmod aliqua...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第五种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/rucksack-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/rucksack-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/rucksack-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+
+                            <h2 class="entry__title"><a href="#">第五种用法： 视觉叙事的艺术.</a>
+                            </h2>
+
+                            <div class="entry__meta">
+                                        <span class="entry__meta-cat">
+                                            <a href="#">Lifestyle</a>
+                                            <a href="#">Work</a>
+                                        </span>
+                                <span class="entry__meta-date">
+                                            <a href="#">Apr 26, 2019</a>
+                                        </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                lüua...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第六种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/jump-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/jump-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/jump-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+
+                            <h2 class="entry__title"><a href="#">第六种：创建有意义的家庭
+                                Moments.</a></h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Family</a>
+                                        <a href="#">Relationship</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 26, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第七种用法... -->
+                <article class="masonry__brick entry format-audio animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="single-audio.html" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/guitarist-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/guitarist-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/guitarist-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="single-audio.html">第七种用法:您的音乐偏好说明了什么
+                                You and Your Personality.</a></h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Lifestyle</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 24, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorema...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第八种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/beetle-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/beetle-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/beetle-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第八种用法:回到过去的美好时光.</a>
+                            </h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Lifestyle</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 24, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第九种用法... -->
+                <article class="masonry__brick entry format-video animate-this">
+
+                    <div class="entry__thumb video-image">
+                        <a href="#" data-lity class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/cookies-600.jpg') }}"
+                                    srcset="{{ url_for('static', filename='images/thumbs/masonry/cookies-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/cookies-1200.jpg') }} 2x"
+                                    alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第九种用法：无糖燕麦饼干.</a></h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Lifestyle</a>
+                                        <a href="#">Health</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 24, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第十种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static',filename="images/thumbs/masonry/lamp-600.jpg") }}"
+                                    srcset="{{ url_for('static',filename="images/thumbs/masonry/lamp-600.jpg") }} 1x, {{ url_for('static',filename="images/thumbs/masonry/lamp-1200.jpg") }} 2x"
+                                    alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">Another Standard Format Post.</a>
+                            </h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Design</a>
+                                        <a href="#">Photography</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 24, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem ipsum Sed eiusmod esse aliqua sed incididunt aliqua incididunt mollit id et sit
+                                proident dolor nulla sed commodo est ad minim elit reprehenderit nisi officia aute
+                                incididunt velit sint in aliqua...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第十一种用法... -->
+                <article class="masonry__brick entry format-link animate-this">
+
+                    <div class="entry__thumb">
+                        <div class="link-wrap">
+                            <h2>第十一种用法：托管。保证。起价 $2.59/mo!</h2>
+                            <cite>
+                                <a target="_blank" href="#">XXXXXXX</a>
+                            </cite>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第十二种用法... -->
+                <article class="masonry__brick entry format-gallery animate-this">
+
+                    <div class="entry__thumb slider">
+                        <div class="slider__slides">
+                            <div class="slider__slide">
+                                <img src="{{ url_for('static', filename='images/thumbs/masonry/gallery/slide-1-600.jpg') }}"
+                                     srcset="{{ url_for('static', filename='images/thumbs/masonry/gallery/slide-1-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/gallery/slide-1-1200.jpg') }} 2x"
+                                     alt="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第十二种用法：最好的热带树叶图片.</a>
+                            </h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Vacation</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 23, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem ...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第十三种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/walk-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/walk-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/walk-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第十三种用法：在中使用重复和模式摄影
+                                .</a></h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Work</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 23, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lore...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+                <!-- 第十四种用法... -->
+                <article class="masonry__brick entry format-standard animate-this">
+
+                    <div class="entry__thumb">
+                        <a href="#" class="entry__thumb-link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/real-600.jpg') }}"
+                                 srcset="{{ url_for('static', filename='images/thumbs/masonry/real-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/real-1200.jpg') }} 2x"
+                                 alt="">
+                        </a>
+                    </div>
+
+                    <div class="entry__text">
+                        <div class="entry__header">
+                            <h2 class="entry__title"><a href="#">第十四种用法:我们的生活方式使我们变得真实。
+                                </a></h2>
+                            <div class="entry__meta">
+                                    <span class="entry__meta-cat">
+                                        <a href="#">Travel</a>
+                                        <a href="#">Vacation</a>
+                                    </span>
+                                <span class="entry__meta-date">
+                                        <a href="#">Apr 23, 2019</a>
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="entry__excerpt">
+                            <p>
+                                Lorem ipsum...
+                            </p>
+                        </div>
+                    </div>
+
+                </article> <!-- end article -->
+
+            </div> <!-- end masonry -->
+
+        </div> <!-- end masonry-wrap -->
+
+        <div class="row">
+            <div class="column large-full">
+                <nav class="pgn">
+                    <ul>
+                        <li><a class="pgn__prev" href="#0">Prev</a></li>
+                        <li><a class="pgn__num" href="#0">1</a></li>
+                        <li><span class="pgn__num current">2</span></li>
+                        <li><a class="pgn__num" href="#0">3</a></li>
+                        <li><span class="pgn__num dots">...</span></li>
+                        <li><a class="pgn__num" href="#0">6</a></li>
+                        <li><a class="pgn__next" href="#0">Next</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+    </div> <!-- end s-content -->
+
+
+    <!-- footer
+    ================================================== -->
+    <footer class="s-footer">
+        <div class="row">
+            <div class="column large-full footer__content">
+                <div class="footer__copyright">
+                    <span>© Copyright Typerite</span>
+                    <span><a target="_blank" href="#" title="我的博客">我的博客</a></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="go-top">
+            <a class="smoothscroll" title="Back to Top" href="#top"></a>
+        </div>
+    </footer>
+
+</div> <!-- end s-wrap -->
+
+
+<!-- Java Script
+================================================== -->
+<script src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/plugins.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>

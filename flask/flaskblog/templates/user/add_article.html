@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}
+	用户发表文章
+{% endblock %}
+{% block header %}
+	{{ super() }}
+    <script src="{{ url_for('static',filename='tinymce/tinymce.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/tinymceInit.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/langs/zh_CN.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row section-intro add-bottom">
+    <h3>用户发表文章</h3>
+    <div class="column large-full">
+          <form action="{{ url_for('user.publish_article') }}" method="post">
+              <div class="form-group">
+                  <label for="sampleInput">文章标题：</label>
+                  <input class="full-width" type="text" id="article_title" name="article_title" placeholder="请输入文章标题">
+                  <span id="error_article" class="error"></span>
+              </div>
+              <div>
+                    <label for="sampleRecipientInput">文章分类</label>
+                    <div class="ss-custom-select">
+                        <select class="full-width" name="type_id">
+                        {% for category_dict in third_level_categories %}
+                            {% for second_level,third_levels in category_dict.items() %}
+                                {% for third_level in third_levels %}
+                                    <option value="{{ third_level.id }}" >{{ third_level.type_name }}</option> %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% endfor %}
+                        </select>
+                    </div>
+            </div>
+            <div>
+                <label for="sampleInput">文章内容：</label>
+                <textarea id="markdown" name="article_content">Hello, World!</textarea>
+            </div>
+            <div>
+                <input class="btn--primary full-width" type="submit" value="发表文章">
+            </div>
+          </form>
+        {# 错误提示 #}
+        {% if error_article_msg %}
+            <div class="alert-box alert-box--error hideit">
+                {{ error_article_msg }}。
+                <i class="fa fa-times alert-box__close" aria-hidden="true"></i>
+            </div><!-- end error -->
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+
+{% block footer %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/user.js') }}"/>
+{% endblock %}

@@ -1,3 +1,5 @@
+#!/user/bin/env python3
+# -*- coding: utf-8 -*-
 from sqlalchemy import DATETIME, String, Integer, SmallInteger, ForeignKey,Boolean
 from sqlalchemy.orm import Mapped, mapped_column,relationship
 import re

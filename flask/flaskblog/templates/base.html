@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+     <title>{% block title %} 首页 {% endblock %}</title>
+    {% block header %}
+    <!--- 基本页面需求
+    ================================================== -->
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- mobile specific metas:移动特定元素
+    ================================================== -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSS:样式表
+    ================================================== -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+    <!-- script:脚本
+    ================================================== -->
+    <script src="{{ url_for('static', filename='js/modernizr.js') }}"></script>
+
+    <!-- favicons:网站图标，可以改成个人图标
+    ================================================== -->
+    <link rel="apple-touch-icon" sizes="180x180" type="image/png"
+          href="{{ url_for('static', filename='images/baseicon/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32"
+          href="{{ url_for('static', filename='images/baseicon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16"
+          href="{{ url_for('static', filename='images/baseicon/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+
+    {# header 头部增加js、css文件引入#}
+    {% endblock %}
+</head>
+
+<body>
+
+<!-- preloader
+================================================== -->
+<div id="preloader">
+    <div id="loader" class="dots-fade">
+        <div>加载器1</div>
+        <div>加载器2</div>
+        <div>加载器3</div>
+    </div>
+</div>
+
+<div id="top" class="s-wrap site-wrapper">
+
+    <!-- site header:站点头部
+    ================================================== -->
+    <header class="s-header">
+
+        <div class="header__top">
+            <div class="header__logo">
+                <a class="site-logo" href="#">
+                    <img src="
+                        {% if user %}
+                            {{ url_for('static', filename='upload/icon/'+user.icon) }}
+                        {% else %}
+                            {{ url_for('static', filename='images/logo.svg') }}
+                        {% endif %}"
+                     alt="Homepage">
+                    {% if user %}
+                    <h3  style="color:white">{{ user.username }}，欢迎你</h3>
+                    {% endif %}
+                </a>
+            </div>
+        </div> <!-- end header__top -->
+
+        {#   头部导航     #}
+        <nav class="header__nav-wrap">
+            {% block BodyNavbar %}
+
+            {# 主要导航 #}
+            <ul class="header__nav" id="main-nav">
+                <li class="current"><a href="{{ url_for('home.index') }}" title="">主页</a></li>
+                {% for category_dict in second_level_categories %}
+                    {% for first_level, second_levels in category_dict.items() %}
+                        <li class="has-children">
+                            <a href="#0" title="">{{ first_level.type_name }}</a>
+                            <ul class="sub-menu">
+                                {% for second_level in second_levels %}
+                                    <li><a href="{{ url_for('article.get_articles', type_id=second_level.id) }}">{{ second_level.type_name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endfor %}
+                {% endfor %}
+
+                {% if user %}
+                    <li class="has-children">
+                        <a href="#0" title="">{{ user.username }}的个人中心</a>
+                        <ul class="sub-menu">
+                            <a href="{{ url_for('user.profile') }}">个人信息</a>
+                            <li><a href="{{ url_for('user.user_article_list') }}">您的文章</a></li>
+                            <li><a href="{{ url_for('user.publish_article') }}">发表文章</a></li>
+                            <li><a href="{{ url_for('user.logout') }}">退出</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li><a href="{{  url_for('user.register') }}" title="">注册</a></li>
+                    <li><a href="{{ url_for('user.login') }}" title="">登录</a></li>
+                {% endif %}
+
+            </ul> <!-- end header__nav -->
+
+            {# 下面导航图标 #}
+            <ul class="header__social">
+                <li class="ss-facebook">
+                    <a href="#">
+                        <span class="screen-reader-text">Facebook</span>
+                    </a>
+                </li>
+                <li class="ss-twitter">
+                    <a href="#">
+                        <span class="screen-reader-text">Twitter</span>
+                    </a>
+                </li>
+                <li class="ss-dribbble">
+                    <a href="#">
+                        <span class="screen-reader-text">GitHub</span>
+                    </a>
+                </li>
+                <li class="ss-pinterest">
+                    <a href="#">
+                        <span class="screen-reader-text">telegram</span>
+                    </a>
+                </li>
+            </ul>
+
+            {% endblock %}
+        </nav> <!-- end header__nav-wrap -->
+
+        <!-- menu toggle：切换主要菜单 -->
+        <a href="#0" class="header__menu-toggle">
+            <span>菜单</span>
+        </a>
+
+    </header> <!-- end s-header -->
+
+
+    <!-- search：搜索框
+    ================================================== -->
+    <div class="s-search">
+        {% block Search %}
+        <div class="search-block">
+
+            <form role="search" method="get" class="search-form" action="#">
+                <label>
+                    <span class="hide-content">查询内容:</span>
+                    <input type="search" class="search-field" placeholder="关键字" value="" name="s"
+                           title="Search for:" autocomplete="off">
+                </label>
+                <input type="submit" class="search-submit" value="Search">
+            </form>
+            <a href="#0" title="Close Search" class="search-close">关闭</a>
+
+        </div>  <!-- end search-block -->
+
+        <!-- search modal trigger：搜索模式触发器 -->
+            <a href="#0" class="search-trigger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="fill:rgba(0, 0, 0, 1);transform:;-ms-filter:"><path d="M10,18c1.846,0,3.543-0.635,4.897-1.688l4.396,4.396l1.414-1.414l-4.396-4.396C17.365,13.543,18,11.846,18,10 c0-4.411-3.589-8-8-8s-8,3.589-8,8S5.589,18,10,18z M10,4c3.309,0,6,2.691,6,6s-2.691,6-6,6s-6-2.691-6-6S6.691,4,10,4z"></path></svg>
+                <span>Search</span>
+            </a>
+        <span class="search-line"></span>
+        {% endblock %}
+    </div> <!-- end s-search -->
+
+
+    <!-- site content：网站内容
+    ================================================== -->
+
+    <div class="s-content">
+        {% block content %}
+
+        {% block content_header %}{% endblock %}
+        <div class="masonry-wrap">
+
+            <div class="masonry">
+
+                <div class="grid-sizer"></div>
+
+                {% block articleContent %}
+
+                {% endblock %}
+
+            </div> <!-- end masonry -->
+        </div> <!-- end masonry-wrap -->
+
+        <div class="row">
+            <div class="column large-full">
+                <nav class="pgn">
+                {# 分页 #}
+                {% block pagination %}
+                        <ul>
+                            <li><a class="pgn__prev" href="#0">Prev</a></li>
+                            <li><a class="pgn__num" href="#0">1</a></li>
+                            <li><span class="pgn__num" href="{{ url_for('article.get_articles', page=page_num,type=articletype_dict.typename) }}">{{ page_num }}</span></li>
+                            <li><span class="pgn__num dots">...</span></li>
+                            <li><a class="pgn__num" href="#0">6</a></li>
+                            <li><a class="pgn__next" href="#0">Next</a></li>
+                        </ul>
+                {% endblock %}
+                </nav>
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+    <!-- end s-content -->
+
+    <!-- footer
+    ================================================== -->
+    <footer class="s-footer">
+        <div class="row">
+            <div class="column large-full footer__content">
+                <div class="footer__copyright">
+                    <span>© Copyright Typerite</span>
+                    <span><a target="_blank" href="{{ url_for('home.index') }}" title="我的博客">我的博客</a></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="go-top">
+            <a class="smoothscroll" title="Back to Top" href="#top"></a>
+        </div>
+    </footer>
+
+</div>
+<!-- end s-wrap -->
+
+{% block footer %}
+<!-- Java Script
+================================================== -->
+<script src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/plugins.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+{# footer底部增加js、css文件引入#}
+
+{% endblock %}
+
+</body>
+
+

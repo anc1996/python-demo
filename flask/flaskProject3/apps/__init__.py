@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask
 from flask_migrate import Migrate
-import os, sys
 import settings
-from flask import Flask
 
 from extends import db
 from apps.user.view import user_bp

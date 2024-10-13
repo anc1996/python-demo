@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}
+	用户注册
+{% endblock %}
+
+{% block content %}
+<main class="row content__page">
+    <section class="column large-full entry format-standard">
+      <h2>用户注册</h2>
+        <form action="{{ url_for('user.register') }}" method="post">
+            <div>
+                <label for="sampleInput">用户名：</label>
+                <input class="full-width" id="inputUsername" type="text" placeholder="用户名" name="username">
+                <span></span>
+             </div>
+            <div>
+                <label for="sampleInput">密码：</label>
+                <p><input class="full-width" type="password" name="password" placeholder="密码"></p>
+                <p><input class="full-width" type="password" name="repassword" placeholder="确认密码"></p>
+            </div>
+            <div>
+                <label for="sampleInput">手机号码：</label>
+                <input class="full-width" id="inputPhone" type="number" name="phone" placeholder="手机号码">
+                <span></span>
+            </div>
+            <div>
+                <label for="sampleInput">邮箱：</label>
+                <input class="full-width" id="inputemail" type="email" name="email" placeholder="邮箱">
+                <span></span>
+            </div>
+                <input class="btn--primary full-width" type="submit" value="用户注册">
+        </form>
+        {# 错误提示 #}
+        {% if submit_error_msg %}
+            <div class="alert-box alert-box--error hideit">
+                {{ submit_error_msg }}。
+                <i class="fa fa-times alert-box__close" aria-hidden="true"></i>
+            </div><!-- end error -->
+        {% endif %}
+    </section>
+</main>
+{% endblock %}
+
+
+{% block footer %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/user.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // 检查用户名是否可用
+            $('#inputUsername').blur(function () {
+                let username = $(this).val();
+                let username_error = $(this).next('span');
+                let isUsernameValid=checkEmptyInput('#inputUsername','span','用户名不能为空');
+                if (isUsernameValid) {
+                    $.get('{{ url_for('user.check_username') }}', {username: username}, function (data) {
+                        if (!data.exists) {
+                            username_error.css({'color': 'red', 'font-size': '10px'});
+                            username_error.text(data.error_msg);
+                        } else {
+                            username_error.css({'color': 'green', 'font-size': '10px'});
+                            username_error.text('用户名可用');
+                        }
+                    });
+                }
+            });
+
+            // 检查邮箱是否可用
+            $('#inputemail').blur(function() {
+                let email = $(this).val();
+                let email_error = $(this).next('span');
+                let isEmailValid=checkEmailFormat('#inputemail','span');
+                if (isEmailValid){
+                    $.get('{{ url_for('user.check_email') }}', { email: email }, function(data) {
+                        if (!data.exists) {
+                                email_error.css({ 'color': 'red', 'font-size': '10px' });
+                                email_error.text(data.error_msg);
+                            } else {
+                                email_error.css({ 'color': 'green', 'font-size': '10px' });
+                                email_error.text('邮箱可用');
+                            }
+                    });
+                }
+            });
+
+            // 检查手机号是否可用
+            $('#inputPhone').blur(function() {
+                let phone = $(this).val();
+                let phone_error = $(this).next('span');
+                let isPhoneValid=checkPhoneFormat('#inputPhone','span');
+                if (isPhoneValid){
+                    $.get('{{ url_for('user.check_phone') }}', { phone: phone }, function(data) {
+                            if (!data.exists) {
+                                phone_error.css({ 'color': 'red', 'font-size': '10px' });
+                                phone_error.text(data.error_msg);
+                            } else {
+                                phone_error.css({ 'color': 'green', 'font-size': '10px' });
+                                phone_error.text('手机号码可用');
+                            }
+                    });
+                }
+            });
+
+        });
+    </script>
+{% endblock %}

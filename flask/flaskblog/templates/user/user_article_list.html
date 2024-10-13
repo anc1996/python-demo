@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {{ user.username }},写的文章
+{% endblock %}
+
+{% block content_header %}
+<section id="styles" class="column large-full">
+    <div class="row section-intro add-bottom">
+        <div class="column large-full">
+
+            <h2 class="display-2">{{ user.username }},文章列表</h2>
+            <p class="lead"></p>
+
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block articleContent %}
+<div class="row section-intro add-bottom">
+    {# 文章列表 #}
+    {% for article in pagination.items %}
+        <article class="masonry__brick entry format-standard animate-this">
+          <div class="entry__thumb">
+                <a href="{{ url_for('article.article_detail', article_id=article.id) }}" data-lity class="entry__thumb-link">
+                    <img src="{{ url_for('static', filename='images/thumbs/masonry/cookies-600.jpg') }}"
+                            srcset="{{ url_for('static', filename='images/thumbs/masonry/cookies-600.jpg') }} 1x, {{ url_for('static', filename='images/thumbs/masonry/cookies-1200.jpg') }} 2x"
+                            alt="">
+                </a>
+            </div>
+
+            <div class="entry__text">
+                <div class="entry__header">
+                    <h2 class="entry__title"><a href="{{ url_for('article.article_detail', article_id=article.id) }}">{{ article.title }}</a></h2>
+                    <div class="entry__meta">
+                        <span class="entry__meta-cat">
+                            <a href="#">标签：{{ article.article_type_name }}</a>
+                            <a href="#">作者: {{ user.username }}</a>
+                        </span>
+                        <span class="entry__meta-date">
+                            <a href="#">{{ article.publish_time.strftime('%b %d, %Y') }}</a>
+                        </span>
+                    </div>
+                </div>
+                <div class="entry__excerpt">
+                    <p>
+                        {{ article.content | safe }}
+                    </p>
+                </div>
+                <div class="entry__meta">
+                        <span class="entry__meta-cat">
+                            <a href="#">阅读量：{{ article.read_count }}</a>
+                            <a href="#">收藏量: {{ article.collect_count }}</a>
+                            <a href="#">评论量: {{ article.comment_count }}</a>
+                        </span>
+                </div>
+                <div class="entry__meta">
+                        <span class="entry__meta-cat">
+                            <a class="btn" href="{{ url_for('user.user_change_article', article_id=article.id) }}">修改文章</a>
+                            <a class="btn btn--stroke" href="{{ url_for('user.delete_article', article_id=article.id) }}">删除</a>
+                        </span>
+                </div>
+            </div>
+        </article> <!-- end article -->
+    {% endfor %}
+</div>
+{%  endblock %}
+
+
+{% block pagination %}
+    {% if pagination %}
+        <ul>
+
+            {# pagination.has_prev 判断是否存在上一页，如果存在则可以点击，否则不能点击#}
+            {% if pagination.has_prev %}
+                <li>
+                    <a class="pgn__prev" href="{{
+                        url_for('user.user_article_list',page=pagination.prev_num) }}">
+                    Prev</a>
+                </li>
+            {% endif %}
+
+            {% set total_pages = pagination.pages %}
+            {% set current_page = pagination.page %}
+
+            <!-- 始终显示第一页 -->
+            <li>
+                <a href="{{ url_for('user.user_article_list', page=1) }}"
+                   class="pgn__num {% if current_page == 1 %}current{% endif %}">1
+                </a>
+                <!-- 如果当前页是第一页，总页数大于2，显示省略号 -->
+                {% if current_page==1 and total_pages>2 %}
+                    <li><span class="pgn__num dots">…</span></li>
+                {% endif %}
+            </li>
+
+            <!-- 如果总页数大于3且当前页不是第一页或最后一页，显示省略号 -->
+            {% if total_pages >= 3 and current_page != 1 and current_page != total_pages %}
+                {% if current_page > 2 %}
+                    <li><span class="pgn__num dots">…</span></li>
+                {% endif %}
+                <li>
+                    <span class="pgn__num current">{{ current_page }}</span>
+                </li>
+                {% if current_page < total_pages - 1 %}
+                    <li><span class="pgn__num dots">…</span></li>
+                {% endif %}
+            {% endif %}
+
+            <!-- 如果总页数大于3，始终显示最后一页 -->
+            {% if total_pages > 1 %}
+                <!-- 如果当前页是最后一页，最后一页大于2，显示省略号 -->
+                {% if current_page == total_pages and total_pages >2 %}
+                    <li><span class="pgn__num dots">…</span></li>
+                {% endif %}
+                <li>
+                    <a href="{{ url_for('article.get_articles', page=total_pages) }}"
+                       class="pgn__num {% if current_page == total_pages %}current{% endif %}">
+                        {{ total_pages }}
+                    </a>
+                </li>
+            {% endif %}
+
+            {# pagination.has_next 判断是否存在下一页，如果存在则可以点击，否则不能点击#}
+            {% if pagination.has_next %}
+                <li>
+                    <a class="pgn__next" href="{{
+                        url_for('article.get_articles',page=pagination.next_num) }}">
+                    Next</a>
+                </li>
+            {% endif %}
+
+        </ul>
+    {% endif %}
+{% endblock %}

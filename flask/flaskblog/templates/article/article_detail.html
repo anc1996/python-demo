@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% set article = article_detail_data.current_article %}
+
+
+{% block title %}
+    {{ article.title }}
+{% endblock %}
+
+
+{% block content %}
+<main class="row content__page">
+
+    <article class="column large-full entry format-standard">
+
+        <!-- 文章图片头-->
+        <div class="media-wrap entry__media">
+            <div class="entry__post-thumb">
+                <img src="{{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }}"
+                     srcset="{{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 2000w,
+                             {{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 1000w,
+                             {{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 500w" sizes="(max-width: 2000px) 100vw, 2000px" alt="">
+            </div>
+        </div>
+
+        <!-- 文章相关内容-->
+        <div class="content__page-header entry__header">
+            <h1 class="display-1 entry__title">
+            {{ article.title }}
+            </h1>
+            <ul class="entry__header-meta">
+                <li class="author">By <a href="#0">{{ article.user.username }}</a></li>
+                <li class="date">{{ article.publish_time.strftime('%b %d, %Y') }}</li>
+                <li class="cat-links">
+                    <a href="#0">{{ article.article_type.type_name }}</a>
+                </li>
+            </ul>
+        </div> <!-- end entry__header -->
+
+        <!-- 文章内容-->
+        <div class="entry__content">
+                {{ article.content | safe }}
+        </div> <!-- end entry content -->
+
+        <div class="entry__statistics">
+            <h3>Stats Tabs</h3>
+            <ul class="stats-tabs">
+                <li><a id="collect_count" href="#">{{ article.collect_count }} <em>收藏量</em></a></li>
+                <li><a id="comment_count" href="#">{{ article.comment_count }} <em>评论量</em></a></li>
+                <li><a id="read_count" href="#">{{ article.read_count }} <em>阅读量</em></a></li>
+                <li><a id="like_count" href="#" onclick="toggleLike()">{{ article.like_count }} <em>点赞量</em></a></li>
+            </ul>
+        </div>
+
+
+
+        <!--上一页与下一页 -->
+        <div class="entry__pagenav">
+            <div class="entry__nav">
+                <div class="entry__prev">
+                    {% if article_detail_data.previous_article %}
+                        <a href="{{ url_for('article.article_detail', article_id=article_detail_data.previous_article.id) }}" rel="prev" %}>
+                            <span>上一页</span>
+                            {{ article_detail_data.previous_article.title }}
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="entry__next">
+                    {% if article_detail_data.next_article %}
+                        <a href="{{ url_for('article.article_detail', article_id=article_detail_data.next_article.id) }}" rel="next">
+                            <span>下一页</span>
+                            {{ article_detail_data.next_article.title }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div> <!-- end entry__pagenav -->
+
+        <!-- 相关文章-->
+        <div class="entry__related">
+            <h3 class="h2">相关文章</h3>
+
+            <ul class="related">
+                {% for related_article in article_detail_data.related_articles %}
+                    <li class="related__item">
+                        <a href="{{ url_for('article.article_detail', article_id=related_article.id) }}" class="related__link">
+                            <img src="{{ url_for('static', filename='images/thumbs/masonry/walk-600.jpg') }}" alt="">
+                        </a>
+                        <h5 class="related__post-title">{{ related_article.title }}</h5>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div> <!-- end entry related -->
+
+
+
+    </article> <!-- end column large-full entry-->
+
+    <!-- 评论部分 -->
+    <div class="comments-wrap">
+
+    </div>
+    <!-- end comments-wrap -->
+
+
+</main>
+{%  endblock %}
+
+{% block footer %}
+{{ super() }}
+<script>
+    let likeFlag=0;
+
+    function toggleLike(){
+        // 发送ajax请求
+        $.ajax({
+            url:"{{ url_for('article.article_like') }}",
+            type:"get",
+            data:{
+                article_id:{{ article.id }},
+                like_flag:likeFlag
+            },
+            success:function(response) {
+                // 更新点赞量
+                $("#like_count").html(response.like_count + "<em>点赞量</em>");
+
+                // 更新点赞状态
+                likeFlag= likeFlag === 0?1:0;
+
+            // 重新初始化 JavaScript 组件或重新应用 CSS 样式
+            $('#like_count').addClass('.stats-tabs li a');
+
+             // 滚动到按钮位置
+            scrollToButton();
+            },
+            error:function(response) {
+                alert(response.love_error_msg)
+            }
+        })
+    }
+    function scrollToButton() {
+        // 获取按钮元素
+        const a = document.getElementById('like_count');
+        // 使用 scrollIntoView 方法滚动到按钮位置,smooth 平滑滚动,block 垂直居中
+        a.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+</script>
+
+{% endblock %}

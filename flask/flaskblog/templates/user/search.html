@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}
+    用户页面
+{% endblock %}
+
+{% block header %}
+    <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+{% endblock %}
+
+{% block middle %}
+    <div>
+        <h1>所有用户信息如下：</h1>
+        搜索： <input type="text" name="search" placeholder="输入用户名、手机号码或邮箱"> <input type="button" value="搜索" id="search">
+        <div id="search-results">
+            <!-- Search results will be displayed here -->
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    <script>
+        var urls = {
+
+            update: '{{ url_for("user.update", id="__id__") }}',
+            delete: '{{ url_for("user.delete", id="__id__") }}'
+        };
+        $(document).ready(function() {
+            // 搜索按钮点击事件
+            $('#search').click(function () {
+                let content = $("input[name='search']").val();
+                $.ajax({
+                    url: '{{ url_for('user.search_user') }}',
+                    type: 'GET',
+                    data: { search: content },
+                    success: function(response) {
+                        let resultsHtml = '';
+                        if (response.length > 0) {
+                            resultsHtml += '<table border="1" cellspacing="0" width="50%">';
+                            resultsHtml += '<tr><th>序号</th><th>用户名</th><th>手机号</th><th>注册时间</th><th>操作</th></tr>';
+                            response.forEach(function(user, index) {
+                                // 替换URL中id的名字
+                                let updateUrl = urls.update.replace('__id__', user.id);
+                                let deleteUrl = urls.delete.replace('__id__', user.id);
+                                resultsHtml += `<tr>
+                                    <td>${index + 1}</td>
+                                    <td>${user.username}</td>
+                                    <td>${user.phone}</td>
+                                    <td>${user.email}</td>
+                                    <td>${user.register_time}</td>
+                                    <td>
+                                        <a href="${updateUrl}">修改</a>
+                                        <a href="${deleteUrl}">删除</a>
+                                    </td>
+                                </tr>`;
+                            });
+                            resultsHtml += '</table>';
+                        } else {
+                            resultsHtml = '<p style="color: red; font-size: 20px;">当前还没有任何的用户，抓紧时间注册吧！！！</p>';
+                        }
+                        $('#search-results').html(resultsHtml);
+                    },
+                    error: function(xhr, status, error) {
+                        alert('搜索失败: ' + error);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
