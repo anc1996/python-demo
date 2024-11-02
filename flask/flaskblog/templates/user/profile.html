@@ -3,6 +3,14 @@
 	用户信息修改
 {% endblock %}
 
+{% block header %}
+	{{ super() }}
+    <script src="{{ url_for('static',filename='tinymce/tinymce.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/tinymceInit.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/langs/zh_CN.js') }}"></script>
+{% endblock %}
+
+
 {% block content %}
 <main class="row content__page">
     <section class="column large-full entry format-standard">
@@ -38,6 +46,10 @@
                 <input class="full-width" id="inputAge" type="number" name="age" placeholder="{{ user_info.age if user_info else '' }}">
                 <span></span>
             </div>
+            <div>
+                <label for="sampleInput">用户自我介绍：</label>
+                <textarea id="markdown" name="user_content">Hello, World!</textarea>
+            </div>
             <div class="form-group">
                 <label for="user-sex">性别：</label>
                 <select id="inputSex" name="sex" id="inputSex">
@@ -50,10 +62,10 @@
                 <label for="sampleInput">头像：</label>
                 <img width="120" height="120" class="pull-left" alt="sample-image"
                      src="
-                        {% if user.icon %}
-                            {{ url_for('static', filename='upload/icon/'+user.icon) }}
+                        {% if user %}
+                            {{ user.url }}
                         {% else %}
-                            {{ url_for('static', filename='images/sample-image.jpg') }}
+                            {{ url_for('static', filename='images/logo.svg') }}
                         {% endif %}
                              ">
                 {# 上传头像 #}

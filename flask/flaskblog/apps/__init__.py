@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_session import Session
 import redis
 
-from extends import db, init_serializer
+from extends import db, init_serializer, cache
 from apps.user.view import user_bp
 from apps.article.view import article_bp
 from apps.goods.view import goods_bp
@@ -21,6 +21,9 @@ def create_app():
 	app.config.from_object(settings.DevelopmentConfig)
 	# 初始化SQLAlchemy对象
 	db.init_app(app)
+	# 初始化flask-caching缓存对象
+	cache.init_app(app=app)
+	
 	# 初始化bootstrap对象
 	# bootstrap.init_app(app)
 	migrate = Migrate(app=app, db=db)
@@ -44,8 +47,8 @@ def create_app():
 	setup_global_hooks(app)
 	
 	# 一定要导入模型，否则无法生成数据库表
-	from apps.user.model import User,UserInfo
-	from apps.article.model import Article,Commnet,ArticleType
+	from apps.user.model import User,UserInfo,UserAlbum
+	from apps.article.model import Article,Comment,ArticleType,ArticleFile
 	from apps.goods.model import Goods,UserGoodsAssociation
 	# 注册蓝图对象
 	app.register_blueprint(user_bp) # 注册用户蓝图

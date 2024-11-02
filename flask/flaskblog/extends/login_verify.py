@@ -6,7 +6,7 @@ from functools import wraps
 
 
 from apps.user.model import User
-
+from extends.minio_bucket import flask_bucket
 
 
 def get_user_id():
@@ -44,17 +44,16 @@ def get_user_id():
 		# 返回user_id为空和response对象
 		return None, resp
 	
-	# 返回user_id和response对象为空
 	return user, None
 
 
 def login_required(func):
-    @wraps(func)
-    def decorated_function(*args, **kwargs):
-        user, redirect_response = get_user_id()
-        if redirect_response:
-            return redirect_response
-        else:
-            g.user = user
-        return func(*args, **kwargs)
-    return decorated_function
+	@wraps(func)
+	def decorated_function(*args, **kwargs):
+		user, redirect_response = get_user_id()
+		if redirect_response:
+			return redirect_response
+		else:
+			g.user = user
+		return func(*args, **kwargs)
+	return decorated_function

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}
+	更改相册
+{% endblock %}
+{% block header %}
+	{{ super() }}
+    <script src="{{ url_for('static',filename='tinymce/tinymce.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/tinymceInit.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/langs/zh_CN.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row section-intro add-bottom">
+    <section class="column large-full entry format-standard">
+
+    <div class="media-wrap">
+        <div>
+            <img src="{{ album.url }}" srcset="{{ album.url }} 2000w,
+                      {{ album.url }} 1000w,
+                      {{ album.url }} 500w" sizes="(max-width: 2000px) 100vw, 2000px" alt="">
+        </div>
+    </div>
+    <div class="content__page-header">
+        <h1 class="display-1">
+            更改相册《{{ album.name }}》
+        </h1>
+    </div>
+    <div class="column large-full">
+          <form action="{{ url_for('user.user_change_album') }}" method="post" enctype="multipart/form-data">
+              <input type="hidden" name="album_id" value="{{ album.id }}">
+              <div>
+                    <label for="sampleInput">相册名字：</label>
+                    <input class="full-width"  type="text" name="album_name" placeholder="{{ album.name }}">
+              </div>
+              <div>
+                   <label for="sampleInput">相册：</label>
+                   <input type="file" name="album_file">
+              </div>
+              <div>
+                  <label for="sampleInput">图片描述：</label>
+                  <textarea id="markdown" name="description">Hello, World!</textarea>
+              </div>
+              <div>
+                  <input class="btn--primary full-width" type="submit" value="上传图片">
+              </div>
+          </form>
+        {# 错误提示 #}
+        {% if album_error_msg %}
+            <div class="alert-box alert-box--error hideit">
+                {{ album_error_msg }}。
+                <i class="fa fa-times alert-box__close" aria-hidden="true"></i>
+            </div><!-- end error -->
+        {% endif %}
+    </div>
+    </section>
+</div>
+{% endblock %}

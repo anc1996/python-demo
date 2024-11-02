@@ -2,148 +2,420 @@
 
 {% set article = article_detail_data.current_article %}
 
-
 {% block title %}
     {{ article.title }}
 {% endblock %}
 
-
 {% block content %}
-<main class="row content__page">
+    <main class="row content__page">
 
-    <article class="column large-full entry format-standard">
+        <!-- 文章内容 -->
+        <article class="column large-full entry format-standard">
 
-        <!-- 文章图片头-->
-        <div class="media-wrap entry__media">
-            <div class="entry__post-thumb">
-                <img src="{{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }}"
-                     srcset="{{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 2000w,
-                             {{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 1000w,
-                             {{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 500w" sizes="(max-width: 2000px) 100vw, 2000px" alt="">
-            </div>
-        </div>
-
-        <!-- 文章相关内容-->
-        <div class="content__page-header entry__header">
-            <h1 class="display-1 entry__title">
-            {{ article.title }}
-            </h1>
-            <ul class="entry__header-meta">
-                <li class="author">By <a href="#0">{{ article.user.username }}</a></li>
-                <li class="date">{{ article.publish_time.strftime('%b %d, %Y') }}</li>
-                <li class="cat-links">
-                    <a href="#0">{{ article.article_type.type_name }}</a>
-                </li>
-            </ul>
-        </div> <!-- end entry__header -->
-
-        <!-- 文章内容-->
-        <div class="entry__content">
-                {{ article.content | safe }}
-        </div> <!-- end entry content -->
-
-        <div class="entry__statistics">
-            <h3>Stats Tabs</h3>
-            <ul class="stats-tabs">
-                <li><a id="collect_count" href="#">{{ article.collect_count }} <em>收藏量</em></a></li>
-                <li><a id="comment_count" href="#">{{ article.comment_count }} <em>评论量</em></a></li>
-                <li><a id="read_count" href="#">{{ article.read_count }} <em>阅读量</em></a></li>
-                <li><a id="like_count" href="#" onclick="toggleLike()">{{ article.like_count }} <em>点赞量</em></a></li>
-            </ul>
-        </div>
-
-
-
-        <!--上一页与下一页 -->
-        <div class="entry__pagenav">
-            <div class="entry__nav">
-                <div class="entry__prev">
-                    {% if article_detail_data.previous_article %}
-                        <a href="{{ url_for('article.article_detail', article_id=article_detail_data.previous_article.id) }}" rel="prev" %}>
-                            <span>上一页</span>
-                            {{ article_detail_data.previous_article.title }}
-                        </a>
-                    {% endif %}
-                </div>
-                <div class="entry__next">
-                    {% if article_detail_data.next_article %}
-                        <a href="{{ url_for('article.article_detail', article_id=article_detail_data.next_article.id) }}" rel="next">
-                            <span>下一页</span>
-                            {{ article_detail_data.next_article.title }}
-                        </a>
-                    {% endif %}
+            <!-- 文章图片头-->
+            <div class="media-wrap entry__media">
+                <div class="entry__post-thumb">
+                    <img src="{{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }}"
+                         srcset="{{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 2000w,
+                                 {{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 1000w,
+                                 {{ url_for('static', filename='images/thumbs/single/standard/standard-2000.jpg') }} 500w" sizes="(max-width: 2000px) 100vw, 2000px" alt="">
                 </div>
             </div>
-        </div> <!-- end entry__pagenav -->
 
-        <!-- 相关文章-->
-        <div class="entry__related">
-            <h3 class="h2">相关文章</h3>
-
-            <ul class="related">
-                {% for related_article in article_detail_data.related_articles %}
-                    <li class="related__item">
-                        <a href="{{ url_for('article.article_detail', article_id=related_article.id) }}" class="related__link">
-                            <img src="{{ url_for('static', filename='images/thumbs/masonry/walk-600.jpg') }}" alt="">
-                        </a>
-                        <h5 class="related__post-title">{{ related_article.title }}</h5>
+            <!-- 文章相关内容-->
+            <div class="content__page-header entry__header">
+                <h1 class="display-1 entry__title">
+                {{ article.title }}
+                </h1>
+                <ul class="entry__header-meta">
+                    <li class="author">By <a href="#0">{{ article.user.username }}</a></li>
+                    <li class="date">{{ article.publish_time.strftime('%b %d, %Y') }}</li>
+                    <li class="cat-links">
+                        <a href="#0">{{ article.article_type.type_name }}</a>
                     </li>
-                {% endfor %}
+                </ul>
+            </div> <!-- end entry__header -->
+
+            <!-- 文章内容-->
+            <div class="entry__content">
+                    {{ article.content | safe }}
+            </div> <!-- end entry content -->
+
+            <!-- 文章统计信息 -->
+            <div class="entry__statistics">
+                <h3>Stats Tabs</h3>
+                <ul class="stats-tabs">
+                    <li><a id="collect_count" href="#">{{ article.collect_count }} <em>收藏量</em></a></li>
+                    <li><a id="comment_count" href="#">{{ article.comment_count }} <em>评论量</em></a></li>
+                    <li><a id="read_count" href="#">{{ article.read_count }} <em>阅读量</em></a></li>
+                    <li><a id="like_count" href="#" onclick="toggleLike()">{{ article.like_count }} <em>点赞量</em></a></li>
+                </ul>
+            </div>
+
+            <!--上一页与下一页 -->
+            <div class="entry__pagenav">
+                <div class="entry__nav">
+                    <div class="entry__prev">
+                        {% if article_detail_data.previous_article %}
+                            <a href="{{ url_for('article.article_detail', article_id=article_detail_data.previous_article.id) }}" rel="prev">
+                                <span>上一页</span>
+                                {{ article_detail_data.previous_article.title }}
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="entry__next">
+                        {% if article_detail_data.next_article %}
+                            <a href="{{ url_for('article.article_detail', article_id=article_detail_data.next_article.id) }}" rel="next">
+                                <span>下一页</span>
+                                {{ article_detail_data.next_article.title }}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div> <!-- end entry__pagenav -->
+
+            <!-- 评论部分 -->
+            <div class="comments-wrap">
+
+            <div id="comments" class="column large-12">
+                    <h3 class="h2">{{ article_detail_data.comments_pagination.total }} Comments</h3>
+
+                    <!-- 评论列表 -->
+                    <ol id="comment-list" class="commentlist">
+                        {% for comment in article_detail_data.comments_pagination.items %}
+                            <li class="thread-alt depth-1 comment" data-comment-id="{{ comment.id }}">
+                                {#用户头像#}
+                                <div class="comment__avatar">
+                                    <img class="avatar" src="{{ comment.user.url }}" alt="" width="50" height="50">
+                                </div>
+                                {#评论内容#}
+                                <div class="comment__content">
+                                    {# 用户名和时间 #}
+                                    <div class="comment__info">
+                                        <div class="comment__author">{{ comment.user.username }}</div>
+                                        <div class="comment__meta">
+                                            <div class="comment__time">{{ comment.comment_time.strftime('%b %d, %Y %H:%M') }}</div>
+                                            <div class="comment__reply">
+                                                <a href="#" class="comment__reply-link" data-comment-id="{{ comment.id }}">回复</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {# 评论内容 #}
+                                    <div class="comment__text">
+                                        <p>{{ comment.content | safe }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- 二级评论 -->
+                                <ul class="children">
+                                    {% for reply in comment.replies %}
+                                        <li class="depth-2 comment" data-comment-id="{{ reply.id }}">
+                                            {#用户头像#}
+                                            <div class="comment__avatar">
+                                                <img class="avatar" src="{{ reply.user.url }}" alt="" width="50" height="50">
+                                            </div>
+                                            {#评论内容#}
+                                            <div class="comment__content">
+                                                {# 用户名和时间 #}
+                                                <div class="comment__info">
+                                                    <div class="comment__author">{{ reply.user.username }}</div>
+                                                    <div class="comment__meta">
+                                                        <div class="comment__time">{{ reply.comment_time.strftime('%b %d, %Y %H:%M') }}</div>
+                                                        <div class="comment__reply">
+                                                            <a href="#" class="comment__reply-link" data-comment-id="{{ comment.id }}" data-reply-id="{{ reply.id }}">回复</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {# 评论内容 #}
+                                                <div class="comment__text">
+                                                    <p>{{ reply.content | safe }}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+
+                                <!-- 回复表单 -->
+                                <div class="reply-form" style="display: none;" data-comment-id="{{ comment.id }}">
+                                    <form id="reply-form-{{ comment.id }}" method="post" action="{{ url_for('article.reply_comment') }}" autocomplete="off">
+                                        <input type="hidden" name="article_id" value="{{ article.id }}">
+                                        <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                        <fieldset>
+                                            <div class="form-field">
+                                                <textarea name="content" id="reply-textarea-{{ comment.id }}" class="full-width" placeholder="写下你的回复。。。" required></textarea>
+                                            </div>
+                                            <input name="submit" id="submit-reply-{{ comment.id }}" class="btn btn--primary btn-wide btn--large full-width" value="提交回复" type="submit">
+                                        </fieldset>
+                                    </form>
+                                </div>
+
+                            </li>
+                        {% endfor %}
+                    </ol>
+                    <!-- END commentlist -->
+
+                <!-- 发表评论表单 -->
+                <div class="column large-12 comment-respond">
+                    <!-- START respond -->
+                    <div id="respond">
+                        <h3 class="h2">Add Comment</h3>
+                        <form id="comment-form" method="post" action="{{ url_for('article.comment') }}" autocomplete="off">
+                            <input type="hidden" name="article_id" value="{{ article.id }}">
+                            <fieldset>
+                                <div class="form-field">
+                                    <textarea name="content" id="comment-textarea" class="full-width" placeholder="写下你的评论。。。" required></textarea>
+                                </div>
+                                <input name="submit" id="submit" class="btn btn--primary btn-wide btn--large full-width" value="提交评论" type="submit">
+                            </fieldset>
+                        </form> <!-- end form -->
+                    </div>
+                    <!-- END respond-->
+                </div><!-- end comment-respond -->
+
+                </div>
+            </div><!-- end comments-wrap -->
+            <div class="row">
+        <div class="column large-full">
+            <nav class="pgn">
+            {# 分页 #}
+            {% set comments_pagination = article_detail_data.comments_pagination %}
+            <ul>
+                {# pagination.has_prev 判断是否存在上一页，如果存在则可以点击，否则不能点击#}
+                {% if comments_pagination.has_prev %}
+                    <li>
+                        <a class="pgn__prev" href="{{
+                            url_for('article.article_detail',page=comments_pagination.prev_num,article_id=article.id) }}">
+                        Prev</a>
+                    </li>
+                {% endif %}
+
+                {% set total_pages = article_detail_data.comments_pagination.pages %}
+                {% set current_page = article_detail_data.comments_pagination.page %}
+
+                <!-- 始终显示第一页 -->
+                <li>
+                    <a href="{{ url_for('article.article_detail', article_id=article.id, page=1) }}"
+                       class="pgn__num {% if current_page == 1 %}current{% endif %}">1
+                    </a>
+                    <!-- 如果当前页是第一页，总页数大于2，显示省略号 -->
+                    {% if current_page==1 and total_pages>2 %}
+                        <li><span class="pgn__num dots">…</span></li>
+                    {% endif %}
+                </li>
+
+                <!-- 如果总页数大于3且当前页不是第一页或最后一页，显示省略号 -->
+                {% if total_pages >= 3 and current_page != 1 and current_page != total_pages %}
+                    {% if current_page > 2 %}
+                        <li><span class="pgn__num dots">…</span></li>
+                    {% endif %}
+                    <li>
+                        <span class="pgn__num current">{{ current_page }}</span>
+                    </li>
+                    {% if current_page < total_pages - 1 %}
+                        <li><span class="pgn__num dots">…</span></li>
+                    {% endif %}
+                {% endif %}
+
+                <!-- 如果总页数大于3，始终显示最后一页 -->
+                {% if total_pages > 1 %}
+                    <!-- 如果当前页是最后一页，最后一页大于2，显示省略号 -->
+                    {% if current_page == total_pages and total_pages >2 %}
+                        <li><span class="pgn__num dots">…</span></li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('article.article_detail', article_id=article.id, page=total_pages) }}"
+                           class="pgn__num {% if current_page == total_pages %}current{% endif %}">
+                            {{ total_pages }}
+                        </a>
+                    </li>
+                {% endif %}
+
+                {# pagination.has_next 判断是否存在下一页，如果存在则可以点击，否则不能点击#}
+                {% if comments_pagination.has_next %}
+                    <li>
+                        <a class="pgn__next" href="{{ url_for('article.article_detail', article_id=article.id, page=comments_pagination.next_num) }}">
+                        Next</a>
+                    </li>
+                {% endif %}
             </ul>
-        </div> <!-- end entry related -->
-
-
-
-    </article> <!-- end column large-full entry-->
-
-    <!-- 评论部分 -->
-    <div class="comments-wrap">
-
+            </nav>
+        </div>
     </div>
-    <!-- end comments-wrap -->
+
+            <!-- 相关文章-->
+            <div class="entry__related">
+                <h3 class="h2">相关文章</h3>
+
+                <ul class="related">
+                    {% for related_article in article_detail_data.related_articles %}
+                        <li class="related__item">
+                            <a href="{{ url_for('article.article_detail', article_id=related_article.id) }}" class="related__link">
+                                <img src="{{ url_for('static', filename='images/thumbs/masonry/walk-600.jpg') }}" alt="">
+                            </a>
+                            <h5 class="related__post-title">{{ related_article.title }}</h5>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div> <!-- end entry related -->
 
 
-</main>
-{%  endblock %}
 
-{% block footer %}
-{{ super() }}
-<script>
-    let likeFlag=0;
+        </article> <!-- end column large-full entry-->
 
-    function toggleLike(){
-        // 发送ajax请求
-        $.ajax({
-            url:"{{ url_for('article.article_like') }}",
-            type:"get",
-            data:{
-                article_id:{{ article.id }},
-                like_flag:likeFlag
-            },
-            success:function(response) {
-                // 更新点赞量
-                $("#like_count").html(response.like_count + "<em>点赞量</em>");
 
-                // 更新点赞状态
-                likeFlag= likeFlag === 0?1:0;
+    </main>
 
-            // 重新初始化 JavaScript 组件或重新应用 CSS 样式
-            $('#like_count').addClass('.stats-tabs li a');
-
-             // 滚动到按钮位置
-            scrollToButton();
-            },
-            error:function(response) {
-                alert(response.love_error_msg)
-            }
-        })
-    }
-    function scrollToButton() {
-        // 获取按钮元素
-        const a = document.getElementById('like_count');
-        // 使用 scrollIntoView 方法滚动到按钮位置,smooth 平滑滚动,block 垂直居中
-        a.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-</script>
 
 {% endblock %}
+
+
+
+{% block footer %}
+    {{ super() }}
+    <script>
+        let likeFlag = 0;
+
+        function toggleLike() {
+            // 发送ajax请求
+            $.ajax({
+                url: "{{ url_for('article.article_like') }}",
+                type: "get",
+                data: {
+                    article_id: {{ article.id }},
+                    like_flag: likeFlag
+                },
+                success: function(response) {
+                    // 更新点赞量
+                    $("#like_count").html(response.like_count + "<em>点赞量</em>");
+
+                    // 更新点赞状态
+                    likeFlag = likeFlag === 0 ? 1 : 0;
+
+                    // 重新初始化 JavaScript 组件或重新应用 CSS 样式
+                    $('#like_count').addClass('.stats-tabs li a');
+
+                    // 滚动到按钮位置
+                    scrollToButton();
+                },
+                error: function(response) {
+                    alert(response.responseJSON.love_error_msg || '点赞失败');
+                }
+            })
+        }
+
+        function scrollToButton() {
+            // 获取按钮元素
+            const a = document.getElementById('like_count');
+            // 使用 scrollIntoView 方法滚动到按钮位置,smooth 平滑滚动,block 垂直居中
+            a.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // 显示回复表单
+        function showReplyForm(commentId, replyId = null) {
+            const replyForm = document.querySelector(`.reply-form[data-comment-id="${commentId}"]`);
+            if (replyForm) {
+                replyForm.style.display = 'block';
+                if (replyId) {
+                    const replyUser = document.querySelector(`.depth-2[data-comment-id="${replyId}"] .comment__author`).innerText;
+                    document.getElementById(`reply-textarea-${commentId}`).placeholder = `@${replyUser} 写下你的回复。。。`;
+                } else {
+                    document.getElementById(`reply-textarea-${commentId}`).placeholder = '写下你的回复。。。';
+                }
+            }
+        }
+
+        // 隐藏回复表单
+        function hideReplyForm(commentId) {
+            const replyForm = document.querySelector(`.reply-form[data-comment-id="${commentId}"]`);
+            if (replyForm) {
+                replyForm.style.display = 'none';
+            }
+        }
+
+        // 处理回复按钮点击事件
+        document.getElementById('comment-list').addEventListener('click', function(event) {
+            const target = event.target;
+            if (target.classList.contains('comment__reply-link')) {
+                event.preventDefault();
+                const commentId = target.getAttribute('data-comment-id');
+                const replyId = target.getAttribute('data-reply-id');
+                showReplyForm(commentId, replyId);
+            }
+        });
+
+        // 处理回复表单提交事件
+        document.getElementById('comment-list').addEventListener('submit', function(event) {
+            const target = event.target;
+            if (target.classList.contains('reply-form')) {
+                event.preventDefault();
+                const formData = new FormData(target);
+                const commentId = target.getAttribute('data-comment-id');
+
+                $.ajax({
+                    url: "{{ url_for('article.reply_comment') }}",
+                    type: "post",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // 局部更新页面，显示新的回复
+                        const newReply = `
+                            <li class="depth-2 comment">
+                                <div class="comment__avatar">
+                                    <img class="avatar" src="{{ user.url }}" alt="" width="50" height="50">
+                                </div>
+                                <div class="comment__content">
+                                    <div class="comment__info">
+                                        <div class="comment__author">{{ user.username }}</div>
+                                        <div class="comment__meta">
+                                            <div class="comment__time">${new Date().toLocaleString()}</div>
+                                            <div class="comment__reply">
+                                                <a class="comment-reply-link" href="#0" data-comment-id="${commentId}">回复</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="comment__text">
+                                        <p>${response.content}</p>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                        const replyList = document.querySelector(`.children[data-comment-id="${commentId}"]`);
+                        if (replyList) {
+                            replyList.insertAdjacentHTML('beforeend', newReply);
+                        }
+                        hideReplyForm(commentId);
+                    },
+                    error: function(response) {
+                        alert(response.responseJSON.comment_msg || '回复失败');
+                    }
+                });
+            }
+        });
+        // 处理分页导航点击事件
+        document.querySelectorAll('.pagination a').forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const page = this.getAttribute('href').split('=')[1];
+                loadComments(page);
+            });
+        });
+
+        // 加载评论
+        function loadComments(page) {
+            $.ajax({
+                url: "{{ url_for('article.article_detail') }}",
+                type: "get",
+                data: { article_id: "{{ article.id }}", page: page },
+                success: function(response) {
+                    const commentsSection = document.getElementById('comments');
+                    commentsSection.innerHTML = response.comments_section;
+                },
+                error: function(response) {
+                    alert('加载评论失败');
+                }
+            });
+        }
+    </script>
+{% endblock %}
+

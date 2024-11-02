@@ -1,13 +1,15 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
 from sqlalchemy import DATETIME, String, Integer, SmallInteger, ForeignKey, Boolean
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 import re
 from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from extends import db
 from datetime import datetime
+
+from extends.minio_bucket import flask_bucket
 
 
 class User(db.Model):
@@ -31,25 +33,26 @@ class User(db.Model):
 	# Mapped：表示这是一个映射到数据库列的 Python 类型，并且能利用 Python 的类型注解功能（Type Hints）。这是为了在模型类中清晰地声明字段的类型。
 	# Mapped[X] 表示这个类属性是数据库表中的一列，且类型为 X。通过这种方式，Python 的静态类型检查工具可以识别字段类型，开发者也可以在代码中更明确地知道每个字段的类型。
 	# mapped_column：这是一个用来定义 SQLAlchemy 模型列的函数，类似于旧版本中的 db.Column，但它结合了新的 Mapped 类型提示，更加灵活。
-	id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-	username: Mapped[str] = mapped_column(String(128), unique=True)
-	email: Mapped[str] = mapped_column(String(128))
-	_password: Mapped[str] = mapped_column("password", String(255), nullable=False)
-	phone: Mapped[str] = mapped_column(String(11), unique=True)
-	register_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.utcnow)
+	id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, comment="主键")
+	username: Mapped[str] = mapped_column(String(128), unique=True,comment="用户名")
+	email: Mapped[str] = mapped_column(String(128),comment="邮箱")
+	_password: Mapped[str] = mapped_column("password", String(255), nullable=False, comment="密码")
+	phone: Mapped[str] = mapped_column(String(11), unique=True, comment="手机号")
+	register_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.utcnow,comment="注册时间")
 	# 头像：表示用户头像，这是一个字符串类型的字段，用于存储头像的路
-	icon: Mapped[str] = mapped_column(String(255), nullable=True)
+	icon: Mapped[str] = mapped_column(String(255), nullable=True, comment="头像")
 	# is_deleted：表示是否删除，这是一个布尔类型的字段，用于标记记录是否被删除。
-	is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
-	userinfo: Mapped["UserInfo"] = relationship("UserInfo", back_populates="user", uselist=False)
+	is_deleted: Mapped[bool] = mapped_column(Boolean, default=False,comment="是否删除")
 	
+	
+	userinfo: Mapped["UserInfo"] = relationship("UserInfo", back_populates="user", uselist=False)
 	# 添加article,反向引用，定义 User 和 Article 的一对多关系
 	# 双向关系: 这意味着当你在 User 实例中访问 article 时，SQLAlchemy 会自动填充 Article 实例中的 user 属性，反之亦然。
 	# article: Mapped["Article"] = relationship("Article", back_populates="user")
 	# 这个参数用于在 Article 模型中自动创建一个反向引用。它会在 Article 模型中添加一个名为 user 的属性，该属性指向 User 模型。
 	# 意味着当你在 User 实例中访问 articles 时，SQLAlchemy 会自动填充 Article 实例中的 user 属性。
 	articles= relationship("Article", backref="user")
-	
+	comments= relationship("Comment", backref="user")
 	
 	# 正则表达式
 	EMAIL_REGEX = r'^[\w\.-]+@[\w\.-]+\.\w+$'
@@ -82,6 +85,13 @@ class User(db.Model):
 			raise ValueError("Invalid phone number format for China")
 		return phone
 	
+	@property
+	def url(self):
+		# 返回头像的 URL
+		if not self.icon:
+			return None
+		return flask_bucket.get_Url(bucket_file=self.icon)
+	
 	def __str__(self):
 		"""返回对象的可读字符串表示"""
 		return f"<User {self.username}>"
@@ -97,16 +107,26 @@ class UserInfo(db.Model):
 		self.sex=sex
 	
 	# 定义表字段
-	id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+	id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, comment="主键")
 	# 定义外键，关联到 User 表的 id
 	# 一个外键列，在数据库的 UserInfo 表中创建一个名为 user_id 的列。
-	user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), unique=True, nullable=False)
+	user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), unique=True, nullable=False,comment="用户ID")
+	realname: Mapped[str] = mapped_column(String(64), nullable=False, comment="真实姓名")
+	age: Mapped[int] = mapped_column(Integer, comment="年龄")
+	sex: Mapped[int] = mapped_column(SmallInteger,comment="性别")
+	content: Mapped[str] = mapped_column(String(255), nullable=False, comment="关于我内容")
+	publish_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.utcnow, comment="发布时间")
+	
 	# 反向引用，定义 User 和 UserInfo 的一对一关系
 	# 这是ORM 关系属性，在 Python 层面上表示 UserInfo 类中的 user 属性与 User 类相关联。
 	user: Mapped["User"] = relationship('User', back_populates='userinfo', uselist=False)
-	realname: Mapped[str] = mapped_column(String(64), nullable=False)
-	age: Mapped[int] = mapped_column(Integer)
-	sex: Mapped[int] = mapped_column(SmallInteger)
+	
+	@validates('age')
+	def validate_age(self, key, age):
+		# 验证年龄是否在合理范围内
+		if age < 0 or age > 150:
+			raise ValueError("Invalid age")
+		return age
 	
 	SEX_MAP = ("男", "女", "保密")
 	
@@ -116,3 +136,47 @@ class UserInfo(db.Model):
 	
 	def __str__(self):
 		return f"<UserInfo {self.realname}>"
+
+
+class UserAlbum(db.Model):
+	"""
+        表示包含图像的用户相册。
+    """
+	
+	__tablename__ = 'user_album'
+
+	id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, comment="主键")
+	name: Mapped[str] = mapped_column(String(128), nullable=False,comment="相册名称")
+	path: Mapped[str] = mapped_column(String(255), nullable=False,comment="相册路径")
+	description: Mapped[str] = mapped_column(String(255),nullable=True,comment="相册描述") # 描述
+	album_datetime: Mapped[datetime] = mapped_column(DATETIME, default=datetime.utcnow,comment="创建时间")
+	user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False,comment="用户ID")
+	
+	# 在附加表中声明相关属性
+	user = relationship("User",uselist=False,
+	                    backref=backref('albums', lazy='dynamic',uselist=True))
+	
+	
+	@validates('name')
+	def validate_name(self, key, name):
+	    if not name.strip():
+	        raise ValueError("相册名称不能为空或空格")
+	    return name
+	
+	@validates('path')
+	def validate_path(self, key, path):
+	    if not path.strip():
+	        raise ValueError("相册路径不能为空或空格")
+	    return path
+	
+	@property
+	def url(self):
+		# 返回相册的 URL
+		if not self.path:
+			return None
+		return flask_bucket.get_Url(bucket_file=self.path)
+	
+	def __str__(self):
+	    return f"<UserAlbum {self.name}>"
+
+

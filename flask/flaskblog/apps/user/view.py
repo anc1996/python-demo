@@ -1,15 +1,18 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
-import os,re
+import re
+import uuid
+
 from flask import Blueprint
 from flask import render_template, request, redirect, url_for, jsonify, session, make_response, current_app, g
 from sqlalchemy import or_,func
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.utils import secure_filename
 
 from apps.article.model import Article,ArticleType
-from apps.user.model import User, UserInfo
-from extends import db
+from apps.user.model import User, UserInfo, UserAlbum
+from extends import db, cache
+from extends.file_function import upload_file
+from extends.minio_bucket import flask_bucket
 from extends.wangyisms.sms import send_sms
 from extends.login_verify import login_required
 
@@ -136,7 +139,8 @@ def login():
 			if not re.match(r'^1[3-9]\d{9}$', phone) and not re.match(r'^\d{6}$', code):
 				return render_template('user/login.html', error_login_msg='手机号和验证码格式不正确',second_level_categories=second_level_categories)
 			# 验证code与redis数据库是否一致
-			valid_code = current_app.redis_client.get(phone).decode('utf-8')
+			valid_code=cache.get(phone)
+			# valid_code = current_app.redis_client.get(phone).decode('utf-8')
 			if code != valid_code:
 				return render_template('user/login.html', error_login_msg='验证码错误',second_level_categories=second_level_categories)
 			# 查找用户是否存在
@@ -144,7 +148,8 @@ def login():
 			if not user:
 				return render_template('user/login.html', error_login_msg='用户不存在',second_level_categories=second_level_categories)
 			# 删除redis数据库中的验证码,若没有不报错
-			current_app.redis_client.delete(phone)
+			# current_app.redis_client.delete(phone)
+			cache.delete(phone)
 		# 登录成功，跳转到个人资料页
 		response = make_response(redirect(url_for('home.index')))
 		# 设置cookie加密
@@ -189,7 +194,8 @@ def sendmsg():
 	# 处理发送结果
 	if success:
 		# 状态200
-		current_app.redis_client.set(phone, code, ex=100)  # 60秒过期
+		cache.set(phone, code, timeout=60)  # 60秒过期
+		# current_app.redis_client.set(phone, code, ex=100)  # 60秒过期
 		return jsonify({"sms_status": "短信发送成功", 'status': 200}), 200
 	else:
 		return jsonify({"sms_status": "短信发送失败", 'status': 500}), 500
@@ -197,19 +203,20 @@ def sendmsg():
 
 @user_bp.route('/logout', methods=['GET', 'POST'])
 def logout():
-	# 检查session中是否存在user_id
-	if 'user_id' in session:
-		# 清除session中的用户ID
-		session.pop('user_id', None)
 	
 	# 创建响应对象并重定向到首页
 	# make_response()函数用于创建响应对象
 	response = make_response(redirect(url_for('home.index')))
 	
-	
 	# 检查cookie中是否存在user_id
 	if 'user_id' in request.cookies:
-		# 删除cookie
+		# 获取cookie中的用户ID
+		singed_user_id = request.cookies.get('user_id')
+		# 对用户ID进行解密
+		user_id = current_app.serializer.loads(singed_user_id).get('user_id')
+		# 删除session中的用户ID
+		session.pop(user_id, None)
+		# 删除cookie中的用户ID
 		response.delete_cookie('user_id')
 	return response
 
@@ -231,95 +238,86 @@ def profile():
 @login_required
 def update_user_info():
 	# 获取二级分类
-	second_level_categories = g.second_level_categories
-	if request.method == 'POST':
-		# 获取表单数据
-		username = request.form.get('username')
-		phone = request.form.get('phone')
-		email = request.form.get('email')
-		realname = request.form.get('realname')
-		sex = request.form.get('sex')
-		age = request.form.get('age')
-		icon = request.files.get('icon') # FileStorage对象, 用于上传文件
+    second_level_categories = g.second_level_categories
+    if request.method == 'POST':
+        # 获取表单数据
+        username = request.form.get('username')
+        phone = request.form.get('phone')
+        email = request.form.get('email')
+        realname = request.form.get('realname')
+        sex = request.form.get('sex')
+        age = request.form.get('age')
+        icon = request.files.get('icon')  # FileStorage对象, 用于上传文件
+        user_content=request.form.get('user_content')
+		
+		
+        # 获取当前登录用户
+        user = g.user
+        # 获取当前登录用户的详细信息
+        userinfo = UserInfo.query.filter_by(user_id=user.id).first()
 
-		
-		# 获取当前登录用户
-		user = g.user
-		# 获取当前登录用户的详细信息
-		userinfo = UserInfo.query.filter_by(user_id=user.id).first()
-		
-		
-		# 检查用户名、手机号、邮箱是否已存在
-		def check_exists(field, value, error_msg):
-			if value:
-				# getattr() 函数用于返回一个对象属性值。
-				if User.query.filter(getattr(User, field) == value, User.id != user.id).first():
-					return error_msg
-			return None
-		
-		for field, value, error_msg in [
-			('username', username, '用户名已存在'),
-			('phone', phone, '手机号已存在'),
-			('email', email, '邮箱已存在')
-		]:
-			error_msg = check_exists(field, value, error_msg)
-			if error_msg:
-				return render_template('user/profile.html', user=user,
-				                       user_info=userinfo, profile_error_msg=error_msg,second_level_categories=second_level_categories)
-		
-		# 属性
-		# icon.filename: 文件名
-		# icon.content_type: 文件类型
-		# icon.content_length: 文件大小
-		# icon.stream: 文件流
-		# icon.save(path): 保存文件到指定路径
-		# icon.read(): 读取文件内容
-		# icon.seek(offset): 移动文件指针
-		# icon.close(): 关闭文件
-		# 允许上传的文件类型
-		if icon:
-			ICON_ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-			icon_name=icon.filename
-			# 获取文件后缀
-			suffix = icon_name.split('.')[-1]
-			if suffix not  in ICON_ALLOWED_EXTENSIONS:
-				return render_template('user/profile.html',
-				                       user=user, user_info=userinfo, profile_error_msg='文件类型不支持',second_level_categories=second_level_categories)
-			# 保存头像
-			icon_name = secure_filename(icon_name)
-			file_path = current_app.config['ICON_DIR']
-			try:
-				icon.save(os.path.join(file_path, icon_name))
-			except Exception as e:
-				return render_template('user/profile.html', user=user, user_info=userinfo,
-				                       profile_error_msg=f'文件上传失败: {str(e)}',second_level_categories=second_level_categories)
-		
-		
-		# 更新用户信息
-		user.username = username if username else user.username
-		user.phone = phone if phone else user.phone
-		user.email = email if email else user.email
-		user.icon = icon_name if icon_name else user.icon
+        # 检查用户名、手机号、邮箱是否已存在
+        def check_exists(field, value, error_msg):
+            if value:
+                # getattr() 函数用于返回一个对象属性值。
+                if User.query.filter(getattr(User, field) == value, User.id != user.id).first():
+                    return error_msg
+            return None
 
-		if userinfo:
-			userinfo.realname = realname if realname else userinfo.realname
-			userinfo.sex = sex if sex else userinfo.sex
-			userinfo.age = age if age else userinfo.age
-		else:
-			# 如果userinfo不存在，则创建一个。
-			userinfo = UserInfo(user_id=user.id, realname=realname, sex=sex, age=age)
-		try:
-			# 保存到数据库
-			db.session.add(user)
-			db.session.add(userinfo)
-			db.session.commit()
-		except Exception as e:
-			db.session.rollback()
-			return render_template('user/profile.html',
-			                       user=user, user_info=userinfo, profile_error_msg=f'更新失败: {str(e)}',second_level_categories=second_level_categories)
-		# 重定向到个人资料页
-		return redirect(url_for('user.profile'))
-	return redirect(url_for('user.profile'))
+        for field, value, error_msg in [
+            ('username', username, '用户名已存在'),
+            ('phone', phone, '手机号已存在'),
+            ('email', email, '邮箱已存在')
+        ]:
+            error_msg = check_exists(field, value, error_msg)
+            if error_msg:
+                return render_template('user/profile.html', user=user,
+                                       user_info=userinfo, profile_error_msg=error_msg, second_level_categories=second_level_categories)
+	  
+	    # 允许上传的文件类型
+        if icon:
+            icon_name = icon.filename
+            # 获取文件后缀
+            
+            minio_file_path, error_msg = upload_file(icon, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'])
+            if error_msg:
+                return render_template('user/profile.html',
+                                       user=user, profile_error_msg=error_msg,
+                                       second_level_categories=second_level_categories)
+            
+            # 删除minio保存的照片。
+            if user.icon:
+	            flask_bucket.remove_file(user.icon)
+		
+        # 更新用户信息
+        user.username = username if username else user.username
+        user.phone = phone if phone else user.phone
+        user.email = email if email else user.email
+        user.icon = minio_file_path if icon else user.icon
+
+        if userinfo:
+            userinfo.realname = realname if realname else userinfo.realname
+            userinfo.sex = sex if sex else userinfo.sex
+            userinfo.age = age if age else userinfo.age
+            userinfo.content=user_content if user_content else userinfo.content
+        else:
+            # 如果userinfo不存在，则创建一个。
+            userinfo = UserInfo(user_id=user.id, realname=realname, sex=sex, age=age)
+        try:
+            # 保存到数据库
+            db.session.add(user)
+            db.session.add(userinfo)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return render_template('user/profile.html',
+                                   user=user, user_info=userinfo, profile_error_msg=f'更新失败: {str(e)}', second_level_categories=second_level_categories)
+        # 重定向到个人资料页
+        return redirect(url_for('user.profile'))
+
+    # get请求，用于更新用户信息
+    return redirect(url_for('user.profile'))
+
 
 
 
@@ -372,7 +370,7 @@ def user_article_list():
 	second_level_categories = g.second_level_categories
 	
 	# 分页查询当前用户的文章
-	pagination = (Article.query.filter_by(user_id=user.id)
+	pagination = (Article.query.filter_by(user_id=user.id,is_deleted=False)
 	              .join(ArticleType)
 	              .with_entities(
 						Article.id,
@@ -413,7 +411,7 @@ def user_change_article():
 		content = request.form.get('article_content')
 		type_id = request.form.get('type_id', type=int)
 		
-		current_article = Article.query.filter(Article.id == article_id).first()
+		current_article = Article.query.filter(Article.id == article_id,Article.is_deleted == False).first()
 		
 		if not all([title, content, type_id]):
 			return render_template('user/change_article.html', error_article_msg='标题和内容、分类不能为空', user=user,
@@ -439,7 +437,7 @@ def user_change_article():
 	# 获取文章ID
 	article_id = request.args.get('article_id', type=int)
 	# 获取当前文章详情
-	current_article = Article.query.filter(Article.id == article_id).first()
+	current_article = Article.query.filter(Article.id == article_id,Article.is_deleted==False).first()
 	return render_template('user/change_article.html',
 	                       user=user,second_level_categories=second_level_categories,
 	                       third_level_categories=third_level_categories,
@@ -458,59 +456,150 @@ def delete_article():
 	# 获取参数
 	article_id = request.args.get('article_id')
 	
-# ====================
-@user_bp.route('/update', methods=['GET', 'POST'], endpoint='update')
-def update_user():
+	article=Article.query.filter(Article.id==article_id,Article.user_id==user.id).first()
+	if article:
+		article.is_deleted=True
+		db.session.add(article)
+		db.session.commit()
+	
+	return redirect(url_for('user.user_article_list'))
+
+
+@user_bp.route('/upload_album', methods=['GET', 'POST'], endpoint='upload_album')
+@login_required
+def upload_album():
+	# 获取当前登录用户
+	user = g.user
+	# 获取二级分类
+	second_level_categories = g.second_level_categories
+	
 	if request.method == 'POST':
-		# 获取post提交的数据
-		id = request.form.get('id')
-		username = request.form.get('username')
-		password = request.form.get('password')
-		phone = request.form.get('phone')
-		email = request.form.get('email')
-		# 查找user对象是否存在
-		user = User.query.filter(User.id == id, User.is_deleted == False).first()
-		if user:
-			user.password = password
-			user.username = username
-			user.phone = phone
-			user.email = email
+		# 获取上传图片
+		album = request.files.get('album_file')  # FilesStorage对象，用于上传文件
+		album_name = request.form.get('album_name')
+		description = request.form.get('description')
+		
+		if not album:
+			return render_template('user/add_album.html',
+			                       user=user, album_error_msg='文件不存在',
+			                       second_level_categories=second_level_categories)
+		
+		# 使用封装的函数上传文件
+		minio_file_path, error_msg = upload_file(album, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'])
+		
+		if error_msg:
+			return render_template('user/add_album.html',
+			                       user=user, album_error_msg=error_msg,
+			                       second_level_categories=second_level_categories)
+		
+		user.albums.append(UserAlbum(name=album_name, path=minio_file_path, description=description))
+		
+		# 保存到数据库
+		try:
 			db.session.commit()
-			return redirect(url_for('user.profile'))
-		else:
-			return '更新失败'
-	# 获取get提交的数据
-	id = request.args.get('id')
-	user = User.query.filter_by(id=id, is_deleted=False).first()
-	if user:
-		return render_template('user/update.html', user=user)
-	else:
-		return '数据库没有当前数据'
+		except Exception as e:
+			db.session.rollback()
+			# 删除刚才上传的图片
+			flask_bucket.remove_file(minio_file_path)
+			return render_template('user/add_album.html', user=user, profile_error_msg=f'更新失败: {str(e)}',
+			                       second_level_categories=second_level_categories)
+		
+		# 重定向到个人资料页
+		return redirect(url_for('user.user_album_list'))
+	
+	return render_template('user/add_album.html',
+	                       user=user, second_level_categories=second_level_categories)
+
+	
+@user_bp.route('/user_album_list', methods=['GET'], endpoint='user_album_list')
+@login_required
+def user_album_list():
+	# 获取当前登录用户
+	user = g.user
+	# 获取二级分类
+	second_level_categories = g.second_level_categories
+	
+	# 分页查询当前用户的相册
+	pagination = UserAlbum.query.filter_by(user_id=user.id).order_by(UserAlbum.album_datetime.desc()).paginate(page=1, per_page=10)
+	
+	return render_template('user/user_album_list.html',second_level_categories=second_level_categories,
+	                       user=user, pagination=pagination)
 
 
-@user_bp.route('/search_user', methods=['GET'], endpoint='search_user')
-def search_user():
-	search_content = request.args.get('search')
+@user_bp.route('/user_change_album', methods=['GET', 'POST'], endpoint='user_change_album')
+@login_required
+def user_change_album():
+	# 获取当前登录用户
+	user = g.user
 	
-	if not search_content:
-		return render_template('user/search.html', users=[])
+	# 获取二级分类
+	second_level_categories = g.second_level_categories
 	
-	users = User.query.filter(
-		or_(
-			User.username.like(f'%{search_content}%'),
-			User.phone.like(f'%{search_content}%'),
-			User.email.like(f'%{search_content}%')
-		),
-		User.is_deleted == False
-	).all()
+	if request.method == 'POST':
+		# 获取表单数据
+		album_id=request.form.get('album_id')
+		album_name = request.form.get('album_name')
+		description = request.form.get('description')
+		album = request.files.get('album_file')
 	
-	# Convert users to a list of dictionaries
-	users = [{
-		'id': user.id,
-		'username': user.username,
-		'phone': user.phone,
-		'email': user.email,
-		'register_time': user.register_time.strftime('%Y-%m-%d %H:%M:%S') if user.register_time else None
-	} for user in users]
+		# 更新相册信息
+		user_album = UserAlbum.query.filter(UserAlbum.id == album_id, UserAlbum.user_id == user.id).first()
+		# 只更新表单中有的数据
+		user_album.name = album_name if album_name else user_album.name
+		user_album.description = description if description else user_album.description
+		if album:
+			# 删除原来的图片
+			flask_bucket.remove_file(user_album.path)
+			# 上传新的图片
+			minio_file_path, error_msg = upload_file(album, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'])
+			if error_msg:
+				return render_template('user/change_album.html', user=user, album=user_album, album_error_msg=error_msg,
+				                       second_level_categories=second_level_categories)
+			user_album.path = minio_file_path
+		try:
+			db.session.add(user_album)
+			db.session.commit()
+		except SQLAlchemyError as e:
+			db.session.rollback()
+			if minio_file_path:
+				# 假如album存在并上传了，才删除刚才上传的图片
+				flask_bucket.remove_file(minio_file_path)
+			return render_template('user/change_album.html', user=user, album=user_album, album_error_msg=f'更新失败: {str(e)}',
+			                       second_level_categories=second_level_categories)
+		return redirect(url_for('user.user_album_list'))
+		
+	album_id = request.args.get('album_id')
+	# 获取当前相册详情
+	current_album = UserAlbum.query.filter(UserAlbum.id == album_id, UserAlbum.user_id == user.id).first()
+	return render_template('user/change_album.html',
+	                       user=user, album=current_album,second_level_categories=second_level_categories)
+
+@user_bp.route('/delete_album', methods=['GET'], endpoint='delete_album')
+@login_required
+def delete_album():
+	# 获取当前登录用户
+	user=g.user
 	
-	return jsonify(users)
+	# 获取二级分类
+	second_level_categories = g.second_level_categories
+	
+	# 获取参数
+	album_id = request.args.get('album_id')
+	album=UserAlbum.query.filter(UserAlbum.id==album_id,UserAlbum.user_id==user.id).first()
+	if album:
+		flask_bucket.remove_file(album.path)
+		db.session.delete(album)
+		db.session.commit()
+	return redirect(url_for('user.user_album_list'))
+
+# 关于用户的介绍
+@user_bp.route('/about_me', methods=['GET'], endpoint='about_me')
+@login_required
+def about_me():
+	# 获取当前登录用户
+	user = g.user
+	
+	# 获取二级分类
+	second_level_categories = g.second_level_categories
+	
+	return render_template('user/about_me.html', user=user,second_level_categories=second_level_categories)

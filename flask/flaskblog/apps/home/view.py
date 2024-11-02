@@ -3,6 +3,7 @@
 # apps/home/view.py
 from flask import Blueprint, render_template, jsonify,g
 
+from extends import cache
 from extends.login_verify import get_user_id
 
 home_bp = Blueprint('home', __name__)
@@ -21,7 +22,7 @@ def get_categories():
 	# 获取二级分类
 	second_level_categories = g.second_level_categories
 	
-	# Convert ArticleType instances to serializable format
+	# 将 ArticleType 实例转换为可序列化格式
 	serializable_categories = []
 	for category_dict in second_level_categories:
 		for first_level, second_levels in category_dict.items():
@@ -42,6 +43,7 @@ def get_categories():
 	return jsonify(serializable_categories)
 
 @home_bp.route('/', methods=['GET'], endpoint='index')
+@cache.cached(timeout=3600)
 def index():
 	user, redirect_response = get_user_id()
 	# 获取二级分类

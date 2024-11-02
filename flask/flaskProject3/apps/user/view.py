@@ -1,10 +1,20 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+import os
+from crypt import methods
+from datetime import datetime, timedelta
+from io import BytesIO
+
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, current_app, session, make_response
 import re
+
+from werkzeug.utils import secure_filename
+
+from apps.user.form import UserForm
 from apps.user.model import User
 from sqlalchemy import or_
 from extends import db
+from extends.verify_code import generate_image
 
 # 创建蓝图对象,name参数是蓝图的名称，url_prefix参数是蓝图的URL前缀m,__name__是蓝图所在模块
 user_bp = Blueprint('user', __name__, url_prefix='/user')
@@ -148,4 +158,45 @@ def search_user():
 	} for user in users]
 	
 	return jsonify(users)
+
+
+@user_bp.route('/', methods=['GET', 'POST'])
+def hello_world():
+	# 创建表单对象
+	uform = UserForm()
+	if uform.validate_on_submit():
+		# 这些数据是UserForm验证通过后的数据
+		username = uform.username.data
+		password = uform.password.data
+		phone = uform.phone.data
+		icon = uform.icon.data
+		filename = secure_filename(icon.filename)
+		# icon.save(os.path.join(current_app.config['UPLOAD_DIR'], filename))
+		return '提交成功！'
+	
+	return render_template('user/user.html', uform=uform)
+
+
+@user_bp.route('/image_code',methods=['GET'])
+def image_code():
+	# 检查是否有之前的验证码session，如果有则删除
+	if 'image_code' in session:
+		session.pop('image_code')
+	# 生成验证码
+	image,code = generate_image(current_app.config['IMAGE_CODE_LENGTH'])
+	# 将验证码图片转换为二进制
+	buffer=BytesIO() # BytesIO对象用于在内存中存储二进制数据
+	image.save(buffer,'JPEG')
+	buffer_bytes=buffer.getvalue()
+	
+	# 将验证码保存到session中
+	session['image_code'] = {
+		'code':code,
+		# 设置验证码的过期时间为5分钟
+		'expiration':(datetime.now()+timedelta(minutes=5)).timestamp()
+	}
+	# 将验证码图片返回给客户端
+	response=make_response(buffer_bytes)
+	response.headers['Content-Type'] = 'image/jpeg'
+	return response
 

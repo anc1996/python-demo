@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}
+	上传相册
+{% endblock %}
+{% block header %}
+	{{ super() }}
+    <script src="{{ url_for('static',filename='tinymce/tinymce.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/tinymceInit.js') }}"></script>
+    <script src="{{ url_for('static',filename='tinymce/langs/zh_CN.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row section-intro add-bottom">
+    <h3>上传个人相册</h3>
+    <div class="column large-full">
+          <form action="{{ url_for('user.upload_album') }}" method="post" enctype="multipart/form-data">
+              <div>
+                    <label for="sampleInput">相册名字：</label>
+                    <input class="full-width"  type="text" name="album_name" placeholder="输入你的相册名字">
+              </div>
+              <div>
+                   <label for="sampleInput">相册：</label>
+                   <input type="file" name="album_file">
+              </div>
+              <div>
+                  <label for="sampleInput">图片描述：</label>
+                  <textarea id="markdown" name="description">Hello, World!</textarea>
+              </div>
+              <div>
+                  <input class="btn--primary full-width" type="submit" value="上传图片">
+              </div>
+          </form>
+        {# 错误提示 #}
+        {% if album_error_msg %}
+            <div class="alert-box alert-box--error hideit">
+                {{ album_error_msg }}。
+                <i class="fa fa-times alert-box__close" aria-hidden="true"></i>
+            </div><!-- end error -->
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+

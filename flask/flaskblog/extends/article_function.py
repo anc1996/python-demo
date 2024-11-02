@@ -4,6 +4,8 @@ from flask import g
 from apps.article.model import ArticleType
 
 
+
+
 def get_article_type_hierarchy():
 	# 第一级分类
 	first_level_categories = ArticleType.query.filter(ArticleType.parent_id == None).all()
