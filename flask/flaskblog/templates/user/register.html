@@ -1,46 +1,71 @@
 {% extends 'base.html' %}
 {% block title %}
-	用户注册
+    用户注册
 {% endblock %}
 
 {% block content %}
 <main class="row content__page">
     <section class="column large-full entry format-standard">
-      <h2>用户注册</h2>
+        <h2>用户注册</h2>
+        <!-- 显示消息闪现 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert-box alert-box--{{ category }} hideit">
+                            {{ message }}
+                            <i class="fa fa-times alert-box__close" aria-hidden="true"></i>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <form action="{{ url_for('user.register') }}" method="post">
+            {{ form.hidden_tag() }}
             <div>
-                <label for="sampleInput">用户名：</label>
-                <input class="full-width" id="inputUsername" type="text" placeholder="用户名" name="username">
-                <span></span>
-             </div>
-            <div>
-                <label for="sampleInput">密码：</label>
-                <p><input class="full-width" type="password" name="password" placeholder="密码"></p>
-                <p><input class="full-width" type="password" name="repassword" placeholder="确认密码"></p>
+                <label for="inputUsername">用户名：</label>
+                {{ form.username(class="full-width", id="inputUsername", placeholder="用户名") }}
+                 <span></span>
+                {% for error in form.username.errors %}
+                    <span style="color: red;">{{ error }}</span>
+                {% endfor %}
             </div>
             <div>
-                <label for="sampleInput">手机号码：</label>
-                <input class="full-width" id="inputPhone" type="number" name="phone" placeholder="手机号码">
-                <span></span>
+                <label for="inputPassword">密码：</label>
+                {{ form.password(class="full-width", id="inputPassword", placeholder="密码") }}
+                {% for error in form.password.errors %}
+                    <span style="color: red;">{{ error }}</span>
+                {% endfor %}
             </div>
             <div>
-                <label for="sampleInput">邮箱：</label>
-                <input class="full-width" id="inputemail" type="email" name="email" placeholder="邮箱">
-                <span></span>
+                <label for="inputRepassword">确认密码：</label>
+                {{ form.re_password(class="full-width", id="inputRepassword", placeholder="确认密码") }}
+                {% for error in form.re_password.errors %}
+                    <span style="color: red;">{{ error }}</span>
+                {% endfor %}
             </div>
-                <input class="btn--primary full-width" type="submit" value="用户注册">
+            <div>
+                <label for="inputPhone">手机号码：</label>
+                {{ form.phone(class="full-width", id="inputPhone", placeholder="手机号码") }}
+                <span></span>
+                {% for error in form.phone.errors %}
+                    <span style="color: red;">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div>
+                <label for="inputEmail">邮箱：</label>
+                {{ form.email(class="full-width", id="inputEmail", placeholder="邮箱") }}
+                <span></span>
+                {% for error in form.email.errors %}
+                    <span style="color: red;">{{ error }}</span>
+                {% endfor %}
+            </div>
+            {{ form.submit(class="btn--primary full-width") }}
         </form>
-        {# 错误提示 #}
-        {% if submit_error_msg %}
-            <div class="alert-box alert-box--error hideit">
-                {{ submit_error_msg }}。
-                <i class="fa fa-times alert-box__close" aria-hidden="true"></i>
-            </div><!-- end error -->
-        {% endif %}
     </section>
 </main>
 {% endblock %}
-
 
 {% block footer %}
     {{ super() }}
@@ -66,10 +91,10 @@
             });
 
             // 检查邮箱是否可用
-            $('#inputemail').blur(function() {
+            $('#inputEmail').blur(function() {
                 let email = $(this).val();
                 let email_error = $(this).next('span');
-                let isEmailValid=checkEmailFormat('#inputemail','span');
+                let isEmailValid=checkEmailFormat('#inputEmail','span');
                 if (isEmailValid){
                     $.get('{{ url_for('user.check_email') }}', { email: email }, function(data) {
                         if (!data.exists) {

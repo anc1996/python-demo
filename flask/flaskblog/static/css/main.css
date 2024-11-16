@@ -2313,6 +2313,18 @@ input::-moz-focus-inner {
     line-height : 3.2rem;
 }
 
+.header__nav .has-children > a {
+    cursor: pointer;
+}
+
+.header__nav .has-children .sub-menu {
+    display: none;
+}
+
+.header__nav .has-children:hover .sub-menu {
+    display: block;
+}
+
 /* ------------------------------------------------------------------- 
  * ## menu toggle
  * ------------------------------------------------------------------- */

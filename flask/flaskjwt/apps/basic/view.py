@@ -3,6 +3,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
+from extends import jwt
+
 basic_bp=Blueprint('basic', __name__, url_prefix='/basic')
 
 # 创建路由来验证您的用户并返回 JWT。这
@@ -14,7 +16,7 @@ def login():
     password=request.json.get('password',None)
     if username!='test' or password!='test':
         return jsonify({"msg": "用户名或密码错误"}), 401
-    
+
     # 创建JWT令牌
     access_token=create_access_token(identity=username)
     return jsonify({"access_token": access_token}), 200

@@ -14,48 +14,66 @@
             <button class="btn--primary" id="phone-login-btn">手机验证码登录</button>
         </div>
 
-        <!-- 用户名密码登录表单 -->
-        <form id="username-login-form" action="{{ url_for('user.login',type='username') }}" method="post" style="display: none;">
-            <div>
-                <label for="InputUsername">用户名：</label>
-                <input class="full-width" type="text" id="InputUsername" name="username" placeholder="用户名">
-                <span></span>
-            </div>
-            <div>
-                <label for="InputPassword">密码：</label>
-                <input class="full-width" type="password" id="InputPassword" name="password" placeholder="密码">
-                <span></span>
-            </div>
-            <div>
-                <input class="btn--primary full-width" type="submit" value="登录">
-            </div>
-        </form>
-
-        <!-- 手机验证码登录表单 -->
-        <form id="phone-login-form" action="{{ url_for('user.login',type="phone") }}" method="post" style="display: none;">
-            <div class="form-group">
-                <label for="InputPhone">手机号：</label>
-                <input class="full-width" type="text" id="InputPhone" name="phone" placeholder="请输入手机号">
-                <span id="error_phone" class="error"></span>
-            </div>
-            <div class="form-group">
-                <label for="sms-provider">选择短信服务商：</label>
-                <select id="sms-provider" name="sms_provider">
-                    <option value="netease">网易短信</option>
-                    <option value="ali">阿里短信</option>
-                </select>
-            </div>
-            <div class="form-group phone-code-input">
-                <label for="InputCode">验证码：</label>
-                <input class="full-width" type="text" id="InputCode" name="code" placeholder="请输入验证码">
-                <button type="button" class="btn--primary" id="send-code-btn">发送验证码</button>
-                <span id="error_code" class="error"></span>
-            </div>
-
-            <div class="form-group">
-                <input class="btn--primary full-width" type="submit" value="登录">
-            </div>
-        </form>
+        <!-- 登录表单容器 -->
+        <div id="login-form-container">
+            <!-- 初始加载用户名密码登录表单 -->
+            {% if form %}
+            <form id="login-form" action="{{ url_for('user.login', type=request.args.get('type')) }}" method="post">
+                {{ form.hidden_tag() }}   <!-- 包含 CSRF 令牌 -->
+                {% if form.__class__.__name__ == 'UsernamePasswordLoginForm' %}
+                    <div>
+                        {{ form.username.label }}
+                        {{ form.username(class="full-width", placeholder="用户名",id="InputUsername") }}
+                        <span></span>
+                        {% for error in form.username.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        {{ form.password.label }}
+                        {{ form.password(class="full-width",id="InputPassword", placeholder="密码") }}
+                        <span></span>
+                        {% for error in form.password.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        {{ form.submit(class="btn--primary full-width") }}
+                    </div>
+                {% elif form.__class__.__name__ == 'PhoneCodeLoginForm' %}
+                    <div class="form-group">
+                        {{ form.phone.label }}
+                        {{ form.phone(class="full-width", placeholder="请输入手机号", id="InputPhone") }}
+                        <span id="error_phone" class="error"></span>
+                        {% for error in form.phone.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="form-group">
+                        {{ form.sms_provider.label }}
+                        {{ form.sms_provider(class="full-width") }}
+                        {% for error in form.sms_provider.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="form-group phone-code-input">
+                        {{ form.code.label }}
+                        {{ form.code(class="full-width", placeholder="请输入验证码",id="InputCode") }}
+                        <button type="button" class="btn--primary" id="send-code-btn">发送验证码</button>
+                        <span id="error_code" class="error"></span>
+                        {% for error in form.code.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="form-group">
+                        {{ form.submit(class="btn--primary full-width") }}
+                    </div>
+                {% endif %}
+            </form>
+            {% else %}
+            <p>请选择登录方式</p>
+            {% endif %}
+        </div>
 
         {# 错误提示 #}
         {% if error_login_msg %}
@@ -68,7 +86,6 @@
 </main>
 {% endblock %}
 
-
 {% block footer %}
     {{ super() }}
     <script src="{{ url_for('static', filename='js/user.js') }}"></script>
@@ -76,13 +93,11 @@
         $(document).ready(function() {
             // 选择登录方式
             $('#username-login-btn').click(function() {
-                $('#username-login-form').show();
-                $('#phone-login-form').hide();
+                window.location.href = "{{ url_for('user.login', type='username') }}";
             });
 
             $('#phone-login-btn').click(function() {
-                $('#phone-login-form').show();
-                $('#username-login-form').hide();
+                window.location.href = "{{ url_for('user.login', type='phone') }}";
             });
 
             // 发送验证码按钮的逻辑
@@ -90,20 +105,29 @@
                 sendVerificationCode();
             });
 
+            // 加载登录表单
+            function loadLoginForm(type) {
+                $.ajax({
+                    url: "{{ url_for('user.login') }}",
+                    type: 'GET',
+                    data: { type: type },
+                    success: function(response) {
+                        $('#login-form-container').html(response);
+                    },
+                    error: function(xhr, status, error) {
+                        alert('加载表单失败: ' + error);
+                    }
+                });
+            }
 
             // 发送验证码的逻辑
             function sendVerificationCode() {
                 let phone = $('#InputPhone').val();
-                let sms_provider = $('#sms-provider').val();
-                let phone_error = $('#error_phone');
+                let sms_provider = $('#sms_provider').val();
+                let phone_error = $('#InputPhone').next('.error');
 
                 // 清空之前的错误信息
                 phone_error.text('');
-
-                // 验证手机号格式
-                if (!checkPhoneFormat('#InputPhone', '#error_phone')) {
-                    return;
-                }
 
                 $.ajax({
                     url: "{{ url_for('user.sendmsg') }}",
@@ -131,27 +155,36 @@
                     }
                 });
             }
+        });
 
-            // 检查用户名和密码是否为空
-            $('#InputUsername').blur(function() {
-                let isUsernameValid=checkEmptyInput('#InputUsername', 'span','用户名不能为空');
-            });
 
-            // 检查密码是否为空
-            $('#InputPassword').blur(function() {
-                let isPasswordValid=checkEmptyInput('#InputPassword', 'span','密码不能为空');
-            });
+        // 显示错误信息
+        function displayErrors(errors) {
+            for (let field in errors) {
+                let errorMessages = errors[field];
+                let errorSpan = $(`#${field}`).next('.error');
+                errorSpan.text(errorMessages.join(', '));
+            }
+        }
 
-            // 检查手机号码格式
-            $('#InputPhone').blur(function() {
-                let isPhoneValid=checkPhoneFormat('#InputPhone', 'span');
-            });
+        // 检查用户名和密码是否为空
+        $('#InputUsername').blur(function() {
+            let isUsernameValid=checkEmptyInput('#InputUsername', 'span','用户名不能为空');
+        });
 
-            // 检查验证码格式
-            $('#InputCode').blur(function() {
-                let isCodeValid=checkCodeFormat('#InputCode', '#error_code');
-            });
+        // 检查密码是否为空
+        $('#InputPassword').blur(function() {
+            let isPasswordValid=checkEmptyInput('#InputPassword', 'span','密码不能为空');
+        });
 
+        // 检查手机号码格式
+        $('#InputPhone').blur(function() {
+            let isPhoneValid=checkPhoneFormat('#InputPhone', 'span');
+        });
+
+        // 检查验证码格式
+        $('#InputCode').blur(function() {
+            let isCodeValid=checkCodeFormat('#InputCode', '#error_code');
         });
     </script>
 {% endblock %}

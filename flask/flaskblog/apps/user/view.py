@@ -1,19 +1,24 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
 import re
-import uuid
+from datetime import datetime, timedelta
+from io import BytesIO
 
-from flask import Blueprint
-from flask import render_template, request, redirect, url_for, jsonify, session, make_response, current_app, g
-from sqlalchemy import or_,func
+from flask import session,render_template, request, jsonify, make_response, current_app, g,Blueprint
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
+from email_validator import validate_email, EmailNotValidError
+from wtforms.validators import ValidationError
 
 from apps.article.model import Article,ArticleType
 from apps.user.model import User, UserInfo, UserAlbum
-from extends import db, cache
+from apps.user.userForm import PhoneCodeLoginForm, UsernamePasswordLoginForm, RegisterForm, SendMsgForm, resetForm
+from extends import db,cache
+from extends.alisms.sms import Sample
 from extends.file_function import upload_file
 from extends.minio_bucket import flask_bucket
-from extends.wangyisms.sms import send_sms
+from extends.picture_verifycode.verify_code import generate_image
+from extends.wangyisms.sms import wy_send_sms
 from extends.login_verify import login_required
 
 
@@ -54,9 +59,14 @@ def check_phone():
 @user_bp.route('/check_email', methods=['GET'])
 def check_email():
 	email = request.args.get('email')
-	if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$', email):
-		return jsonify({'exists': False, 'error_msg': '邮箱格式不正确'})
+	# 使用 email_validator 验证邮箱格式
+	try:
+		valid = validate_email(email)
+		email = valid.email  # 规范化邮箱地址
+	except EmailNotValidError as e:
+		return jsonify({'exists': False, 'error_msg': str(e)})
 	
+	# 检查邮箱是否已存在
 	user = User.query.filter_by(email=email).first()
 	if user:
 		return jsonify({'exists': False, 'error_msg': '邮箱已存在'})
@@ -64,148 +74,98 @@ def check_email():
 		return jsonify({'exists': True})
 
 
+from flask import flash, redirect, url_for
+
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
-	
-	if request.method == 'POST':
-		# 获取post提交的数据
-		username = request.form.get('username')
-		password = request.form.get('password')
-		repassword = request.form.get('repassword')
-		phone = request.form.get('phone')
-		email = request.form.get('email')
-		# 判断用户名和密码是否为空
-		if not all([username, password, repassword]):
-			return render_template('user/register.html', submit_error_msg='用户名和密码不能为空',second_level_categories=second_level_categories)
-		# 判断两次密码是否一致
-		if password != repassword:
-			return render_template('user/register.html', submit_error_msg='两次密码不一致',second_level_categories=second_level_categories)
-		
-		# 判断手机号是否为空且格式是否正确
-		if not phone and re.match(r'^1[3-9]\d{9}$', phone):
-			return render_template('user/register.html', submit_error_msg='手机号格式不正确',second_level_categories=second_level_categories)
-		
-		# 判断邮箱是否为空且格式是否正确
-		if not email and re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
-			return render_template('user/register.html', submit_error_msg='邮箱格式不正确',second_level_categories=second_level_categories)
-		# 判断用户是否已经注册
-		# if any(user.username == username for user in users):
-		# 	return render_template('user/register.html', msg='用户已注册')
-		# 第一步：创建user对象
-		user = User(username=username, password=password, email=email, phone=phone)
-		# 第二步：将user对象添加到数据库
-		db.session.add(user)
-		db.session.commit()
-		# 注册成功，跳转到个人资料页
-		response = make_response(redirect(url_for('home.index')))
-		# 设置cookie加密
-		singed_user_id = current_app.serializer.dumps({'user_id': user.id})
-		# cookie实现机制;httponly表示只能通过http协议访问，不能通过js访问，secure表示只能通过https协议访问
-		response.set_cookie('user_id', singed_user_id, max_age=60 * 60 * 24 * 7, httponly=True, secure=False)
-		# session 用法
-		session[user.id] = user.username
-		return response
-	return render_template('user/register.html',second_level_categories=second_level_categories)
+    form = RegisterForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            username = form.username.data
+            password = form.password.data
+            phone = form.phone.data
+            email = form.email.data
+            # 创建user对象
+            user = User(username=username, password=password, email=email, phone=phone)
+            # 将user对象添加到数据库
+            db.session.add(user)
+            db.session.commit()
+
+            # 注册成功，跳转到个人资料页
+            response = make_response(redirect(url_for('home.index')))
+            # 设置cookie加密
+            singed_user_id = current_app.serializer.dumps({'user_id': user.id})
+            response.set_cookie('user_id', singed_user_id, max_age=60 * 60 * 24 * 7, httponly=True, secure=False)
+            # 更新缓存
+            cache.delete('view//')
+            # session 用法
+            session[user.id] = user.username
+            return response
+        else:
+	        flash(form.errors, 'error')
+	        return redirect(url_for('user.register'))
+    return render_template('user/register.html', form=form)
+
 
 
 @user_bp.route('/login', methods=['GET', 'POST'], endpoint='login')
 def login():
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
-	if request.method == 'POST':
-		type = request.args.get('type')
-		if type == 'username':
-			# 获取post提交的数据
-			username = request.form.get('username')
-			password = request.form.get('password')
-			# 判断用户名和密码是否为空
-			if not all([username, password]):
-				return render_template('user/login.html', error_login_msg='用户名和密码不能为空',second_level_categories=second_level_categories)
-			# 查找用户且
-			user = User.query.filter_by(username=username).first()
-			# 判断用户是否存在且密码是否正确
-			if not user or not user.check_password(password):
-				return render_template('user/login.html', error_login_msg='用户名或密码错误',second_level_categories=second_level_categories)
-			# 判断用户是否被删除
-			if user.is_deleted:
-				return render_template('user/login.html', error_login_msg='用户已被删除,需要激活',second_level_categories=second_level_categories)
-		elif type == 'phone':
-			# 获取post提交的数据
-			phone = request.form.get('phone')
-			code = request.form.get('code')
-			# 判断手机号和验证码格式是否正确
-			if not re.match(r'^1[3-9]\d{9}$', phone) and not re.match(r'^\d{6}$', code):
-				return render_template('user/login.html', error_login_msg='手机号和验证码格式不正确',second_level_categories=second_level_categories)
-			# 验证code与redis数据库是否一致
-			valid_code=cache.get(phone)
-			# valid_code = current_app.redis_client.get(phone).decode('utf-8')
-			if code != valid_code:
-				return render_template('user/login.html', error_login_msg='验证码错误',second_level_categories=second_level_categories)
-			# 查找用户是否存在
-			user = User.query.filter_by(phone=phone).first()
-			if not user:
-				return render_template('user/login.html', error_login_msg='用户不存在',second_level_categories=second_level_categories)
-			# 删除redis数据库中的验证码,若没有不报错
-			# current_app.redis_client.delete(phone)
-			cache.delete(phone)
-		# 登录成功，跳转到个人资料页
-		response = make_response(redirect(url_for('home.index')))
-		# 设置cookie加密
-		singed_user_id = current_app.serializer.dumps({'user_id': user.id})
-		# cookie实现机制;httponly表示只能通过http协议访问，不能通过js访问，secure表示只能通过https协议访问
-		response.set_cookie('user_id', singed_user_id, max_age=60 * 60 * 24 * 7, httponly=True, secure=False)
-		# session 用法
-		session[user.id] = user.username
-		return response
-	
-	# get请求，用于登录
-	return render_template('user/login.html',second_level_categories=second_level_categories)
+    login_type = request.args.get('type')
+    if login_type == 'username':
+        form = UsernamePasswordLoginForm()
+    elif login_type == 'phone':
+        form = PhoneCodeLoginForm()
+    else:
+        return render_template('user/login.html', form=None, error_login_msg='请选择登录方式')
 
+    if request.method == 'POST':
+        if form.validate_on_submit():
+	        # 根据登录方式获取用户
+            user = User.query.filter_by(username=form.username.data).first() \
+	                if login_type == 'username' \
+	                else User.query.filter_by(phone=form.phone.data).first()
+            # 创建响应对象并重定向到首页
+            response = make_response(redirect(url_for('home.index')))
+            singed_user_id = current_app.serializer.dumps({'user_id': user.id})
+            response.set_cookie('user_id', singed_user_id, max_age=60 * 60 * 24 * 7, httponly=True, secure=False)
+            session[user.id] = user.username
+            # 更新缓存
+            cache.delete('view//')
+            return response
+        else:
+	        return render_template('user/login.html', form=form, error_login_msg=form.errors)
 
-@user_bp.route('/sendmsg', methods=['GET', 'POST'], endpoint='sendmsg')
+    return render_template('user/login.html', form=form)
+
+@user_bp.route('/sendmsg', methods=['POST'], endpoint='sendmsg')
 def sendmsg():
-	# 用手机验证码登录
-	sms_provider = request.form.get('sms_provider')
-	phone = request.form.get('phone')
-	
-	# 验证手机号格式
-	if not re.match(r'^1[3-9]\d{9}$', phone):
-		return jsonify({'sms_status': '手机号格式不正确', 'status': 400}), 400
-	
-	# 验证用户是否存在
-	user = User.query.filter_by(phone=phone).first()
-	if not user:
-		return jsonify({'sms_status': '用户不存在', 'status': 404}), 404
-	
-	# 验证短信服务商
-	if sms_provider not in ['netease', 'ali']:
-		return jsonify({'sms_status': '请选择短信服务商', 'status': 400}), 400
-	
-	# 发送验证码
-	if sms_provider == 'netease':
-		success, code = send_sms(phone)
-	elif sms_provider == 'ali':
-		# 用阿里云发送验证码
-		# 这里需要实现阿里云发送验证码的逻辑
-		success, code = True, '123456'  # 示例代码，实际应替换为阿里云发送验证码的逻辑
-	
-	# 处理发送结果
-	if success:
-		# 状态200
-		cache.set(phone, code, timeout=60)  # 60秒过期
-		# current_app.redis_client.set(phone, code, ex=100)  # 60秒过期
-		return jsonify({"sms_status": "短信发送成功", 'status': 200}), 200
+	form = SendMsgForm(request.form)
+	if form.validate():
+		phone = form.phone.data
+		sms_provider = form.sms_provider.data
+		
+		# 发送验证码
+		if sms_provider == 'netease':
+			success, code = wy_send_sms(phone)
+		elif sms_provider == 'ali':
+			# 用阿里云发送验证码
+			# 这里需要实现阿里云发送验证码的逻辑
+			success, code = Sample.send_sms(phone)  # 示例代码，实际应替换为阿里云发送验证码的逻辑
+		
+		# 处理发送结果
+		if success:
+			# 状态200
+			cache.set(phone, code, timeout=60)  # 60秒过期
+			return jsonify({"sms_status": "短信发送成功", 'status': 200}), 200
+		else:
+			return jsonify({"sms_status": "短信发送失败", 'status': 500}), 500
 	else:
-		return jsonify({"sms_status": "短信发送失败", 'status': 500}), 500
+		return jsonify({"sms_status": form.errors, 'status': 500}), 500
 
 
 @user_bp.route('/logout', methods=['GET', 'POST'])
 def logout():
-	
 	# 创建响应对象并重定向到首页
-	# make_response()函数用于创建响应对象
 	response = make_response(redirect(url_for('home.index')))
 	
 	# 检查cookie中是否存在user_id
@@ -215,30 +175,32 @@ def logout():
 		# 对用户ID进行解密
 		user_id = current_app.serializer.loads(singed_user_id).get('user_id')
 		# 删除session中的用户ID
-		session.pop(user_id, None)
+		session.pop(user_id, default=None)
 		# 删除cookie中的用户ID
 		response.delete_cookie('user_id')
+	
+	# 删除首页缓存
+	cache.delete('view//')
 	return response
 
 
 @user_bp.route('/profile', methods=['GET', 'POST'], endpoint='profile')
 @login_required
 def profile():
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
 	# 获取当前登录用户
 	user = g.user
 	# 获取用户的详细信息
 	user_info = UserInfo.query.filter_by(user_id=user.id).first()
-	return render_template('user/profile.html', user=user, user_info=user_info,second_level_categories=second_level_categories)
+	return render_template('user/profile.html', user=user, user_info=user_info)
+
+
 
 
 
 @user_bp.route('/update_user_info', methods=['GET', 'POST'], endpoint='update_user_info')
 @login_required
 def update_user_info():
-	# 获取二级分类
-    second_level_categories = g.second_level_categories
+	
     if request.method == 'POST':
         # 获取表单数据
         username = request.form.get('username')
@@ -249,7 +211,6 @@ def update_user_info():
         age = request.form.get('age')
         icon = request.files.get('icon')  # FileStorage对象, 用于上传文件
         user_content=request.form.get('user_content')
-		
 		
         # 获取当前登录用户
         user = g.user
@@ -272,18 +233,18 @@ def update_user_info():
             error_msg = check_exists(field, value, error_msg)
             if error_msg:
                 return render_template('user/profile.html', user=user,
-                                       user_info=userinfo, profile_error_msg=error_msg, second_level_categories=second_level_categories)
+                                       user_info=userinfo, profile_error_msg=error_msg)
 	  
 	    # 允许上传的文件类型
         if icon:
             icon_name = icon.filename
-            # 获取文件后缀
-            
-            minio_file_path, error_msg = upload_file(icon, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'])
+            # 获取蓝图的名字
+            # 返回上传文件的路径和错误信息
+            minio_file_path, error_msg = upload_file(icon, user.id,
+                                                     current_app.config['IMAGE_ALLOWED_EXTENSIONS'],'user/images','icon')
             if error_msg:
                 return render_template('user/profile.html',
-                                       user=user, profile_error_msg=error_msg,
-                                       second_level_categories=second_level_categories)
+                                       user=user, profile_error_msg=error_msg)
             
             # 删除minio保存的照片。
             if user.icon:
@@ -311,7 +272,7 @@ def update_user_info():
         except Exception as e:
             db.session.rollback()
             return render_template('user/profile.html',
-                                   user=user, user_info=userinfo, profile_error_msg=f'更新失败: {str(e)}', second_level_categories=second_level_categories)
+                                   user=user, user_info=userinfo, profile_error_msg=f'更新失败: {str(e)}')
         # 重定向到个人资料页
         return redirect(url_for('user.profile'))
 
@@ -324,10 +285,8 @@ def update_user_info():
 @user_bp.route('/publish_article', methods=['GET', 'POST'], endpoint='publish_article')
 @login_required
 def publish_article():
+	# 获取当前登录用户
 	user = g.user
-	
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
 	third_level_categories = g.third_level_categories
 	
 	if request.method == 'POST':
@@ -336,7 +295,6 @@ def publish_article():
 		type_id = request.form.get('type_id',type=int)
 		if not all([title, content, type_id]):
 			return render_template('user/add_article.html', error_article_msg='标题和内容、分类不能为空', user=user,
-			                       second_level_categories=second_level_categories,
 			                       third_level_categories=third_level_categories)
 		
 		# 将文章保存到数据库数据库
@@ -347,12 +305,10 @@ def publish_article():
 		except SQLAlchemyError as e:
 			db.session.rollback()
 			return render_template('user/add_article.html', error_article_msg='文章发布失败', user=user,
-			                       second_level_categories=second_level_categories,
 			                       third_level_categories=third_level_categories)
 		return redirect(url_for('home.index'))
 	
 	return render_template('user/add_article.html', user=user,
-	                       second_level_categories=second_level_categories,
 	                       third_level_categories=third_level_categories)
 
 
@@ -365,9 +321,6 @@ def user_article_list():
 	
 	# 获取页码
 	page = request.args.get('page', 1, type=int)
-	
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
 	
 	# 分页查询当前用户的文章
 	pagination = (Article.query.filter_by(user_id=user.id,is_deleted=False)
@@ -389,18 +342,14 @@ def user_article_list():
 	              .order_by(Article.publish_time.desc()).paginate(page=page, per_page=10))
 	
 	# 返回文章列表页
-	return render_template('user/user_article_list.html',
-	                       second_level_categories=second_level_categories,
-	                       user=user, pagination=pagination)
+	return render_template('user/user_article_list.html',user=user, pagination=pagination)
 
 @user_bp.route('/user_change_article', methods=['GET', 'POST'], endpoint='user_change_article')
 @login_required
 def user_change_article():
 	# 获取当前登录用户
 	user=g.user
-	
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
+	# 获取当前登录用户的文章分类
 	third_level_categories = g.third_level_categories
 	
 	if request.method == 'POST':
@@ -415,9 +364,7 @@ def user_change_article():
 		
 		if not all([title, content, type_id]):
 			return render_template('user/change_article.html', error_article_msg='标题和内容、分类不能为空', user=user,
-			                       second_level_categories=second_level_categories,
-			                       third_level_categories=third_level_categories,
-			                       article=current_article)
+			                       third_level_categories=third_level_categories,article=current_article)
 		
 		# 更新文章
 		current_article.title = title
@@ -429,9 +376,7 @@ def user_change_article():
 		except SQLAlchemyError as e:
 			db.session.rollback()
 			return render_template('user/change_article.html', error_article_msg='文章更新失败', user=user,
-			                       second_level_categories=second_level_categories,
-			                       third_level_categories=third_level_categories,
-			                       article=current_article)
+			                       third_level_categories=third_level_categories,article=current_article)
 		return redirect(url_for('user.user_article_list'))
 	
 	# 获取文章ID
@@ -439,9 +384,7 @@ def user_change_article():
 	# 获取当前文章详情
 	current_article = Article.query.filter(Article.id == article_id,Article.is_deleted==False).first()
 	return render_template('user/change_article.html',
-	                       user=user,second_level_categories=second_level_categories,
-	                       third_level_categories=third_level_categories,
-	                       article=current_article)
+	                       user=user,third_level_categories=third_level_categories, article=current_article)
 	
 
 @user_bp.route('/delete_article', methods=['GET'], endpoint='delete_article')
@@ -449,9 +392,6 @@ def user_change_article():
 def delete_article():
 	# 获取当前登录用户
 	user=g.user
-	
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
 	
 	# 获取参数
 	article_id = request.args.get('article_id')
@@ -470,9 +410,6 @@ def delete_article():
 def upload_album():
 	# 获取当前登录用户
 	user = g.user
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
-	
 	if request.method == 'POST':
 		# 获取上传图片
 		album = request.files.get('album_file')  # FilesStorage对象，用于上传文件
@@ -480,17 +417,13 @@ def upload_album():
 		description = request.form.get('description')
 		
 		if not album:
-			return render_template('user/add_album.html',
-			                       user=user, album_error_msg='文件不存在',
-			                       second_level_categories=second_level_categories)
+			return render_template('user/add_album.html',user=user, album_error_msg='文件不存在')
 		
 		# 使用封装的函数上传文件
-		minio_file_path, error_msg = upload_file(album, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'])
+		minio_file_path, error_msg = upload_file(album, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'],'user/images','album')
 		
 		if error_msg:
-			return render_template('user/add_album.html',
-			                       user=user, album_error_msg=error_msg,
-			                       second_level_categories=second_level_categories)
+			return render_template('user/add_album.html',user=user, album_error_msg=error_msg)
 		
 		user.albums.append(UserAlbum(name=album_name, path=minio_file_path, description=description))
 		
@@ -501,14 +434,13 @@ def upload_album():
 			db.session.rollback()
 			# 删除刚才上传的图片
 			flask_bucket.remove_file(minio_file_path)
-			return render_template('user/add_album.html', user=user, profile_error_msg=f'更新失败: {str(e)}',
-			                       second_level_categories=second_level_categories)
+			return render_template('user/add_album.html', user=user, profile_error_msg=f'更新失败: {str(e)}')
 		
 		# 重定向到个人资料页
 		return redirect(url_for('user.user_album_list'))
 	
 	return render_template('user/add_album.html',
-	                       user=user, second_level_categories=second_level_categories)
+	                       user=user)
 
 	
 @user_bp.route('/user_album_list', methods=['GET'], endpoint='user_album_list')
@@ -516,14 +448,10 @@ def upload_album():
 def user_album_list():
 	# 获取当前登录用户
 	user = g.user
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
-	
 	# 分页查询当前用户的相册
 	pagination = UserAlbum.query.filter_by(user_id=user.id).order_by(UserAlbum.album_datetime.desc()).paginate(page=1, per_page=10)
 	
-	return render_template('user/user_album_list.html',second_level_categories=second_level_categories,
-	                       user=user, pagination=pagination)
+	return render_template('user/user_album_list.html',user=user, pagination=pagination)
 
 
 @user_bp.route('/user_change_album', methods=['GET', 'POST'], endpoint='user_change_album')
@@ -531,9 +459,6 @@ def user_album_list():
 def user_change_album():
 	# 获取当前登录用户
 	user = g.user
-	
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
 	
 	if request.method == 'POST':
 		# 获取表单数据
@@ -551,10 +476,9 @@ def user_change_album():
 			# 删除原来的图片
 			flask_bucket.remove_file(user_album.path)
 			# 上传新的图片
-			minio_file_path, error_msg = upload_file(album, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'])
+			minio_file_path, error_msg = upload_file(album, user.id, current_app.config['IMAGE_ALLOWED_EXTENSIONS'],'user/images','album')
 			if error_msg:
-				return render_template('user/change_album.html', user=user, album=user_album, album_error_msg=error_msg,
-				                       second_level_categories=second_level_categories)
+				return render_template('user/change_album.html', user=user, album=user_album, album_error_msg=error_msg)
 			user_album.path = minio_file_path
 		try:
 			db.session.add(user_album)
@@ -564,24 +488,20 @@ def user_change_album():
 			if minio_file_path:
 				# 假如album存在并上传了，才删除刚才上传的图片
 				flask_bucket.remove_file(minio_file_path)
-			return render_template('user/change_album.html', user=user, album=user_album, album_error_msg=f'更新失败: {str(e)}',
-			                       second_level_categories=second_level_categories)
+				
+			return render_template('user/change_album.html', user=user, album=user_album, album_error_msg=f'更新失败: {str(e)}')
 		return redirect(url_for('user.user_album_list'))
 		
 	album_id = request.args.get('album_id')
 	# 获取当前相册详情
 	current_album = UserAlbum.query.filter(UserAlbum.id == album_id, UserAlbum.user_id == user.id).first()
-	return render_template('user/change_album.html',
-	                       user=user, album=current_album,second_level_categories=second_level_categories)
+	return render_template('user/change_album.html',user=user, album=current_album)
 
 @user_bp.route('/delete_album', methods=['GET'], endpoint='delete_album')
 @login_required
 def delete_album():
 	# 获取当前登录用户
 	user=g.user
-	
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
 	
 	# 获取参数
 	album_id = request.args.get('album_id')
@@ -596,10 +516,60 @@ def delete_album():
 @user_bp.route('/about_me', methods=['GET'], endpoint='about_me')
 @login_required
 def about_me():
+	
 	# 获取当前登录用户
 	user = g.user
+	return render_template('user/about_me.html', user=user)
+
+
+# 生成图片验证码
+@user_bp.route('/image_code', methods=['GET'], endpoint='image_code')
+def image_code():
+	# 检查是否有之前的验证码session，如果有则删除
+	if 'image_code' in session:
+		session.pop('image_code', None)
+	# 生成验证码
+	image, code = generate_image(current_app.config['IMAGE_CODE_LENGTH'])
+	# 将验证码图片转换为二进制
+	buffer = BytesIO()  # BytesIO对象用于在内存中存储二进制数据
+	image.save(buffer, 'JPEG')
+	buffer_bytes = buffer.getvalue()
 	
-	# 获取二级分类
-	second_level_categories = g.second_level_categories
-	
-	return render_template('user/about_me.html', user=user,second_level_categories=second_level_categories)
+	# 将验证码保存到session中
+	session['image_code'] = {
+		'code': code,
+		# 设置验证码的过期时间为5分钟
+		'expiration': (datetime.now() + timedelta(minutes=5)).timestamp()
+	}
+	# 将验证码图片返回给客户端
+	response = make_response(buffer_bytes)
+	response.headers['Content-Type'] = 'image/jpeg'
+	return response
+
+
+@user_bp.route('/reset_password', methods=['GET', 'POST'], endpoint='reset_password')
+@login_required
+def reset_password():
+    user = g.user
+    restform = resetForm()
+
+    if request.method == 'POST':
+        if restform.validate_on_submit():
+            old_password = restform.old_password.data
+            new_password = restform.new_password.data
+            try:
+                # 检查旧的密码
+                if not user.check_password(old_password):
+                    raise ValidationError('旧密码不正确')
+                # 更新密码
+                user.password = new_password
+                db.session.add(user)
+                db.session.commit()
+                # 重定向到首页
+                return redirect(url_for('home.index'))
+            except ValidationError as e:
+                # 捕获 ValidationError 并返回错误信息
+                reset_error_msg = str(e)
+                return render_template('user/reset_password.html', reset_error_msg=reset_error_msg, restform=restform, user=user)
+
+    return render_template('user/reset_password.html', restform=restform, user=user)

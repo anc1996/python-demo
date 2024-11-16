@@ -28,7 +28,7 @@ def logout(client):
 # 使用 JWT 函数发出请求
 def make_request_with_jwt(client):
     # 发出受保护的请求
-    response = client.post(f"{BASE_URL}/locations/protected")
+    response = client.post(f"{BASE_URL}/locations/only_headers")
     result = response.json()
     print(f"Protected Response: {result}")  # Debugging print statement
     return result
@@ -41,7 +41,7 @@ def test_jwt_workflow(client):
 
     # 使用 JWT 令牌发出请求
     result = make_request_with_jwt(client)
-    assert result['foo'] == 'bar'
+    assert result['foo'] == 'baz'
 
     #注销并删除 JWT 令牌
     logout(client)

@@ -9,7 +9,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from extends import db
 
 
-class automatic(db.Model):
+class AUTOMATIC(db.Model):
 	
 	# 定义表名
 	__tablename__ = 'automatic'
@@ -17,7 +17,7 @@ class automatic(db.Model):
 	id:Mapped[int]=mapped_column(primary_key=True,autoincrement=True,comment="主键")
 	username:Mapped[str]=mapped_column(String(128),unique=True,comment="用户名")
 	full_name = mapped_column(Text, nullable=False)
-	password:Mapped[str]=mapped_column(String(255),nullable=False,comment="密码")
+	_password:Mapped[str]=mapped_column(String(255),nullable=False,comment="密码")
 	
 	@property
 	def password(self):
@@ -43,3 +43,4 @@ class automatic(db.Model):
 		"""
 		
 		return check_password_hash(self._password, password)
+	

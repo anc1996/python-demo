@@ -83,19 +83,8 @@
             {# 主要导航 #}
             <ul class="header__nav" id="main-nav">
                 <li class="current"><a href="{{ url_for('home.index') }}" title="">主页</a></li>
-                {% for category_dict in second_level_categories %}
-                    {% for first_level, second_levels in category_dict.items() %}
-                        <li class="has-children">
-                            <a href="#0" title="">{{ first_level.type_name }}</a>
-                            <ul class="sub-menu">
-                                {% for second_level in second_levels %}
-                                    <li><a href="{{ url_for('article.get_articles', type_id=second_level.id) }}">{{ second_level.type_name }}</a></li>
-                                {% endfor %}
-                            </ul>
-                        </li>
-                    {% endfor %}
-                {% endfor %}
-                {# 使用 AJAX 加载的导航部分 #}
+
+                <!-- 使用 AJAX 加载的导航部分 -->
                 <div id="ajax-nav-placeholder"></div>
 
                 {% if user %}
@@ -103,7 +92,8 @@
                     <li class="has-children">
                         <a href="#0" title="">{{ user.username }}的个人中心</a>
                         <ul class="sub-menu">
-                            <a href="{{ url_for('user.profile') }}">个人信息</a>
+                            <li><a href="{{ url_for('user.profile') }}">个人信息</a></li>
+                            <li><a href="{{ url_for('user.reset_password') }}">修改密码</a></li>
                             <li><a href="{{ url_for('user.user_article_list') }}">您的文章</a></li>
                             <li><a href="{{ url_for('user.publish_article') }}">发表文章</a></li>
                             <li><a href="{{ url_for('user.user_album_list') }}">你的相册</a></li>
@@ -250,48 +240,54 @@
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 {# footer底部增加js、css文件引入#}
-{#<script>#}
-{#    $(document).ready(function() {#}
-{#        // 使用事件委托绑定点击事件#}
-{#        $('#ajax-nav-placeholder').on('click', 'a', function(event) {#}
-{#            event.preventDefault();#}
-{#            console.log('Link clicked:', $(this).attr('href'));#}
-{#            // 在这里添加你的逻辑#}
-{#        });#}
-{#        #}
-{#        // Make an AJAX request to fetch the categories#}
-{#        $.ajax({#}
-{#            url: "{{ url_for('home.get_categories') }}",#}
-{#            method: "GET",#}
-{#            success: function(data) {#}
-{#                // 创建主导航列表#}
-{#                var $nav = $('<ul class="header__nav"></ul>');#}
-{##}
-{#                // 迭代类别并构建导航#}
-{#                data.forEach(function(category_dict) {#}
-{#                    var $firstLevelLi = $('<li class="has-children"></li>');#}
-{#                    $firstLevelLi.append('<a href="#0" title="">' + category_dict.first_level.type_name + '</a>');#}
-{##}
-{#                    var $subMenu = $('<ul class="sub-menu"></ul>');#}
-{#                    category_dict.second_levels.forEach(function(second_level) {#}
-{#                        var articleUrl = "{{ url_for('article.get_articles', type_id=0) }}".replace("0", second_level.id);#}
-{#                        $subMenu.append('<li><a href="' + articleUrl + '">' + second_level.type_name + '</a></li>');#}
-{#                    });#}
-{##}
-{#                    $firstLevelLi.append($subMenu);#}
-{#                    $nav.append($firstLevelLi);#}
-{#                });#}
-{##}
-{#                // 将导航附加到占位符#}
-{#                $('#ajax-nav-placeholder').append($nav);#}
-{#            },#}
-{#            error: function(xhr, status, error) {#}
-{#                console.error("AJAX Error: ", status, error);#}
-{#            }#}
-{#        });#}
-{#    });#}
-{#</script>#}
+<script>
+$(document).ready(function() {
+    // 使用事件委托绑定点击事件
+    $('#ajax-nav-placeholder').on('click', 'a', function(event) {
+        // 阻止默认行为
+        event.preventDefault();
+        // 获取链接的 href 属性
+        var href = $(this).attr('href');
+        // 在这里添加你的逻辑
+        console.log('Link clicked:', href);
+        // 使用 window.location.href 进行页面跳转
+        window.location.href = href;
+    });
+
+    // Make an AJAX request to fetch the categories
+    $.ajax({
+        url: "{{ url_for('home.get_categories') }}",
+        method: "GET",
+        success: function(data) {
+            // 创建主导航列表
+            var $nav = $('<ul class="header__nav"></ul>');
+
+            // 迭代类别并构建导航
+            data.forEach(function(category_dict) {
+                var $firstLevelLi = $('<li class="has-children"></li>');
+                $firstLevelLi.append('<a href="#0" title="">' + category_dict.first_level.type_name + '</a>');
+
+                var $subMenu = $('<ul class="sub-menu"></ul>');
+                category_dict.second_levels.forEach(function(second_level) {
+                    var articleUrl = "{{ url_for('article.get_articles', type_id=0) }}".replace("0", second_level.id);
+                    $subMenu.append('<li><a href="' + articleUrl + '">' + second_level.type_name + '</a></li>');
+                });
+
+                $firstLevelLi.append($subMenu);
+                $nav.append($firstLevelLi);
+            });
+
+            // 将导航附加到占位符
+            $('#ajax-nav-placeholder').append($nav);
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX Error: ", status, error);
+        }
+    });
+});
+</script>
 {% endblock %}
+
 
 </body>
 </html>

@@ -16,11 +16,13 @@ from sqlalchemy import or_
 from extends import db
 from extends.verify_code import generate_image
 
+
 # 创建蓝图对象,name参数是蓝图的名称，url_prefix参数是蓝图的URL前缀m,__name__是蓝图所在模块
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
+	
 	if request.method == 'POST':
 		# 获取post提交的数据
 		username = request.form.get('username')
@@ -35,16 +37,19 @@ def login():
 			return render_template('user/login.html', msg='用户名或密码错误')
 		# 登录成功，跳转到个人资料页
 		return redirect(url_for('user.profile'))
+	
 	return render_template('user/login.html')
 
 
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
+	
 	if request.method == 'POST':
 		# 获取post提交的数据
 		username = request.form.get('username')
 		password = request.form.get('password')
 		repassword = request.form.get('repassword')
+		
 		# 判断用户名和密码是否为空
 		if not all([username, password, repassword]):
 			return render_template('user/register.html', msg='用户名和密码不能为空')
@@ -60,6 +65,7 @@ def register():
 		# 判断邮箱是否为空且格式是否正确
 		if not email and re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
 			return render_template('user/register.html', msg='邮箱格式不正确')
+		
 		# 判断用户是否已经注册
 		# if any(user.username == username for user in users):
 		# 	return render_template('user/register.html', msg='用户已注册')
@@ -73,11 +79,14 @@ def register():
 		db.session.add(user)
 		db.session.commit()
 		return redirect(url_for('user.profile'))
+	
 	return render_template('user/register.html')
 
 
 @user_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
+	
+	
 	print(url_for('user.register'))  # 反向解析：/user/register
 	# 从数据库中查询未删除的用户
 	users = User.query.filter(User.is_deleted == False).all()
@@ -195,6 +204,7 @@ def image_code():
 		# 设置验证码的过期时间为5分钟
 		'expiration':(datetime.now()+timedelta(minutes=5)).timestamp()
 	}
+	
 	# 将验证码图片返回给客户端
 	response=make_response(buffer_bytes)
 	response.headers['Content-Type'] = 'image/jpeg'

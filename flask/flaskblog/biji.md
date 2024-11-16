@@ -253,7 +253,7 @@ teardown_app_request
              将image对象转成二进制
              make_response(buf_bytes)  ---->response
              response.headers['Content-Type']= 'image/jpg'
-    
+
              session['code']=code验证码
              return response
 
@@ -270,35 +270,35 @@ teardown_app_request
 使用缓存：
 
     1. Cache对象
-    
+
        from flask-caching import Cache
-    
+
        cache = Cache()
-    
+
     2.
     config = {
         'CACHE_TYPE': 'redis',
         'CACHE_REDIS_HOST': '127.0.0.1',
         'CACHE_REDIS_PORT': 6379
     }
-    
+
     def create_app():
         .....
         cache.init_app(app,config)
-    
+
     3. 设置缓存:
        cache.set(key,value,timeout=second)   ----> flask_cache_pic_abc
        cache.set_many([(key,value),(key,value),(key,value),...])
-    
+
        获取缓存值:
        cache.get(key)  --->value
        cache.get_many(key1,key2,...)
-    
+
        删除缓存:
        cache.delete(key)
        cache.delete_many(key1,key2,...)
        cache.clear()
-    
+
     视图函数缓存:
     @app.route("/")
     @cache.cached(timeout=50)
@@ -325,7 +325,7 @@ SMS: 手机验证码
         s = AppSecret + Nonce + CurTime
         headers['CheckSum'] = hashlib.sha1(s.encode('utf-8')).hexdigest().lower()
         res = requests.post(url, data={'mobile': phone}, headers=headers)
-       4.获取响应对象：
+    4.获取响应对象：
        res.text     文本内容
        res.content  二进制
 
@@ -337,6 +337,7 @@ SMS: 手机验证码
        保存到缓存中: cache.set(phone,r.obj)
 
     6. 返回json结果给ajax
+
 
 2.登录验证：
    获取手机号码和验证码进行验证
@@ -359,7 +360,7 @@ nginx:
 安装可以参照的路径:
   http://nginx.org/en/linux_packages.html#Ubuntu
 
-# Nginx
+
 
 启动Nginx
 	nginx 	[ -c  configpath]   默认配置目录：/etc/nginx/nginx.conf
@@ -380,110 +381,3 @@ nginx:
 	systemctl  stop     nginx   关闭nginx服务
 	systemctl  enable nginx	设置开机自启
 	systemctl  disable nginx	禁止开机自启
-
-# wtform
-
-flask-wtf:集成了wtform，csrf的保护和文件上传功能，图形验证码。
-
-1。安装：
-
-```SH
-pip3 install Flask-WTF
-```
-
-全局使用csrf保护，
-
-```python
-csrf = CSRFProtect(app=app)
-# 必须需要设置SECRET_KEY这个配置项
-app.config['SECRET_KEY'] = 'fgfhdf4564'
-```
-
-2。定义form.py:
-
-```python
-# 在文件中中添加：
-
-class UserForm(FlaskForm):
-    name = StringField('name', validators=[DataRequired()])
-```
-
-各种：Field类型
-
-- StringField
-- PasswordField
-- IntegerField
-- DecimalField
-- FloatField
-- BooleanField
-- RadioField
-- SelectField
-- DatetimeField
-
-各种的验证：
-
-- DataRequired
-- EqualTo
-- IPAddress
-- Length
-- NumberRange
-- URL
-- Email
-- Regexp
-
-3.使用：
-
- 视图中：
-
-```python
-   .....
-   form =UserForm()
-   return render_template('user.html',form=form)
-```
-
- 模板中：
-
-```html
-    <form action='' method=''>
-      {{form.csrf_token}}
-      {{form.name}}
-      {{form.password}}
-      <input type='submit' value=''/>
-    </form>
-```
-
-4.提交验证：
-
-```python
-@app.route('/',methods=['GET','POST'])
-def hello_world():
- uform = UserForm()
- if uform.validate_on_submit():   ------->主要通过validate_on_submit进行校验
-     print(uform.name)
-     print(uform.password)
-     return '提交成功！'
-
- return render_template('user.html', uform=uform)
-```
-
-## 文件上传：
-
-1。定义form
-
-```python
-class UserForm(FlaskForm):
-    。。。。。。
-    # 上传使用的就是FileField，如果需要指定上传文件的类型需要使用：FileAllowed
-    icon = FileField(label='用户头像', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'gif'], message='必须是图片文件格式')])
-```
-
-2。模板中的使用同其他类型的字段，但是必须在form上面：enctype="multipart/form-data",multipart/form-data 是一种用于在 HTTP 请求中上传文件的编码类型。它允许你在一个表单中同时上传文件和文本数据。使用 multipart/form-data 的主要原因是为了支持文件上传，并且能够处理二进制数据和文本数据。
-
-3。视图函数中如果验证成功，通过：
-
-```python
-    icon = uform.icon.data  #  -----》icon是FileStorage类型
-    filename = secure_filename(icon.filename)
-    icon.save(os.path.join(UPLOAD_DIR, filename))
-```
-

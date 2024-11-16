@@ -1,25 +1,39 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String,Float,Integer,ForeignKey,event,Text
+
+from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
+from sqlalchemy import String,Float,Integer,ForeignKey,event,Text,Boolean,DateTime
 from extends import db
+from extends.minio_bucket import flask_bucket
 
 
 class Goods(db.Model):
 	__tablename__ = 'goods'
 	
-	id:Mapped[int]=mapped_column(primary_key=True,autoincrement=True)
-	name:Mapped[str]=mapped_column(String(128),nullable=False)
-	price:Mapped[float]=mapped_column(Float,nullable=False)
-	description:Mapped[str]=mapped_column(Text,nullable=True)
+	id:Mapped[int]=mapped_column(primary_key=True,autoincrement=True,comment='商品id') # 商品id
+	name:Mapped[str]=mapped_column(String(128),nullable=False,comment='商品名称') # 商品名称
+	price:Mapped[float]=mapped_column(Float,nullable=False,comment='商品价格') # 商品价格
+	description:Mapped[str]=mapped_column(Text,nullable=True,comment='商品描述') # 商品描述
+	image:Mapped[str]=mapped_column(String(128),nullable=True,comment='商品图片') # 商品图片
+	is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, comment='是否删除')  # 是否删除
+	update_time: Mapped[datetime] = mapped_column(DateTime, default=datetime.now,onupdate=datetime.now, comment='更新时间')  # 更新时间
+	
 	# backref: 反向引用
 	# secondary: 指定中间表
-	users = relationship('User', backref='goods',secondary='user_goods_association')
+	users:Mapped["User"]=relationship("User",secondary='user_goods_association',
+	                                  backref='goods',uselist=True)
 	
 	def __str__(self):
 		return self.name
 	
-	
+	@property
+	def ImageUrl(self):
+		if not self.image:
+			return None
+		return flask_bucket.get_Url(bucket_file=self.image)
+
+
 class UserGoodsAssociation(db.Model):
 	
 	def __init__(self,user_id,goods_id,quantity):
@@ -33,8 +47,9 @@ class UserGoodsAssociation(db.Model):
 	user_id:Mapped[int]=mapped_column(Integer,ForeignKey('user.id'))
 	goods_id:Mapped[int]=mapped_column(Integer,ForeignKey('goods.id'))
 	quantity:Mapped[int]=mapped_column(Integer,default=0)
-	# 总价
-	total_price:Mapped[float]=mapped_column(Float,nullable=False)
+	total_price:Mapped[float]=mapped_column(Float,nullable=False) # 总价
+	# backref: 反向引用
+	user:Mapped["User"]=relationship("User",backref=backref('association',uselist=False))
 	
 # 事件监听器，用于自动计算 total_price
 @event.listens_for(UserGoodsAssociation, 'before_insert')

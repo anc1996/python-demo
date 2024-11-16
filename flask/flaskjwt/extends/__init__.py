@@ -19,6 +19,7 @@ cors=CORS()  # 实例化CORS对象
 
 jwt=JWTManager()  # 实例化JWTManager对象
 
+
 # 实例化URLSafeTimedSerializer对象
 def init_serializer(app):
     # 实例化URLSafeTimedSerializer对象

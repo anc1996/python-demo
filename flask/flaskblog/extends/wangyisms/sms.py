@@ -54,7 +54,7 @@ def generate_code(phone):
 	code = ''.join(random.sample(last_six_digits + timestamp_last_six_digits, 6))
 	return code
 	
-def send_sms(phone):
+def wy_send_sms(phone):
 	"""
 		resp.content
 		 Response:b'{"code":200,"msg":"2201","obj":"223333"}'
@@ -73,6 +73,7 @@ def send_sms(phone):
 		if result['code'] == 200:
 			return True,code
 		else:
+			current_app.logger.error("ERROR: ret.code=%s,msg=%s" % (result['code'], result['msg']))
 			print("ERROR: ret.code=%s,msg=%s" % (result['code'], result['msg']))
 			return False,code
 	return False,code

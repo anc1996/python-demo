@@ -40,20 +40,30 @@ def get_user_id():
 		resp.delete_cookie('user_id')
 		# 删除session中的user_id
 		if cookie_user_id in session:
-			session.pop(cookie_user_id)
+			session.pop(cookie_user_id, default=None)
 		# 返回user_id为空和response对象
 		return None, resp
 	
 	return user, None
 
 
+# 定义一个装饰器函数，用于检查用户是否已登录
 def login_required(func):
+	# 使用 wraps 装饰器来保留被装饰函数的元数据
 	@wraps(func)
 	def decorated_function(*args, **kwargs):
+		# 调用 get_user_id 函数来获取用户信息和重定向响应
 		user, redirect_response = get_user_id()
+		
+		# 如果 get_user_id 返回了重定向响应，则直接返回该响应
 		if redirect_response:
 			return redirect_response
 		else:
+			# 如果用户已登录，将用户信息存储在全局变量 g 中
 			g.user = user
+		
+		# 调用被装饰的函数，并传递所有参数
 		return func(*args, **kwargs)
+	
+	# 返回装饰后的函数
 	return decorated_function

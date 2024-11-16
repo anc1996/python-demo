@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy import DATETIME, String, Integer, ForeignKey, Boolean,Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
-import re
 from sqlalchemy.orm import validates
 
 from extends import db
@@ -43,7 +42,7 @@ class Article(db.Model):
     title: Mapped[str] = mapped_column(String(128),nullable=False,comment='标题')
     description: Mapped[str] = mapped_column(String(128), nullable=True,comment="文章描述")
     content: Mapped[str] = mapped_column(Text,nullable=False,comment='文章内容')
-    publish_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.utcnow, comment='发布时间')
+    publish_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.now, comment='发布时间')
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, comment='是否删除')
     read_count: Mapped[int] = mapped_column(Integer, default=0,comment="阅读次数")
     collect_count: Mapped[int] = mapped_column(Integer, default=0,comment="收藏次数")
@@ -77,9 +76,10 @@ class ArticleFile(db.Model):
     file_path: Mapped[str] = mapped_column(String(128), nullable=False, comment="文件路径")
     file_type: Mapped[str] = mapped_column(String(64), nullable=True, comment="文件类型")
     file_size: Mapped[int] = mapped_column(Integer, nullable=True, comment="文件大小")
-    upload_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.utcnow, comment="上传时间")
+    upload_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.now, comment="上传时间")
     article_id: Mapped[int] = mapped_column(Integer, ForeignKey('article.id'), nullable=False, comment="文章ID")
     content_type: Mapped[str] = mapped_column(String(64), nullable=False, comment="附件类型")
+
 
     @validates('file_name')
     def validate_file_name(self, key, file_name):
@@ -118,7 +118,7 @@ class Comment(db.Model):
     content: Mapped[str] = mapped_column(Text, nullable=False, comment='评论内容')
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False, comment='用户ID')
     article_id: Mapped[int] = mapped_column(Integer, ForeignKey('article.id'), nullable=False, comment='文章ID')
-    comment_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.utcnow, comment='评论时间')
+    comment_time: Mapped[datetime] = mapped_column(DATETIME, default=datetime.now, comment='评论时间')
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, comment='是否删除')
     parent_id: Mapped[int] = mapped_column(Integer, ForeignKey('comment.id'), nullable=True, comment='父评论ID')
     
