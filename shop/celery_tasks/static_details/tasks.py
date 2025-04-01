@@ -5,11 +5,14 @@ import sys
 # sys.path.insert(0, '../')
 
 from django.template import loader
-from django.conf import settings
+
+
+
 from celery_tasks.main import celery_app
 
 from contents.utils import get_categories, get_breadcrumb
 from goods.models import SKU
+from shop.settings import dev_settings as settings
 
 @celery_app.task(bind=True,name='get_detail_html',retry_backoff=3,max_retries=4) # name给任务起别名
 def get_detail_html(self,sku_id):

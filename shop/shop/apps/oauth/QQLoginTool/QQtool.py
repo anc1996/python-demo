@@ -9,6 +9,7 @@ class OAuthQQ(object):
     """
 
     def __init__(self, client_id=None, client_secret=None, redirect_uri=None, state=None):
+        """初始化QQ认证辅助工具类"""
         # 申请QQ登录成功后，分配给应用的appid。
         self.client_id = client_id
         # **appkey**：appid对应的密钥，访问用户资源时用来验证应用的合法性
@@ -17,9 +18,10 @@ class OAuthQQ(object):
         self.redirect_uri = redirect_uri
         # 用于保存登录成功后的跳转页面路径。client端的状态值。用于第三方应用防止CSRF攻击，成功授权后回调时会原样带回。
         self.state = state
-
+    
+    # 1、QQ登录url参数组建，扫码后得到Authorization Code
     def get_qq_url(self):
-        # QQ登录url参数组建，第一步：获取Authorization Code
+        
         data_dict = {
             'response_type': 'code',
             'client_id': self.client_id,
@@ -32,7 +34,7 @@ class OAuthQQ(object):
 
         return qq_url
 
-    # 获取access_token值
+    # 2、通过Authorization Code获取access_token值
     def get_access_token(self, code):
         # 构建参数数据
         data_dict = {
@@ -45,10 +47,9 @@ class OAuthQQ(object):
             # 与上面一步中传入的redirect_uri保持一致。
             'redirect_uri': self.redirect_uri,
             # 上一步返回的authorization code。如果用户成功登录并授权，则会跳转到指定的回调地址，并在URL中带上Authorization Code。
-            # 例如，回调地址为www.qq.com/my.php，则跳转到：http://www.qq.com/my.php?code=520DD95263C1CFEA087******注意此code会在10分钟内过期。
+            # 例如，回调地址为www.qq.com/my.php，则跳转到：http://www.qq.com/my.php?code=520DD95263C1CFEA087******,注意此code会在10分钟内过期。
             'code': code
         }
-        print('code钥匙：', code)
         # 构建url
         access_url = 'https://graph.qq.com/oauth2.0/token?' + urlencode(data_dict)
 
@@ -73,8 +74,7 @@ class OAuthQQ(object):
 
         return access_token[0]
 
-    # 获取open_id值
-
+    # 3、通过Access Token获取获取open_id值
     def get_open_id(self, access_token):
 
         # 构建请求url
@@ -85,7 +85,7 @@ class OAuthQQ(object):
             response = requests.get(url)
 
             # 提取数据
-            # callback( {"client_id":"YOUR_APPID","openid":"YOUR_OPENID"} );
+            """callback( {"client_id":"YOUR_APPID","openid":"YOUR_OPENID"} );"""
             # code=asdasd&msg=asjdhui  错误的时候返回的结果
             data = response.text
             data = data[10:-3]

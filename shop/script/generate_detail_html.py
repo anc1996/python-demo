@@ -18,10 +18,6 @@ from contents.utils import get_categories, get_breadcrumb
 from goods.models import SKU
 
 
-
-
-
-
 def generate_static_sku_detail_html(sku_id):
     """
     生成静态商品详情页面

@@ -56,9 +56,9 @@ def check_verify_email_token(token):
 
 def get_user_by_account(account):
     """
-    通过账号获取账号
-    :param account:用户名或者手机号
-    :return:user
+        通过账号获取账号
+        :param account:用户名或者手机号
+        :return:user
     """
     try:
         if re.match(r'^1[3-9]\d{9}$', account):

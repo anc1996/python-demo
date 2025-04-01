@@ -1,0 +1,60 @@
+
+<!-- 继承自基础模板 base.html -->
+{% extends "base.html" %}
+
+<!-- 加载 Wagtail 核心标签库，提供 richtext、pageurl 等过滤器和标签 -->
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block body_class %}template-blogpage{% endblock %}
+
+{% block content %}  <!-- 开始内容区块，会替换父模板中的同名区块 -->
+
+    <h1>{{ page.title }}</h1>  <!-- 显示博客文章的标题 -->
+    <p class="date">Published: {{ page.date }}</p>  <!-- 显示文章的发布日期，应用 date 类样式 -->
+
+    <!-- 添加作者-->
+    {% with authors=page.authors.all %}
+        {% if authors %}
+            <h3>作者:</h3>
+            <ul>
+                {% for author in authors %}
+                    <li style="display: inline">
+                        {% image author.author_image fill-40x60 style="vertical-align: middle" %}
+                        {{ author.name }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <!-- 显示文章的简介内容 -->
+    <div class="intro">{{ page.intro }}</div>
+
+    {{ page.body|richtext }}  <!-- 显示文章的主体内容，使用 richtext 过滤器渲染富文本 -->
+
+    {% for item in page.gallery_images.all %}
+        <div style="float: inline-start; margin: 10px">
+            {% image item.image fill-320x240 %} <!-- 显示图片 -->
+            {% if item.caption %}  <!-- 如果有图片说明，则显示 -->
+                <p class="caption">{{ item.caption }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <!--get_parent: 获取当前页面的父页面（即博客索引页面）-->
+    <p><a href="{{ page.get_parent.url }}">Return to blog</a></p>  <!-- 返回博客列表页的链接 -->
+
+    <!--添加标签 -->
+    {% with tags=page.tags.all %}
+        {% if tags %}
+            <div class="tags">
+                <h3>Tags</h3>
+                {% for tag in tags %}
+                    <!--用于根据名为 'tags' 的 Wagtail 页面的 slug 生成 URL。 假设你有一个名为 "tags" 的 Wagtail 页面，用于显示所有标签及其相关内容。-->
+                    <a href="{% slugurl 'tags' %}?tag={{ tag }}"><button type="button">{{ tag }}</button></a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+{% endblock %}

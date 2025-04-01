@@ -66,6 +66,8 @@ class Config:
 	JWT_REDIS_DB=8 # redis数据库
 	
 
+	
+
 class DevelopmentConfig(Config):
 	ENV = 'development'  # 环境
 	# 配置对象加载配置信息

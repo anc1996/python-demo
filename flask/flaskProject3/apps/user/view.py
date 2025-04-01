@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 
 from apps.user.form import UserForm
 from apps.user.model import User
+from apps.user.singal import login_space
 from sqlalchemy import or_
 from extends import db
 from extends.verify_code import generate_image
@@ -35,9 +36,11 @@ def login():
 		# 判断用户是否存在且密码是否正确
 		if not user or not user.check_password(password):
 			return render_template('user/login.html', msg='用户名或密码错误')
+		# 发送信号,这里用于app通信
+		login_space.send('user.login模块')
 		# 登录成功，跳转到个人资料页
 		return redirect(url_for('user.profile'))
-	
+		
 	return render_template('user/login.html')
 
 

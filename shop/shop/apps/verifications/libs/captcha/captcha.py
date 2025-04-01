@@ -189,7 +189,6 @@ class Captcha(object):
 
     def captcha(self, path=None, fmt='JPEG'):
         """Create a captcha.
-
         Args:
             path: save path, default None.
             fmt: image format, PNG / JPEG.

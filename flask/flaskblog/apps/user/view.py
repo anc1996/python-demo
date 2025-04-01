@@ -194,9 +194,6 @@ def profile():
 	return render_template('user/profile.html', user=user, user_info=user_info)
 
 
-
-
-
 @user_bp.route('/update_user_info', methods=['GET', 'POST'], endpoint='update_user_info')
 @login_required
 def update_user_info():
@@ -207,8 +204,8 @@ def update_user_info():
         phone = request.form.get('phone')
         email = request.form.get('email')
         realname = request.form.get('realname')
-        sex = request.form.get('sex')
-        age = request.form.get('age')
+        sex = request.form.get('sex',type=int)
+        age = request.form.get('age',type=int)
         icon = request.files.get('icon')  # FileStorage对象, 用于上传文件
         user_content=request.form.get('user_content')
 		
@@ -263,7 +260,7 @@ def update_user_info():
             userinfo.content=user_content if user_content else userinfo.content
         else:
             # 如果userinfo不存在，则创建一个。
-            userinfo = UserInfo(user_id=user.id, realname=realname, sex=sex, age=age)
+            userinfo = UserInfo(user_id=user.id, realname=realname, sex=sex, age=age,content=user_content)
         try:
             # 保存到数据库
             db.session.add(user)

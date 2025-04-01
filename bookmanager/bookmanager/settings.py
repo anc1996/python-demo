@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Path(__file__).resolve()返回一个Path对象，表示当前文件的绝对路径。例如：返回：PosixPath('/home/source/Django/bookmanager/bookmanager/settings.py')
 # Path(__file__).parent.parent返回当前文件的父目录。# PosixPath('/home/source/Django/bookmanager')
 # parent属性是Path对象的一个属性，它返回一个Path对象，表示父目录。
+
 print('BASE_DIR路径:',os.path.join(BASE_DIR,'templates'))
 
 # Quick-start development settings - unsuitable for production
@@ -63,8 +64,10 @@ INSTALLED_APPS = [
 # 中间件是位于服务器和客户端之间的一个代码模块，它可以对请求和响应进行处理。伴随触发的事件，中间件会执行一些操作。
 # 在Django中，中间件通常用于处理请求和响应、拦截请求和响应等。
 '''
-注意：中间件的顺序很重要，因为它们按照从上到下的顺序执行。在请求视图被处理后，中间件按照从下到上的顺序执行。
-可以自己编写中间件，范例在middleware.py文件中
+    注意：中间件的顺序很重要。
+        在请求视图被处理前，中间件由上至下依次执行
+        在请求视图被处理后，中间件由下至上依次执行
+    可以自己编写中间件，范例在middleware.py文件中
 '''
 MIDDLEWARE = [
     # 用于防止跨站脚本攻击（XSS）、跨站请求伪造（CSRF）等安全问题。
@@ -95,6 +98,8 @@ ROOT_URLCONF = "bookmanager.urls"
 # 告诉模板路径
 TEMPLATES = [
     {
+        # 由于你用了Django 的许多内置功能（如管理后台、表单渲染等）依赖于 Django 模板引擎。
+        # 该引擎不能丢弃。
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # 模板路径
         "DIRS": [BASE_DIR / 'templates'],
@@ -144,7 +149,7 @@ DATABASES = {
         # 'django.db.backends.sqlite3'
         # 'django.db.backends.oracle'
     "default": {
-        "ENGINE": "django.db.backends.mysql",
+        "ENGINE": "django.db.backends.mysql", # 默认依赖 MySQLdb 作为数据库驱动。在模块内部，它会尝试执行 import MySQLdb 来加载 MySQL 数据库驱动。
         'HOST': '127.0.0.1',  # 主机
         'PORT': '3306',  # 端口号
         'USER': 'root',  # 用户名
@@ -209,8 +214,8 @@ STATIC_URL = "static/"
 # STATICFILES_DIRS是一个列表，用于存储所有静态文件的集合。用于查找静态文件
 STATICFILES_DIRS = [
     # 两种方法
-    os.path.join(BASE_DIR, 'static'),
-    # BASE_DIR / "static",
+    # os.path.join(BASE_DIR, 'static'), # 兼容性高，适用对于 Python 3.8 以下版本
+    BASE_DIR / "static", # 适合当前流行的代码风格，尤其是在使用 Python 3.9+ 版本的项目中。
 ]
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

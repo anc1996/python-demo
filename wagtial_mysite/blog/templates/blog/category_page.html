@@ -1,0 +1,27 @@
+<!-- blog/templates/blog/category_page.html -->
+<!-- 这是一个博客分类页面的模板，用于展示特定分类下的所有博客文章 -->
+
+{% extends "base.html" %}  <!-- 继承自基础模板 base.html，复用基础页面结构 -->
+
+{% load wagtailcore_tags %}
+
+{% block content %}  <!-- 开始内容区块，会替换父模板中的同名区块 -->
+    <h1>{{ page.title }}</h1>  <!-- 显示当前分类页面的标题 -->
+    <p>{{ page.intro }}</p>  <!-- 显示分类页面的介绍文本 -->
+
+    {% if blogpages %}  <!-- 检查当前分类是否有博客文章 -->
+        <ul>  <!-- 使用无序列表展示博客文章 -->
+            {% for post in blogpages %}  <!-- 循环遍历当前分类下的所有博客文章 -->
+                <li>  <!-- 每篇博客作为一个列表项 -->
+                    <a href="{% pageurl post %}">{{ post.title }}</a>  <!-- 显示文章标题并链接到文章详情页 -->
+                    <p>{{ post.date }}</p>  <!-- 显示文章发布日期 -->
+                    <p>{{ post.intro }}</p>  <!-- 显示文章简介 -->
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No blog posts in this category.</p>  <!-- 如果该分类没有文章，显示提示信息 -->
+    {% endif %}
+
+    <a href="{% pageurl page.get_parent %}">返回到分类</a>  <!-- 返回到分类列表页的链接 -->
+{% endblock %}  <!-- 结束内容区块 -->

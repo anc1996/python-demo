@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 from rest_framework.status import *
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 
 from book_drf.Over_Basicclass.serializer import BookSerializer
+from books.filters import BookInfoFilter
 from books.models import BookInfo
 
 logger=logging.getLogger('BasicViewSet')
@@ -20,18 +23,30 @@ class Books(GenericViewSet):
             update() 保存数据
             destory() 删除数据
         因为 GenericViewSet 类继承自 GenericAPIView，
-        并提供了 get_object， get_queryset 方法和其他通用视图基本行为的默认配置，但默认情况不包括任何操作。
+        并提供了 get_object，get_queryset 方法和其他通用视图基本行为的默认配置，但默认情况不包括任何操作。
     """
     # 1、要指定当前类视图使用的查询数据
     queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
+    # 3、要指定当前视图使用的过滤器
+    filter_backends = [DjangoFilterBackend,OrderingFilter]  # Corrected filter_backends
+    filterset_class = BookInfoFilter  # Added filterset_class
+    ordering_fields = ['readcount', 'commentcount', 'pub_date']  # Added ordering_fields
+    
+    
     def list(self,request):
         # 1、获取查询集中的所有数据
-        books=self.get_queryset()
+        filtered_queryset=self.filter_queryset(self.get_queryset())
+        # 2、分页
+        page = self.paginate_queryset(filtered_queryset)
+        if page is not None:
+            # 4. 序列化分页后的数据
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         # 2、使用指定序列化器，获取序列化对象
-        books_serializer=self.get_serializer(books,many=True)
-        return Response(books_serializer.data)
+        serializer=self.get_serializer(filtered_queryset,many=True)
+        return Response(serializer.data)
 
     """新增保存图书"""
     def create(self, request):
@@ -90,5 +105,6 @@ class Books(GenericViewSet):
         except BookInfo.DoesNotExist:
             logger.error('当前数据不存在')
             return Response({'error': '当前数据不存在'}, status=HTTP_404_NOT_FOUND)
-        book.delete()
+        book.is_delete = True
+        book.save()
         return Response({'msg':'删除成功'},status=HTTP_204_NO_CONTENT)

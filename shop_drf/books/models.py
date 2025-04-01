@@ -29,11 +29,10 @@ class BookInfo(models.Model):
     is_delete=models.BooleanField(default=False,verbose_name='书是否删除')
     #自动为我们添加一个属性，这个属性可以通过书籍查询人物信息。
     class Meta:
-        # 用于模型的数据库表的名称：
-        db_table='bookinfo'
+        db_table='bookinfo'  # 用于模型的数据库表的名称：
         # 在admin站点中显示的名称
         verbose_name = '图书表'
-        verbose_name_plural=verbose_name
+        verbose_name_plural=verbose_name # verbose_name_plural表示复数形式的显示名称
 
     def __str__(self):
         """将模型类以字符串的方式输出"""
@@ -48,11 +47,7 @@ class PeopleInfo(models.Model):
     name = models.CharField(max_length=50, verbose_name='名称')
     # 性别
     # 有序字典
-    GENDER_CHOICES = (
-        (0, 'male'),
-        (1, 'female'),
-        (2,'secrecy')
-    )
+    GENDER_CHOICES = ((0, 'male'),(1, 'female'), (2,'secrecy'))
     # SmallIntegerField：一个小整数字段，适用于小整数。
     gender = models.SmallIntegerField(choices=GENDER_CHOICES, default=0, verbose_name='性别')
     # 描述

@@ -33,19 +33,19 @@ class AdminSerializer(serializers.ModelSerializer):
         pwd = validated_data.get('password')
         validated_data['is_staff'] = True
         # 加密密码
-        user = super().create(validated_data)
+        admin = super().create(validated_data)
         # 密码加密
-        user.set_password(pwd)
-        user.save()
-        return user
+        admin.set_password(pwd)
+        admin.save()
+        return admin
 
 
     def update(self, instance, validated_data):
         # 获取密码
         pwd = validated_data.get('password')
         # 加密密码
-        user = super().update(instance, validated_data)
+        admin = super().update(instance, validated_data)
         if pwd:
-            user.set_password(pwd)
-        user.save()
-        return user
+            admin.set_password(pwd)
+        admin.save()
+        return admin

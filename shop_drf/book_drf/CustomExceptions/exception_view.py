@@ -20,9 +20,10 @@ action装饰器可以接收两个参数：
 
 class Books(GenericViewSet):
     """获取所有图书"""
-    """获取所有图书"""
     # 1、要指定当前类视图使用的查询数据
     queryset = BookInfo.objects.filter(is_delete=False)
+    
+
 
     #  2、要指定当前视图使用的序列化器，通过重写父类的gget_serializer_class方法返回应该用于序列化器的类。
     # 才能使父类执行get_serializer函数这个serializer_class = self.get_serializer_class()内部定义的赋值
@@ -62,7 +63,7 @@ class Books(GenericViewSet):
     # 获取单一图书
     @action(methods=['get'], detail=True)
     def getone(self, request, pk):
-        raise DatabaseError
+        raise DatabaseError # 模拟异常
         try:
             # get_object(self) 返回详情视图所需的模型类数据对象，
             # 默认使用lookup_field参数来过滤queryset。 在试图中可以调用该方法获取详情信息的模型类对象。
@@ -97,5 +98,6 @@ class Books(GenericViewSet):
             book = self.get_object()  # 从查询集获取指定的单一数据对象
         except BookInfo.DoesNotExist:
             raise DatabaseError
-        book.delete()
+        book.is_delete=True
+        book.save()
         return Response({'ok': '删除成功'}, status=200)

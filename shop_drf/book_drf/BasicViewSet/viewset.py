@@ -33,11 +33,10 @@ class Books(ViewSet):
         # 1、查询所有图书对象
         print('这个是django view类原来request.data数据返回的内容:',request.query_params)
         books = BookInfo.objects.filter(is_delete=False)
-        bookserializer = BookSerializer(books, many=True)
-        return Response(bookserializer.data)
+        bookSerializer = BookSerializer(books, many=True)
+        return Response(bookSerializer.data)
 
     """保存图书"""
-
     def create(self, request):
         """自定义方法名，代替post方法,在urls路由匹配对应方法名"""
         # 1、请求体获取数据
@@ -86,5 +85,6 @@ class Books(ViewSet):
         except BookInfo.DoesNotExist:
             logger.error('当前数据不存在')
             return Response({'error': '当前数据不存在'}, status=HTTP_404_NOT_FOUND)
-        book.delete()
+        book.is_delete = True
+        book.save()
         return Response({'msg':'删除成功'},status=HTTP_204_NO_CONTENT)

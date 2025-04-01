@@ -33,7 +33,7 @@ class PaymentView(LoginRequiredJSONMixin, View):
         try:
             order = OrderInfo.objects.get(order_id=order_id, user=user, status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'])
         except OrderInfo.DoesNotExist:
-            return HttpResponseForbidden('订单信息错误')
+            return JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '订单有误'})
 
 
         alipay=alipay_init()
@@ -81,18 +81,18 @@ class PaymentStatusView(View):
         # 获取前端传入的请求参数
         query_dict = request.GET
         """
-        charset=utf-8
-        &out_trade_no=20240513203839000000006
-        &method=alipay.trade.page.pay.return
-        &total_amount=55281.00
-        &sign=KbRQnkRX8nCzd7FHbxW4JIhJl+DIUS1tlF0meQXoiTUB2BYoigV0jtd~······
-        &trade_no=2024051422001488090502967144
-        &auth_app_id=9021000136698047
-        &version=1.0
-        &app_id=9021000136698047
-        &sign_type=RSA2
-        &seller_id=2088721035568010
-        &timestamp=2024-05-14 23:58:06
+            charset=utf-8
+            &out_trade_no=20240513203839000000006
+            &method=alipay.trade.page.pay.return
+            &total_amount=55281.00
+            &sign=KbRQnkRX8nCzd7FHbxW4JIhJl+DIUS1tlF0meQXoiTUB2BYoigV0jtd~······
+            &trade_no=2024051422001488090502967144
+            &auth_app_id=9021000136698047
+            &version=1.0
+            &app_id=9021000136698047
+            &sign_type=RSA2
+            &seller_id=2088721035568010
+            &timestamp=2024-05-14 23:58:06
         """
         data = query_dict.dict()
         # 获取并从请求参数中提取并移除sign
@@ -127,6 +127,7 @@ class PaymentStatusView(View):
             order.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order.pay_method - 1][1]
             order.sku_list = []
             order_goods = order.skus.all()
+            
             for order_good in order_goods:
                 sku = order_good.sku
                 sku.count = order_good.count

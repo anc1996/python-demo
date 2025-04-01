@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, JsonResponse, HttpResponseRedirect, HttpResponseBadRequest
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from book.models import BookInfo
 from django.views import View
 import json
@@ -12,7 +12,7 @@ import json
 """
 视图
 1.就是python函数
-2.函数的第一个参数就是 请求  和请求相关的 它是 HttpRequest的实例对象
+2.函数的第一个参数就是 请求 和 请求相关的 它是 HttpRequest的实例对象
 3.我们必须要返回一个相应   相应是 HttpResponse的实例对象/子类实例对象
 """
 
@@ -74,21 +74,17 @@ def detail1(request,category_id, book_id):
     return HttpResponse(context.items())
 
 def detail2(request, category_id, book_id):
-
-
-
-
     ###########################GET 查询字符串#################################
     """
-    http://127.0.0.1:8000/detail2/100/110?username=it&password=123
-    定义视图接受参数，category_name=math，book_id=100
-    以? 作为一个分隔
-    ?前边 表示 路由
-    ?后边 表示 get方式传递的参数 称之为 查询字符串
-    ?key=value&key=value...
-    我们在登陆的时候会输入用户名和密码 理论上 用户名和密码都应该以POST方式进行传递
-        用 get方式来传递用户名和密码,QueryDict类型的对象用来处理同一个键带有多个值的情况
-        get('键',默认值)   如果键不存在则返回None值，可以设置默认值进行后续处理
+        http://127.0.0.1:8000/detail2/100/110?username=it&password=123
+        定义视图接受参数，category_name=math，book_id=100
+            以? 作为一个分隔
+            ?前边 表示 路由
+            ?后边 表示 get方式传递的参数 称之为 查询字符串
+            ?key=value&key=value...
+            我们在登陆的时候会输入用户名和密码 理论上 用户名和密码都应该以POST方式进行传递
+                用 get方式来传递用户名和密码,QueryDict类型的对象用来处理同一个键带有多个值的情况
+                get('键',默认值)   如果键不存在则返回None值，可以设置默认值进行后续处理
     """
     query_params = request.GET # request.GET获取请求中的查询字符串数据。
     print('query_params:', query_params)
@@ -144,10 +140,9 @@ def post_json(request):
     request_body=request.body # 得到数据是一个字节类型的数据
     body_decode=request_body.decode() # 解码成字符串
     """
-    导入 import json
-    json
-    json.dumps   将字典转换为 JSON形式的字符串
-    json.loads   将JSON形式的字符串转换为字典
+        导入 import json
+        json.dumps   将字典转换为 JSON形式的字符串
+        json.loads   将JSON形式的字符串转换为字典
     """
     if len(body_decode) <1:
         return HttpResponseBadRequest('没有数据')
@@ -168,23 +163,23 @@ def get_header(request):
         return HttpResponseBadRequest('没有数据')
 
     '''
-    元数据里面主要内容：
-    CONTENT_TYPE：请求的内容类型，例如"application/json"、"text/html"等。
-    HTTP_HOST：请求的主机名和端口号，如果有端口号的话。
-    SERVER_PORT：服务器的端口号。
-    SERVER_PROTOCOL：服务器使用的协议，例如"HTTP/1.1"、"HTTP/2"等。
-    CONTENT_LENGTH：请求的内容长度，以字节为单位。
-    HTTP_ACCEPT：客户端能接收的内容类型，例如"application/json"、"text/html"等。
-    HTTP_USER_AGENT：客户端的浏览器信息，通常用于识别客户端类型。
-    HTTP_REFERER：客户端发出请求的页面的URL。
-    HTTP_ACCEPT_ENCODING：客户端能支持的编码方式，例如"gzip"、"deflate"等。
-    HTTP_ACCEPT_LANGUAGE：客户端首选的语言，用于返回适合客户端的语言版本的内容。
-    HTTP_COOKIE：客户端的Cookie信息。
-    HTTP_CONNECTION：客户端期望的服务器连接类型，例如"keep-alive"、"close"等。
-    HTTP_CACHE_CONTROL：客户端对缓存的要求，例如"max-age=0"、"no-cache"等。
-    HTTP_UPGRADE_INSECURE_REQUESTS：客户端是否升级到HTTPS请求。
-    REMOTE_USER：客户端的用户名，通常用于身份验证。
-    REMOTE_ADDR：客户端的IP地址。
+        元数据里面主要内容：
+        CONTENT_TYPE：请求的内容类型，例如"application/json"、"text/html"等。
+        HTTP_HOST：请求的主机名和端口号，如果有端口号的话。
+        SERVER_PORT：服务器的端口号。
+        SERVER_PROTOCOL：服务器使用的协议，例如"HTTP/1.1"、"HTTP/2"等。
+        CONTENT_LENGTH：请求的内容长度，以字节为单位。
+        HTTP_ACCEPT：客户端能接收的内容类型，例如"application/json"、"text/html"等。
+        HTTP_USER_AGENT：客户端的浏览器信息，通常用于识别客户端类型。
+        HTTP_REFERER：客户端发出请求的页面的URL。
+        HTTP_ACCEPT_ENCODING：客户端能支持的编码方式，例如"gzip"、"deflate"等。
+        HTTP_ACCEPT_LANGUAGE：客户端首选的语言，用于返回适合客户端的语言版本的内容。
+        HTTP_COOKIE：客户端的Cookie信息。
+        HTTP_CONNECTION：客户端期望的服务器连接类型，例如"keep-alive"、"close"等。
+        HTTP_CACHE_CONTROL：客户端对缓存的要求，例如"max-age=0"、"no-cache"等。
+        HTTP_UPGRADE_INSECURE_REQUESTS：客户端是否升级到HTTPS请求。
+        REMOTE_USER：客户端的用户名，通常用于身份验证。
+        REMOTE_ADDR：客户端的IP地址。
     '''
     # 定义一个字典，存放所有的请求头字段
     HEADER_FIELDS = {
@@ -214,9 +209,9 @@ def get_header(request):
 def response1(request):
     ###########################HttpResponse#################################
     '''
-   范例：http://http://127.0.0.1:8000/book/response/
-    :param request:
-    :return: HttpResponse
+       范例：http://http://127.0.0.1:8000/book/response/
+        :param request:
+        :return: HttpResponse
     '''
     data = {'name': 'itcast'} #只有name
     # HttpResponse(content=响应体, content_type=响应体数据类型, status=状态码)
@@ -224,13 +219,13 @@ def response1(request):
     # statue        HTTP status 必须是系统的 100-599
     # content_type  是一个MIME类型，英文全称是Multipurpose Internet Mail Extensions，中文意思是多用途互联网邮件扩展类型
     #               语法形式是: 大类/小类
-    #           text/html   text/css    text/javascript
-    #           application/json
-    #           image/png   image/gif   image/jpeg
-    #           audio/mp3   audio/mp4
-    #           video/mp4   video/avi
-    #           application/pdf application/zip
-    #           application/msword
+    #                   text/html   text/css    text/javascript
+    #                   application/json
+    #                   image/png   image/gif   image/jpeg
+    #                   audio/mp3   audio/mp4
+    #                   video/mp4   video/avi
+    #                   application/pdf application/zip
+    #                   application/msword
     context=json.dumps(data)
     return HttpResponse(content=context,status=200,content_type='application/json')
 
@@ -238,8 +233,8 @@ def jsonresponse(request):
     ###########################JsonResponse#################################
     '''
     范例：http://ip:port/book/jsonresponse/
-    :param request:
-    :return: JsonResponse
+        :param request:
+        :return: JsonResponse
     '''
     data = {'name': 'itcast'}
     # 自动将字典转换为json格式的字符串,
@@ -252,10 +247,11 @@ def redirect1(request):
     范例：http://ip:port/book/tiaozhuan/
     :param request:
     :return: redirect
+    
+    HttpResponseRedirect 是 Django 中的一个类，直接生成 HTTP 状态码为 302 的响应，用于告诉浏览器重定向到指定的 URL。
+    Redirect 类是一个简单的视图函数，底层使用了 HttpResponseRedirect 或 HttpResponsePermanentRedirect。
+        可以接受多种类型的输入，包括 URL 字符串、命名路由（reverse）、模型对象等。
     '''
-    # HttpResponseRedirect 和 Redirect 类都可以用于重定向用户，但它们之间有一些细微的差别。
-    # HttpResponseRedirect 是 Django 中的一个类，它可以处理一些特殊情况，如处理 POST 请求时重定向等。
-    # 而 Redirect 类是一个简单的视图函数，它不会处理这些特殊情况。
     path = reverse('book:index')
     return redirect(path)
 
@@ -269,7 +265,7 @@ def redirect2(request):
     # 也可以用reverse来获取路径
     return HttpResponseRedirect('/book/index1/')
 
-    '''
+'''
     HttpResponseRedirect 301:永久重定向
     HttpResponsePermanentRedirect 302:临时重定向
     HttpResponseNotModified 304:未修改
@@ -279,7 +275,7 @@ def redirect2(request):
     HttpResponseNotAllowed 405:不允许的方法
     HttpResponseGone 410:已经不存在
     HttpResponseServerError 500:服务器错误
-    '''
+'''
 
 
 """
@@ -308,22 +304,22 @@ def redirect2(request):
             这里的“携带cookie信息”是指浏览器会自动将之前保存的cookie信息添加到请求头中
         ⑥ 我们的服务器接收到请求之后,会发现请求头Request Headers中携带的cookie信息,这样的话就认识是谁的请求了
 
-
 """
 
 def set_cookie(request):
     """
-    范例:http://ip:port/book/set_cookie/?username=zhangsan
-    :param request:
-    :return:
+        范例:http://ip:port/book/set_cookie/?username=zhangsan
+        :param request:
+        :return:
      """
     # 第一次
-    # 1. 先判断有没有cookie信息
+    # 1.先判断有没有cookie信息
     # 2.获取用户名,设置cookie信息
     # HttpResponse.set_cookie(cookie名, value=cookie值, max_age=cookie有效期)
         # key,value
         # max_age 单位是秒
         # 时间是 从服务器接收到这个请求时间 + 秒数 计算之后的时间
+    
     if request.GET.get('username') is None:
         return HttpResponseBadRequest('没有请求参数，设置cookie失败')
     username = request.GET.get('username')
@@ -493,6 +489,10 @@ POST 实现个人中心信息的修改
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 class CenterView(LoginRequiredMixin,View): # 多继承，由于LoginRequiredMixin的方法，如果没有找view视图方法
+    
+    login_url = reverse_lazy('book:login') # 惰性执行，只有在实际需要时才会解析 URL。
+    redirect_field_name = "" # 默认是next，这里修改为
+    
     # 范例:http://127.0.0.1:8000/center
     # LoginRequiredMixi判断是否验证用户已登录，若没有登录返回404
     def get(self,request):
@@ -503,6 +503,8 @@ class CenterView(LoginRequiredMixin,View): # 多继承，由于LoginRequiredMixi
 
 #############################模板############################################
 class HomeView(View):
+    
+    # 范例:http://127.0.0.1:8000/book/home
     # Django自带的模板引擎也是一款功能强大的模板引擎，它与Django框架紧密集成，使用起来非常方便
     def get(self,request):
         username = request.COOKIES.get('username')

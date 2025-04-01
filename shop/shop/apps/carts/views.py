@@ -1,7 +1,4 @@
-import base64
-import json
-import logging
-import pickle
+import base64,json,logging,pickle
 
 from django.http import HttpResponseForbidden, JsonResponse
 from django.views import View
@@ -9,7 +6,7 @@ from django.shortcuts import render
 from django_redis import get_redis_connection
 
 from goods.models import SKU
-from shop.utils.response_code import RETCODE
+from shop.utils.response_code import RETCODE, err_msg
 
 # Create your views here.
 logger=logging.getLogger('carts')
@@ -25,25 +22,25 @@ class CartsView(View):
 
         # 判断参数是否齐全
         if not all([sku_id, count]):
-            return HttpResponseForbidden('缺少必传参数')
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': err_msg[RETCODE.NECESSARYPARAMERR]})
+        
+        # 判断count是否为数字
+        try:
+            count=int(count)
+        except Exception as e:
+            logger.error(e)
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '参数count不是数字'})
+
+        # 校验勾选是否是bool
+        if selected and not isinstance(selected,bool): # 判断一个对象是否是一个已知的类型，
+                return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '参数selected类型不对'})
 
         # 判断sku_id是否存在
         try:
             sku=SKU.objects.get(id=sku_id)
         except SKU.DoesNotExist as e:
             logger.error(e)
-            return HttpResponseForbidden('商品不存在')
-
-        # 判断count是否为数字
-        try:
-            count=int(count)
-        except Exception as e:
-            logger.error(e)
-            return HttpResponseForbidden('参数count不是数字')
-        # 校验勾选是否是bool
-        if selected:
-            if not isinstance(selected,bool): # 判断一个对象是否是一个已知的类型，
-                return HttpResponseForbidden('参数selected类型不对')
+            return JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '商品不存在'})
 
         user=request.user
         # 判断用户是否登录
@@ -53,12 +50,12 @@ class CartsView(View):
             pl = redis_conn.pipeline()
             # 新增购物车数据，hincrby能判断sku_id是否存在，并自动累加
             # HINCRBY key field increment,为哈希表 key 中的域 field 的值加上增量 increment 。
-            pl.hincrby('carts_%s'% user.id ,sku_id ,count )
+            pl.hincrby('carts_%s'% user.id ,sku.id ,count )
             # 新增选中的状态，
             if selected:
                 # SADD key member [member ...]
                 # Redis Sadd 命令将一个或多个成员元素加入到集合中，已经存在于集合的成员元素将被忽略。
-                pl.sadd('selected_%s' % user.id, sku_id)
+                pl.sadd('selected_%s' % user.id, sku.id)
             # 执行管道
             pl.execute()
             return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加购物车成功'})
@@ -72,10 +69,10 @@ class CartsView(View):
             else:
                 cart_dict={}
             # 判断当前要添加的商品在cart_dict中是否存在
-            if sku_id in cart_dict:
-                orgin_count=cart_dict[sku_id]['count']
-                count+=orgin_count
-            cart_dict[sku_id] = { 'count': count,'selected': selected}
+            if sku.id in cart_dict:
+                # 如果存在，累加count
+                count+=cart_dict[sku.id]['count']
+            cart_dict[sku.id] = { 'count': count,'selected': selected}
             # 将字典转成bytes,用base64加密转成base64的byte类型。
             cookie_cart_str_bytes=base64.b64encode(pickle.dumps(cart_dict))
             # 最后将bytes转字符串转成字符串
@@ -94,6 +91,7 @@ class CartsView(View):
         if user.is_authenticated:
             # 用户已登录，查询redis购物车
             redis_conn = get_redis_connection('carts')
+            
             '''将cookie购物车的数据保存到redis'''
             if cart_str:
                 # 将cart_str转成bytes,再将bytes转成base64的bytes,最后将bytes转字典
@@ -113,10 +111,12 @@ class CartsView(View):
                         pl.srem('selected_%s' % user.id, sku_id)
                 # 执行管道
                 pl.execute()
+                
             # 查询hash数据,HGETALL key,命令用于返回存储在 key 中的哈希表中所有的域和值。
             redis_cart_dict=redis_conn.hgetall('carts_%s'% user.id)
             # 查询set数据,SMEMBERS key命令返回存储在 key 中的集合的所有的成员。 不存在的集合被视为空集合。
             set_selected_list=redis_conn.smembers('selected_%s' % user.id)
+            
             # 删除redis中selected不存在的sku_id
             pl = redis_conn.pipeline()
             for selected_skuid in set_selected_list:
@@ -124,6 +124,7 @@ class CartsView(View):
                     pl.srem('selected_%s'% user.id,selected_skuid)
             # 执行管道
             pl.execute()
+            
             # 将redis中的数据构造成跟cookie中的格式一致，方便统一查询
             '''{
                 "sku_id1": {
@@ -144,8 +145,10 @@ class CartsView(View):
                         continue
                 else:
                     pl = redis_conn.pipeline()
-                    pl.hdel('carts_%s'% user.id,sku_id)
-                    pl.srem('selected_%s'% user.id,sku_id)
+                    # 如果sku_id不存在，删除sku_id
+                    pl.hdel('carts_%s'% user.id,sku_id) # hdel用法：Delete ``keys`` from hash ``name``
+                    # 如果sku_id不存在，删除sku_id
+                    pl.srem('selected_%s'% user.id,sku_id) # srem用法：Remove ``values`` from set ``name``
                     pl.execute()
         else:
             # 用户未登录，查询cookie购物车
@@ -154,6 +157,7 @@ class CartsView(View):
                 cart_dict =pickle.loads(base64.b64decode(cart_str.encode()))
             else:
                 cart_dict={}
+                
         # 2.构造购物车渲染数据
         '''
         [{sku1数据1},{sku数据2}]
@@ -174,6 +178,7 @@ class CartsView(View):
             'amount':str(sku.price * cart_dict.get(sku.id).get('count')),
             })
         context={'cart_skus':cart_skus}
+        
         # 3.渲染到模板
         response = render(request, 'cart.html', context=context)
         # 用户已登录，清除cookie中的购物车数据
@@ -191,25 +196,25 @@ class CartsView(View):
 
         # 判断参数是否齐全
         if not all([sku_id, count]):
-            return HttpResponseForbidden('缺少必传参数')
-
-        # 判断sku_id是否存在
-        try:
-            sku = SKU.objects.get(id=sku_id)
-        except SKU.DoesNotExist as e:
-            logger.error(e)
-            return HttpResponseForbidden('商品不存在')
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': err_msg[RETCODE.NECESSARYPARAMERR]})
 
         # 判断count是否为数字
         try:
             count = int(count)
         except Exception as e:
             logger.error(e)
-            return HttpResponseForbidden('参数count不是数字')
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '参数count不是数字'})
         # 校验勾选是否是bool
-        if selected:
-            if not isinstance(selected, bool):  # 判断一个对象是否是一个已知的类型，
-                return HttpResponseForbidden('参数selected类型不对')
+        if selected and not isinstance(selected, bool):  # 判断一个对象是否是一个已知的类型，
+                return JsonResponse({'code': RETCODE.ALLOWERR, 'errmsg': '参数selected类型不对'})
+            
+        # 判断sku_id是否存在
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist as e:
+            logger.error(e)
+            return JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '商品不存在'})
+
 
         user = request.user
         # 判断用户是否登录
@@ -238,7 +243,8 @@ class CartsView(View):
                 # 将cart_str转成bytes,再将bytes转成base64的bytes,最后将bytes转字典
                 cart_dict =pickle.loads(base64.b64decode(cart_str.encode()))
             else:
-                cart_dict={}
+                cart_dict={} # 如果没有购物车数据，创建一个空字典
+                
             # 对当前内容直接覆盖，
             cart_dict[sku_id] = {'count': count, 'selected': selected}
             # 将字典转成bytes,再将bytes转成base64的bytes,
@@ -247,7 +253,6 @@ class CartsView(View):
             cookie_cart_str = cookie_str_bytes.decode()
 
         # 3.渲染模板
-        # 创建响应对象
         cart_sku = {
             'id': sku_id,
             'count': count,
@@ -273,7 +278,7 @@ class CartsView(View):
         try:
             SKU.objects.get(id=sku_id)
         except SKU.DoesNotExist:
-            return HttpResponseForbidden('商品不存在')
+            return JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '商品不存在'})
 
         # 3.判断用户是否登录
         user = request.user
@@ -297,7 +302,7 @@ class CartsView(View):
             if cart_str:
                 # 将cart_str转成bytes,再将bytes转成base64的bytes,最后将bytes转字典
                 cart_dict =pickle.loads(base64.b64decode(cart_str.encode()))
-                del cart_dict[sku_id]
+                cart_dict.pop(sku_id, None)
                 # 将字典转成bytes,再将bytes转成base64的bytes,
                 cookie_str_bytes = base64.b64encode(pickle.dumps(cart_dict))
                 # 最后将bytes转字符串转成字符串
@@ -317,9 +322,8 @@ class CartsSelectAllView(View):
         json_dict = json.loads(request.body.decode())
         selected = json_dict.get('selected', True)
         # 校验参数
-        if selected:
-            if not isinstance(selected, bool):
-                return HttpResponseForbidden('参数selected有误')
+        if selected and not isinstance(selected, bool):
+                return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '参数selected类型不对'})
 
         # 2.判断用户是否登录
         user = request.user
@@ -357,7 +361,8 @@ class CartsSimpleView(View):
     """商品页面右上角购物车"""
 
     def get(self, request):
-        # 判断用户是否登录
+        
+        # 1、判断用户是否登录
         '''
                 {
             "code":"0",
@@ -394,7 +399,8 @@ class CartsSimpleView(View):
                 cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
             else:
                 cart_dict = {}
-        # 构造购物车渲染数据
+        
+        # 2、构造购物车渲染数据
         '''
         [{sku1数据1},{sku数据2}]
         '''

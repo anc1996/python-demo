@@ -29,7 +29,7 @@ class LoginView(View):
         # 查询用户名操作
         username=request.GET.get('username')
         # 返回结果，
-        return JsonResponse({'message':username})
+        return JsonResponse({'username':username})
 
 class BookView(View):
 

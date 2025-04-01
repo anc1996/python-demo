@@ -1,0 +1,23 @@
+<!-- blog/templates/blog/category_index_page.html -->
+<!-- 这是博客分类索引页面的模板，用于展示所有可用的博客分类 -->
+
+{% extends "base.html" %}  <!-- 继承自基础模板 base.html，复用网站的基础布局和样式 -->
+
+{% load wagtailcore_tags %}
+
+{% block content %}  <!-- 开始内容区块，会替换父模板中的同名区块 -->
+    <h1>{{ page.title }}</h1>  <!-- 显示分类索引页面的标题 -->
+    <p>{{ page.intro }}</p>  <!-- 显示分类索引页面的介绍文本 -->
+
+    {% if categories %}  <!-- 检查是否有可用的分类 -->
+        <ul>  <!-- 使用无序列表展示所有分类 -->
+            {% for category_page in categories %}  <!-- 循环遍历所有分类 -->
+                <li>  <!-- 每个分类作为一个列表项 -->
+                    <a href="{% pageurl category_page %}">{{ category_page.title }}</a>  <!-- 显示分类名称并链接到对应的分类详情页 -->
+                </li>
+            {% endfor %}  <!-- 结束分类循环 -->
+        </ul>
+    {% else %}  <!-- 如果没有任何分类 -->
+        <p>显示无分类提示信息.</p>  <!-- 显示无分类提示信息 -->
+    {% endif %}  <!-- 结束条件判断 -->
+{% endblock %}  <!-- 结束内容区块 -->

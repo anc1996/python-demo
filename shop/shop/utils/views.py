@@ -2,10 +2,10 @@ from django.contrib.auth.mixins import  LoginRequiredMixin
 from django.http import JsonResponse
 
 from shop.utils.response_code import  RETCODE
+
+
 class LoginRequiredJSONMixin(LoginRequiredMixin):
     """自定义判断用户是否登录扩展类，返回JSON数据"""
-
-
     '''
         def dispatch(self, request, *args, **kwargs):
             if not request.user.is_authenticated:

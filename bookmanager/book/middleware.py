@@ -25,9 +25,9 @@ def simple_middleware1(get_response):
         if username is None:
             print('username is None')
             # return HttpResponse('哥们,你没有登陆哎')
-        print('这里是 simple_middleware请求前,上面执行代码')
+        print('这里是 simple_middleware1请求前,上面执行代码')
         response = get_response(request)
-        print('这里就 simple_middleware响应后/请求后')
+        print('这里就 simple_middleware1响应后/请求后')
         # 对于每个请求/响应在视图被调用之后执行的代码。
         return response
     return middleware
@@ -35,8 +35,8 @@ def simple_middleware1(get_response):
 def simple_middleware2(get_response):
     print('这里是中间件2第一次配置、加载和初始化的地方')
     def middleware(request):
-        print('before request simple_middleware2')
+        print('这里是 simple_middleware2请求前,上面执行代码')
         response=get_response(request)
-        print('after request/response simple_middleware2')
+        print('这里就 simple_middleware2响应后/请求后')
         return response
     return middleware

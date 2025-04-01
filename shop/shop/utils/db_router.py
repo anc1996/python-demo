@@ -17,14 +17,19 @@ class MasterSlaveDBRouter(object):
 
     def allow_relation(self, obj1, obj2, **hints):
         """是否运行关联操作"""
+        
         # 如果允许 obj1 和 obj2 之间的关系，返回 True 。
         # 如果阻止关系，返回 False ，或如果路由没意见，则返回 None。这纯粹是一种验证操作，由外键和多对多操作决定是否应该允许关系。
         # 如果没有路由有意见（比如所有路由返回 None），则只允许同一个数据库内的关系。
-        return True
+        db_set = {'default', 'slave'}
+        if obj1._state.db in db_set and obj2._state.db in db_set:
+            return True  # 允许在主库和从库之间的关系
+        return None
 
-    # def allow_migrate(db, app_label, model_name=None, **hints):
-    #     """是否允许迁移"""
-    #     # 如果应该在 db 上迁移 app_label 中的模型，则返回 True 。
-    #     # 如果不应该，则返回 False 。
-    #     # 如果没有意见，则返回 None 。
-    #     return True
+    def allow_migrate(db, app_label, model_name=None, **hints):
+        """
+        决定是否允许迁移操作在别名为 db 的数据库上运行。
+            如果操作运行，那么返回 True ，
+            如果没有运行则返回False ，或路由没有意见则返回None 。
+        """
+        return db == 'default'

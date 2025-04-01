@@ -263,12 +263,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # 这里是全局配置，如果需要局部配置，可以在视图中配置
 REST_FRAMEWORK = {
     '''
-    如果认证成功 BasicAuthentication 提供以下信息。
-        request.user 将是一个 Django User 实例。
-        request.auth 将是 None。
-    如果成功验证，SessionAuthentication 提供以下凭据。
-        request.user 是一个 Django User 实例。
-        request.auth 是 None。
+        如果认证成功 BasicAuthentication 提供以下信息。
+            request.user 将是一个 Django User 实例。
+            request.auth 将是 None。
+        如果成功验证，SessionAuthentication 提供以下凭据。
+            request.user 是一个 Django User 实例。
+            request.auth 是 None。
     '''
     # 这里需要创建用户才能体现
     # 认证
@@ -321,7 +321,7 @@ REST_FRAMEWORK = {
     # 第2种：此分页样式反映了查找多个数据库记录时使用的语法。客户端包括“limit”和“offset”查询参数。该限制表示要返回的最大项目数，与其他样式中的限制相同 page_size 。偏移量表示要跳过的项目数。
     # 例如：?limit=100&offset=400
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100,
+    'PAGE_SIZE': 20,
 
     # 异常，默认为 REST 框架提供的标准异常处理程序：
     # 'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',

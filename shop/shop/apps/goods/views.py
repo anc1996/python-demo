@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from contents.utils import get_categories, get_breadcrumb
+from goods.constants import GOODS_LIST_LIMIT
 from goods.models import GoodsCategory, SKU, GoodsVisitCount
 from shop.utils.response_code import RETCODE
 
@@ -22,14 +23,17 @@ logger=logging.getLogger('goods')
 
 class ListView(View):
     def get(self, request, category_id, page_num):
-        """提供商品列表页"""
+        """
+            提供商品列表页
+            http://xxxx:8080/list/115/1/?sort=default
+        """
+        
         # 校验参数，category_id为三级id
-
         try:
             category=GoodsCategory.objects.get(id=category_id)
         except GoodsCategory.DoesNotExist:
-            logger.error('GoodsCategory does not exist')
-            return HttpResponseNotFound('GoodsCategory does not exist')
+            logger.error('GoodsCategory 不存在')
+            return HttpResponseNotFound('GoodsCategory 不存在')
         except GoodsCategory.MultipleObjectsReturned as e:
             logger.error(e)
             return HttpResponseNotFound('不是查找三级分类')
@@ -53,6 +57,7 @@ class ListView(View):
             # 'price'和'sales'以外的所有排序方式都归为'default'
             sort='default'
             sort_field = 'create_time'
+        
         # 方法一：
         # skus=SKU.objects.filter(category=category,is_launched=True)
         # 方法二：
@@ -62,7 +67,7 @@ class ListView(View):
             logger.error(e)
             return HttpResponseNotFound('查询商品排序参数错误')
         # 创建分页器,Paginator('要分页的数据','每页记录的条数')
-        paginator = Paginator(skus, 20)
+        paginator = Paginator(skus, GOODS_LIST_LIMIT)
         # 获取列表页的总页数
         total_page = paginator.num_pages
         try:
@@ -74,13 +79,13 @@ class ListView(View):
             return HttpResponseNotFound('empty page')
 
         # 构造上下文
-        context={'categories':categories,
-                'breadcrumb':breadcrumb,
-                 'page_skus':page_skus,
-                 'total_page':total_page,
-                 'sort':sort,
-                 'page_num':page_num,
-                 'category_id':category_id,
+        context={'categories':categories, # 商品分类
+                'breadcrumb':breadcrumb, # 面包屑导航
+                 'page_skus':page_skus, # 分页后的商品数据
+                 'total_page':total_page, # 总页数
+                 'sort':sort, # 排序规则
+                 'page_num':page_num, # 当前页码
+                 'category_id':category_id, # 当前分类id
                  }
         return render(request, 'list.html',context=context)
 
@@ -107,14 +112,14 @@ class HotGoodsView(View):
         # 序列化
         hot_skus = []
         for sku in skus:
-            hot_skus.append(
-                {'id':sku.id,
-                 'default_image_url':sku.default_image.url,
-                 'name':sku.name,
-                 'price':sku.price,
-                 'comments':sku.comments,
-                 'sales':sku.sales}
-            )
+            hot_skus.append({
+                'id':sku.id,
+                'default_image_url':sku.default_image.url,
+                'name':sku.name,
+                'price':sku.price,
+                'comments':sku.comments,
+                'sales':sku.sales
+            })
         return JsonResponse({"code": RETCODE.OK,"errmsg": "OK","hot_skus":hot_skus})
 
 
@@ -162,7 +167,7 @@ class DetailView(View):
         goods_specs = sku.spu.specs.order_by('id')
         # 若当前sku的规格信息不完整，则不再继续
         if len(sku_key) < len(goods_specs):
-            return
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '缺少必要的参数'})
 
         # 给当前spu下面的每个规格绑定上对应的选项
         # 遍历当前商品的规格信息，做页面渲染
@@ -206,7 +211,7 @@ class DetailVisitView(View):
         try:
             category = GoodsCategory.objects.get(id=category_id)
         except GoodsCategory.DoesNotExist:
-            return HttpResponseForbidden('缺少category_id必传参数')
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': '缺少category_id必传参数'})
         # 获取今天的日期
         t = timezone.localtime()
 
@@ -230,7 +235,7 @@ class DetailVisitView(View):
                 counts_data.save()
             except Exception as e:
                 logger.error(e)
-                return HttpResponseServerError('统计失败')
+                return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '数据库保存失败'})
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
 

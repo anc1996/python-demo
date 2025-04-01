@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import traceback
 
+from django.db import transaction
 from django.conf import settings
 from fdfs_client.client import Fdfs_client
 from rest_framework.permissions import IsAdminUser
@@ -9,6 +10,7 @@ from rest_framework.status import *
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 
+from celery_tasks.static_details.tasks import get_detail_html
 from goods.models import SKUImage, SKU
 from shop_admin.serializers.PageNum import PageNum
 from shop_admin.serializers.image_serializer import ImagesSerializer, SkuSerializer
@@ -39,6 +41,8 @@ class ImagesView(ModelViewSet):
     pagination_class = PageNum
 
     # 由于ModelViewSet继承ModelMixin的list、update、retrieve、destory、create方法,不需要写
+    
+    
 
     def simple(self,request):
         """
@@ -50,18 +54,17 @@ class ImagesView(ModelViewSet):
         serializer = SkuSerializer(skus, many=True)
         return Response(serializer.data)
 
-
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
+    # 重写destroy方法
+    def perform_destroy(self, instance):
         client = Fdfs_client(settings.FASTDFS_PATH)
-        image_url=instance.image.name
-        group_url=image_url.replace('//', '/')
+        image_url = instance.image.name
+        group_url = image_url.replace('//', '/')
         try:
-            ret_delete = client.delete_file(group_url)
-            print('图片删除成功:',ret_delete)
-            self.perform_destroy(instance)
-            return Response(status=HTTP_204_NO_CONTENT)
+            with transaction.atomic():
+                instance.delete()
+                ret_delete = client.delete_file(group_url)
+                print('图片删除成功:', ret_delete)
         except Exception as e:
-            print("FastDFS delete file fail, {0}, {1}".format(e, traceback.print_exc()))
+            print("删除失败: {0}, {1}".format(e, traceback.print_exc()))
             return Response(status=HTTP_400_BAD_REQUEST)
+        return Response(status=HTTP_204_NO_CONTENT)

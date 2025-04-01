@@ -23,12 +23,8 @@ class AdminView(ModelViewSet):
     # 分页器
     pagination_class = PageNum
 
-
-
     def simple(self,request):
         # 查询分组信息
         groups=Group.objects.all()
         ser=GroupSerializer(groups,many=True)
         return Response(ser.data)
-
-

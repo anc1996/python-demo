@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
@@ -29,7 +30,6 @@ class LimitOff(LimitOffsetPagination):
     '''
     # default_limit：指示在客户端未在查询参数中提供限制时使用的限制。默认为与 PAGE_SIZE 设置键相同的值。
     default_limit = 4
-
     # limit_query_param,指示“limit”查询参数的名称。默认为 'limit'。
     limit_query_param='limit'
     # offset_query_param 指示“offset”查询参数的名称。默认为 'offset'。
@@ -42,7 +42,14 @@ class Books(ModelViewSet):
     queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
-
+    # 还有个全局DjangoFilterBackend在settings
+    # 该 OrderingFilter 类支持简单的查询参数控制的结果排序。
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter,DjangoFilterBackend]
+    # 自定过滤字段
+    '''book_drf/DefaultRouter-LimitOff_ViewSet/?name=红楼梦'''
+    filterset_fields  = ['name'] # 过滤字段
+    search_fields = ['name', 'id'] # 搜索字段
+    
     # 局部视图认证和权限，
 
     # 认证
@@ -55,16 +62,13 @@ class Books(ModelViewSet):
     # 局部视图，用户限流。
     throttle_classes = [CustomAnonRateThrottle,CustomUserRateThrottle]
 
-    # 自定过滤字段
-    '''book_drf/OtherFeatures/?name=红楼梦'''
-    filterset_fields  = ['name', 'readcount']
-
-    # 还有个全局DjangoFilterBackend在settings
-    # 该 OrderingFilter 类支持简单的查询参数控制的结果排序。
-    filter_backends = [filters.OrderingFilter]
-
-
     # 指定分页器
     pagination_class = LimitOff
 
     # 由于ModelViewSet继承ModelMixin的list、update、retrieve、destory、create方法,不需要重写
+    
+    # 重写destroy方法
+    def perform_destroy(self, instance):
+        instance.is_delete = True
+        instance.save()
+        return instance

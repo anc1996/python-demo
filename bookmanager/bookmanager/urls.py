@@ -1,18 +1,18 @@
 """
 URL configuration for bookmanager project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
+'urlpatterns' 列表将 URL 路由到视图。有关更多信息，请参阅：
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+例子：
+函数视图
+    1. 添加导入：从my_app导入视图
+    2. 向 urlpatterns 添加 URL：path（''， views.home， name='home'）
+基于类的视图
+    1. 添加导入：from other_app.views import Home
+    2. 向 urlpatterns 添加一个 URL：path（''， Home.as_view（）， name='home'）
+包含另一个 URLconf
+    1. 导入 include（） 函数： from django.urls import include， path
+    2. 向 urlpatterns 添加 URL：path（'blog/'， include（'blog.urls'））
 """
 # Django 项目的 URL 声明，就像你网站的“目录”。这个文件是 Django 项目的 URL 配置文件。
 from django.contrib import admin

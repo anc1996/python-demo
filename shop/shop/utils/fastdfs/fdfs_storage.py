@@ -32,17 +32,13 @@ class FastDFSStorage(Storage):
         pass
 
     def save(self, name, content, max_length=None):
-        """
-        Save new content to the file specified by name. The content should be
-        a proper File object or any Python file-like object, ready to be read
-        from the beginning.
-        """
-        # Get the proper name for the file, as it will actually be saved.
-        # 我们需要将文件上传到 FastDFS 上面.
-        # 创建客户端对象:
+        
+        """将新内容保存到按名称指定的文件中。内容应该是适当的 File 对象或任何类似 Python 文件的对象，可以从一开始就阅读。 """
+        # 获取文件的正确名称，因为它实际上将被保存。
+        
+        # 1、创建客户端对象:
         client=Fdfs_client(settings.FDFS_CLIENT_CONF)
-        # 调用上传函数, 进行上传:
-        # 我们这里调用的是上面说过的, 根据文件内容上传方法.
+        # 2、调用上传函数, 进行上传:
         result=client.upload_by_buffer(content.read())
         # 判断是否上传成功:
         if result.get('Status') != 'Upload successed.':

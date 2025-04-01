@@ -47,11 +47,10 @@ class SMSCodeView(View):
         """
         # 1.接受参数
         image_code_client=request.GET.get('image_code') # 接收客户端图形验证码
-        uuid=request.GET.get('uuid') #
+        uuid=request.GET.get('uuid') # 接收客户端uuid
         # 2.校验参数
         if not all([image_code_client,uuid]):
             return HttpResponseForbidden('缺少参数')
-
 
         # 3.创建连接redis对象
         redis_conn=get_redis_connection('VerifyCode')
@@ -75,7 +74,7 @@ class SMSCodeView(View):
             logger.error(e)
 
         # 7.对比图形验证码
-        image_code_server=image_code_server.decode()# 将btyes转成字符串类型
+        image_code_server=image_code_server.decode()# 将 btyes 转成字符串类型
         if image_code_client.lower()!=image_code_server.lower(): # 验证码转小写
             return JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': '输入图形验证码错误'})
 
@@ -83,25 +82,14 @@ class SMSCodeView(View):
         sms_code='%04d' % random.randint(0,9999)
         logger.info('mobile号:%s,sms_code短信验证码:%s'% (mobile,sms_code)) # 手动输出日志，导出验证码
 
-        # 10.保存短信验证码，有效事件300秒
-        # 9.创建redis管道，将多个命令添加到队列中
-        pl=redis_conn.pipeline()
+        # 9.保存短信验证码，有效事件300秒
+        pl=redis_conn.pipeline()  # 创建redis管道，将多个命令添加到队列中
         pl.setex('sms_%s' % mobile,constants.SMS_CODE_REDIS_EXPIRES,sms_code)
         """避免频繁发送短信验证码"""
-        # 同时保存发送验证码的标记，60s内是否重复发送的标记
-        pl.setex('send_flag_%s'% mobile,constants.SEND_SMS_CODE_INTERVAL,1)
-        # 执行
-        pl.execute()
+        pl.setex('send_flag_%s'% mobile,constants.SEND_SMS_CODE_INTERVAL,1) # 同时保存发送验证码的标记，60s内是否重复发送的标记
+        pl.execute() # 执行
 
-        # 10.发送短信验证码
-        # 单例类发送短信验证码，过期时间5分钟，测试的短信模板编号为1
-        # CCP().send_template_sms('15775023011', ['1134', 5], '1')
-        if constants.SMS_CODE_REDIS_EXPIRES <60:
-            expire=1
-        else:
-            expire=constants.SMS_CODE_REDIS_EXPIRES//60
-
-        # CCP().send_template_sms(mobile,[sms_code, expire], constants.SEND_SMS_TEMPLATE_ID)
+        # 10.发送短信验证码，设置2分钟过期
         # 用celery异步执行，生成者和消费模式，避免堵塞
         ret=ccp_send_sms_code.delay(mobile, sms_code) # 千万不要忘记写delay，异步任务
         # 响应结果

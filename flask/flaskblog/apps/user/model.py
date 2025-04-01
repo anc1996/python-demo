@@ -101,11 +101,12 @@ class User(db.Model):
 class UserInfo(db.Model):
 	__tablename__ = 'userinfo'
 	
-	def __init__(self, user_id, realname, age,sex):
+	def __init__(self, user_id, realname, age,sex, content):
 		self.user_id = user_id
 		self.realname = realname
 		self.age = age
 		self.sex=sex
+		self.content = content
 	
 	# 定义表字段
 	id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, comment="主键")

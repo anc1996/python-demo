@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from flask_restful import Resource
+
+
 def decorator1(func):
     def inner(*args, **kwargs):
         print('running decorator1')

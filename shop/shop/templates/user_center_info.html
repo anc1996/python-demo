@@ -118,12 +118,14 @@
 		<p>电话：010-****888    京ICP备*******8号</p>
 	</div>
 	</div>
+    {# 实现用户添加邮箱时的界面局部刷新 #}
     <script type="text/javascript">
         let username = "{{ username }}";
         let mobile = "{{ mobile }}";
         let email = "{{ email }}";
         let email_active = "{{ email_active }}";
     </script>
+
     <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/user_center_info.js') }}"></script>
 </body>

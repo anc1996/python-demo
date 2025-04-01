@@ -29,7 +29,7 @@ class Books(APIView):
 
     def get(self,request):
         # 1、查询所有图书对象
-        # request.query_params 是 的更正确命名的 request.GET 同义词。
+        # request.query_params 任何 HTTP 方法类型都可能包含查询参数，而不仅仅是 GET 请求。而这里类似 request.GET 同义词。
         # /book_drf/apibooks?a=233&b=333&c=332123
         print('这个是django view原来的request.data数据返回内容:',request.query_params) #  <QueryDict: {'a': ['233'], 'b': ['333'], 'c': ['332123']}>
         books=BookInfo.objects.filter(is_delete=False)

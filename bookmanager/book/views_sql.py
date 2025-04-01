@@ -272,10 +272,10 @@ books=BookInfo.objects.filter(readcount__range=(30,300)).order_by('-readcount')
     从表模型(实例对象).外键
 """
 # 方法一：查询书籍为1的人物信息,通过书籍查询人物信息(已知主表数据,关联查询从表数据)
-people = PeopleInfo.objects.filter(book=1)
+peoples = PeopleInfo.objects.filter(book=1)
 # 方法二：查询书籍为1的人物信息, 主表模型(实例对象).关联模型类名小写_set.all()
 book = BookInfo.objects.get(id=1)
-people = book.peopleinfo_set.all()
+peoples = book.peopleinfo_set.all()
 
 # 查询书籍为'天龙八部'的所有人物信息
 # 步骤一；查询书籍为'天龙八部'

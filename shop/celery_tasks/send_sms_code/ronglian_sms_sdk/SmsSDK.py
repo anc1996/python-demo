@@ -40,8 +40,10 @@ class SmsSDK:
         Returns:
             返回发送结果和发送成功消息ID
             发送成功示例:
-            {"statusCode":"000000","templateSMS":{"dateCreated":"20130201155306",
-             "smsMessageSid":"ff8080813c373cab013c94b0f0512345"}}
+            {"statusCode":"000000",
+                "templateSMS":{"dateCreated":"20130201155306",
+                "smsMessageSid":"ff8080813c373cab013c94b0f0512345"}
+            }
             发送失败示例：
             {"statusCode": "172001", "statusMsg": "网络错误"}
         """

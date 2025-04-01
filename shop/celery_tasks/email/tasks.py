@@ -1,9 +1,9 @@
 from django.core.mail import send_mail
-from django.conf import settings
 import logging
 from celery_tasks.main import celery_app
 from django.core.mail import EmailMultiAlternatives,EmailMessage
 
+from shop.settings import dev_settings as settings
 
 # bind：保证task对象会作为第一个参数自动传入
 # name：异步任务别名
@@ -13,14 +13,13 @@ from django.core.mail import EmailMultiAlternatives,EmailMessage
 # 创建日志输出器
 logger=logging.getLogger('send_email')
 
-
 @celery_app.task(bind=True,name='send_verify_email',retry_backoff=3,max_retries=4) # name给任务起别名
 def send_verify_email(self,to_email,verify_url):
     """
     定义发送验证邮件
     :param to_email: 收件人
     :param verify_url: 激活链接
-    :return:
+    :return:None
     """
 
     """
@@ -53,9 +52,12 @@ def send_verify_email(self,to_email,verify_url):
        您必须定义环境变量 DJANGO_SETTINGS_MODULE 或调用 settings.configure（）
    """
     try:
+        # EmailMultiAlternatives：Django 提供的高级邮件发送类，支持更复杂的邮件配置，比如同时发送纯文本和 HTML 格式的邮件，还可以添加附件。
         # mail=EmailMultiAlternatives(subject=subject, body=html_message, from_email=settings.EMAIL_FROM, to=[to_email])
         # mail.content_subtype='html'
         # mail.send()
+        
+        # send_mail ：一个简单快捷的邮件发送方法，用于发送基础邮件。支持纯文本或带 HTML 的邮件内容。
         send_mail(subject=subject,message='',from_email=settings.EMAIL_FROM,recipient_list=[to_email],html_message=html_message)
     except Exception as e:
         # 触发错误重试：最多3次

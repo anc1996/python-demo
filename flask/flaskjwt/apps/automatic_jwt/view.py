@@ -8,6 +8,7 @@ from extends import db,jwt
 
 automatic_bp=Blueprint('automatic', __name__, url_prefix='/automatic')
 
+"""JWT可以绑定到用户身份标识（identity）。通过，@jwt.additional_claims_loader"""
 
 @automatic_bp.route("/login", methods=["POST"])
 def login():

@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.filters import OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 from book_drf.Over_Basicclass.serializer import BookSerializer
+from books.filters import BookInfoFilter
 from books.models import BookInfo
 
 """
@@ -25,5 +28,15 @@ class Books(ModelViewSet):
     queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
-
-    # 由于ModelViewSet继承ModelMixin的list、update、retrieve、destory、create方法,不需要重写
+    # 3、要指定当前视图使用的过滤器
+    filter_backends = [ DjangoFilterBackend,OrderingFilter]  # Corrected filter_backends
+    filterset_class = BookInfoFilter
+    ordering_fields = ['readcount', 'commentcount', 'pub_date']  # Added ordering_fields
+    
+    # 由于ModelViewSet继承ModelMixin的list、update、retrieve、destory、create方法
+    
+    # 重写destroy方法
+    def perform_destroy(self, instance):
+        instance.is_delete = True
+        instance.save()
+        return instance

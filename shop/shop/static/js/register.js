@@ -128,7 +128,7 @@ let vm=new Vue({
                     });
             }
         },
-        //生成图形验证码的方法：封装思想，代码服用
+        //生成图形验证码的方法，通过生成uuid，发送请求，获取图片
         generate_image_code(){
             this.uuid=generateUUID();
             this.image_code_url='/image_codes/'+this.uuid+'/';
@@ -158,13 +158,12 @@ let vm=new Vue({
         send_sms_code(){
             // 避免恶意用户频繁的点击获取短信验证码
             // 如果send_flag=true，不能点击按钮，该按钮已上锁
-            if(this.send_flag==true)
-            { return }
+            if(this.send_flag==true) { return }
             //没有，可以进入，同时上锁。
             this.send_flag=true;
             this.check_mobile();
             this.check_image_code();
-            if (this.error_mobile==true || this.check_image_code==true)
+            if (this.error_mobile==true || this.error_image_code ==true)
             {
                 this.send_flag=false; // 解锁
                 return;
@@ -172,7 +171,7 @@ let vm=new Vue({
             let url='/sms_codes/' + this.mobile + '/?image_code=' + this.image_code+'&uuid='+ this.uuid;
             axios.get(url,{responseType:'json'})
                 .then(response=>{
-                    // 后端返回RETCODE.OK=0
+                    // 后端返回 RETCODE.OK=0
                     if(response.data.code=='0') {
                         //展示倒计时60秒
                         // setInterval('回调函数','时间间隔')，定时器
@@ -240,7 +239,7 @@ let vm=new Vue({
                 this.error_allow,
                 this.error_sms_code,
             ];
-
+          // errors.some()方法，只要有一个为true，就返回true
           if (errors.some(error => error === true)) {
             window.event.returnValue = false;
           }

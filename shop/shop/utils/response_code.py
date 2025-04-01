@@ -2,25 +2,25 @@
 
 
 class RETCODE:
-    OK                  = "0"
-    IMAGECODEERR        = "4001"
-    THROTTLINGERR       = "4002"
-    NECESSARYPARAMERR   = "4003"
-    USERERR             = "4004"
-    PWDERR              = "4005"
-    CPWDERR             = "4006"
-    MOBILEERR           = "4007"
-    SMSCODERR           = "4008"
-    ALLOWERR            = "4009"
-    SESSIONERR          = "4101"
-    DBERR               = "5000"
-    EMAILERR            = "5001"
-    TELERR              = "5002"
-    NODATAERR           = "5003"
-    NEWPWDERR           = "5004"
-    OPENIDERR           = "5005"
-    PARAMERR            = "5006"
-    STOCKERR            = "5007"
+    OK                  = "0" # ok
+    IMAGECODEERR        = "4001" # imagecode error
+    THROTTLINGERR       = "4002"# throttling error
+    NECESSARYPARAMERR   = "4003" # necessary param error
+    USERERR             = "4004" # user error
+    PWDERR              = "4005" # password error
+    CPWDERR             = "4006" # confirm password error
+    MOBILEERR           = "4007" # mobile error
+    SMSCODERR           = "4008" # sms code error
+    ALLOWERR            = "4009" # allow error
+    SESSIONERR          = "4101" # session error
+    DBERR               = "5000" # db error
+    EMAILERR            = "5001" # email error
+    TELERR              = "5002" # tel error
+    NODATAERR           = "5003" # no data error
+    NEWPWDERR           = "5004" # new password error
+    OPENIDERR           = "5005" # openid error
+    PARAMERR            = "5006" # param error
+    STOCKERR            = "5007" # stock error
 
 
 err_msg = {

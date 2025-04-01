@@ -1,10 +1,12 @@
 ﻿#!/user/bin/env python3
 # -*- coding: utf-8 -*-
+
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 from book_drf.Over_Basicclass.serializer import BookSerializer
 from books.models import BookInfo
@@ -32,32 +34,36 @@ ViewSet视图集类不再实现get()、post()等方法，而是实现动作 acti
 """
 
 class Books(ModelViewSet):
+    
     # 1、要指定当前类视图使用的查询数据
     queryset = BookInfo.objects.filter(is_delete=False)
     # 2、要指定当前视图使用的序列化器
     serializer_class = BookSerializer
+    # 3、筛选,排序
+    # 还有个全局DjangoFilterBackend在settings
+    filter_backends = [filters.OrderingFilter,DjangoFilterBackend]
+    # 该 OrderingFilter 类支持简单的查询参数控制的结果排序。
+    ordering_fields = ['readcount', 'commentcount', 'pub_date']
+    # 该 DjangoFilterBackend 类支持 Django-filter 过滤器。
+    filterset_fields = ['name']
 
-    # 局部视图认证和权限，
-
-    # 认证
+    # 4、认证
         # BasicAuthentication，此身份验证方案使用 HTTP 基本身份验证，根据用户的用户名和密码进行签名。基本身份验证通常仅适用于测试。
         # SessionAuthentication，此认证方案使用Django的默认session后端进行身份验证。Session身份验证适用于与你的网站在相同的Session环境中运行的AJAX客户端。
     authentication_classes = [BasicAuthentication,SessionAuthentication]
-    # 权限，局部会覆盖全局的权限
+    
+    # 5、权限，局部会覆盖全局的权限
     permission_classes = [AllowAny,]  # AllowAny 设置默认为允许不受限制的访问：
 
-    # 局部视图，用户限流。
+    # 6、局部视图，用户限流。
     throttle_classes = [CustomAnonRateThrottle,CustomUserRateThrottle]
+    
+    # 重写destroy方法
+    def perform_destroy(self, instance):
+        instance.is_delete = True
+        instance.save()
 
-    # 自定过滤字段
-    '''book_drf/OtherFeatures/?name=红楼梦'''
-    filterset_fields  = ['name', 'readcount']
-
-    # 还有个全局DjangoFilterBackend在settings
-    # 该 OrderingFilter 类支持简单的查询参数控制的结果排序。
-    filter_backends = [filters.OrderingFilter]
-
-    # 由于ModelViewSet继承ModelMixin的list、update、retrieve、destory、create方法,不需要重写
+     # 由于ModelViewSet继承ModelMixin的list、update、retrieve、destory、create方法,不需要重写
 
 
 class BookView(ModelViewSet):

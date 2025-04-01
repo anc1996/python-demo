@@ -4,6 +4,7 @@ from django.contrib.auth.models import Permission,ContentType
 from rest_framework import serializers
 
 class PermissionSerializer(serializers.ModelSerializer):
+    
     class Meta:
         # 指定根据那个模型类生成序列化器字段
         model = Permission
@@ -11,7 +12,8 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 
 class ContentTypeSerializer(serializers.ModelSerializer):
-    #
+    
+    # 重写字段
     name=serializers.CharField(read_only=True)
     class Meta:
         # 指定根据那个模型类生成序列化器字段

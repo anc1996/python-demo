@@ -30,11 +30,14 @@ class RequestParserResource(Resource):
             type: 参数的类型
             help: 参数检验错误时返回的错误描述信息
             required: 是否必须提供参数，默认为True,若异常，则返回400。
+            trim: 是否去除参数两边的空格，默认为False
+            ignore: 是否忽略参数的值，默认为False
+            store_missing: 是否存储缺失的参数，默认为True
             action: 参数的动作。
                   append：表示将参数的值添加到一个列表中
                   store：表示保留第一个,默认值
         '''
-        parser.add_argument('name', type=str, help='name error', required=True)
+        parser.add_argument('name', type=str, help='name error',required=True)
         parser.add_argument('age', type=inputs.int_range(0,200), help='age error', required=False)
         parser.add_argument('email', type=inputs.regex(r'^[a-zA-Z0-9_]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'),
                             help='email error', required=False, action='append')

@@ -44,11 +44,14 @@ def create_app():
 	
 	# 设置我们的 redis 连接以存储列入黑名单的 Token。
 	# 您可能希望将 redis 实例配置为将数据持久保存到磁盘，以便重新启动不会导致应用程序忘记 JWT 已被撤销。
-	app.jwt_redis_blocklist = redis.StrictRedis(host=settings.Config.REDIS_HOST,
-	                                        port=settings.Config.REDIS_PORT,
-	                                       db=settings.Config.JWT_REDIS_DB,
-	                                       password=settings.Config.REDIS_PASSWORD,
-	                                       decode_responses=True) # decode_responses=True 返回的数据是str类型
+	jwt_redis_blocklist = redis.StrictRedis(
+		host=settings.Config.REDIS_HOST,
+		port=settings.Config.REDIS_PORT,
+		db=settings.Config.JWT_REDIS_DB,
+		password=settings.Config.REDIS_PASSWORD,
+		decode_responses=True)  # decode_responses=True 返回的数据是str类型
+	
+	app.jwt_redis_blocklist = jwt_redis_blocklist
 	
 	
 	

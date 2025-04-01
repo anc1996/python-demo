@@ -70,7 +70,6 @@ sys.path.insert(0,os.path.join(BASE_DIR,'apps'))
 # sys列表第一个元素就是apps路径
 print('sys[0]:',sys.path[0])
 
-
 # Application definition
 # 安装的应用程序列表。每个应用程序都是一个 Python 包，它包含一些特定功能的代码。
 INSTALLED_APPS = [
@@ -221,6 +220,7 @@ SESSION_CACHE_ALIAS = "session"
 
 # redis分库缓存
 CACHES = {
+    # 默认的Redis配置项，采用0号Redis库。
     "default": {
         # 缓存后端
         "BACKEND": "django_redis.cache.RedisCache",
@@ -232,6 +232,7 @@ CACHES = {
             "PASSWORD": "123456"
         }
     },
+    
     # session缓存
     "session": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -241,6 +242,7 @@ CACHES = {
             "PASSWORD": "123456"
         }
     },
+    
     # 存储验证码VerifyCode
     "VerifyCode": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -250,6 +252,7 @@ CACHES = {
             "PASSWORD": "123456"
         }
     },
+    
     # 存储用户浏览记录history
     "history": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -259,6 +262,7 @@ CACHES = {
             "PASSWORD": "123456"
         }
     },
+    
     # 购物车
     "carts": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -313,9 +317,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [
     # 方法一
-    os.path.join(BASE_DIR, 'static'),
+    # os.path.join(BASE_DIR, 'static'),
     # 方法二
-    # BASE_DIR / 'static'
+    BASE_DIR / 'static'
 ]
 
 
@@ -327,7 +331,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # 配置工程日志
 LOGGING = {
-    "version": 1, #
+    "version": 1, # 日志配置的版本
     "disable_existing_loggers": False, # 不禁用已经存在的日志记录器
     "formatters": {
         "verbose": {
@@ -350,9 +354,8 @@ LOGGING = {
         },
     },
     "filters": {  # 对日志进行过滤
-        # Debug模式为True时，才会记录日志。
         "require_debug_true": {
-            "()": "django.utils.log.RequireDebugTrue",
+            "()": "django.utils.log.RequireDebugTrue", # Debug模式为True时，才会记录日志。
         },
     },
     "handlers": { # 日志处理方法
@@ -368,62 +371,62 @@ LOGGING = {
             'filename': os.path.join(os.path.dirname(BASE_DIR), 'logs/shop.log'),   # 日志文件的位置，
             'maxBytes': 300 * 1024 * 1024, # 日志文件的最大大小,这里设置为300M
             # 保留的日志文件的个数，若满的话新建一个文件
-            'backupCount': 10,
-            'formatter': 'verbose'
+            'backupCount': 10, # 日志文件的个数
+            'formatter': 'verbose' # 详细日志
         },
     },
     "loggers": {  # 日志器
-        "django": {# django的日志器
+        "django": { # django的日志器
             "handlers": ['console', 'file'], # 处理方法
-            "propagate": True,# 是否传递给父日志器
+            "propagate": True,# 控制日志消息是否传递给父级日志器（Logger）。
             'level': 'INFO',  # 日志器接收的最低日志级别
         },
         # 定义了一个名为verifications的日志器,监控子应用verifications
         'verifications': {
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
         # 定义了一个名为users的日志器,监控子应用users
         'users': {
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
         # 定义了一个名为oauth的日志器,监控子应用oauth
         'oauth': {
             'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
         # 定义了一个名为send_email的日志器
         'send_email': {
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
         # 定义了一个名为areas的日志器
         'areas': {
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
         # 定义了一个名为goods的日志器
         'goods': {
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
         # 定义了一个名为goods的日志器
         'orders': {
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
         # payment支付日志
         'payment': {
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': False,
             'level': 'DEBUG',
         },
     },
@@ -431,16 +434,31 @@ LOGGING = {
 
 
 # 指定自定义的用户认证后端，用于多用户登录
+# 默认是，Django 会使用 django.contrib.auth.backends.ModelBackend 类来认证用户。
 AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
 
 # 判断用户是否登录，指定未登录用户重定向的地址
 LOGIN_URL="/login/"
 
+# celery配置
+celery_broker_url = 'redis://:123456@127.0.0.1:6379/2'
+
+#
+celery_result_backend= 'redis://:123456@127.0.0.1:6379/10'
+
+
+# 容联云短信
+# 说明：主账号，登陆云通讯网站后，可在"控制台-应用"中看到开发者主账号ACCOUNT SID
+accountSid = '8a216da881ad97540181ba09d9b90215'
+# 说明：主账号Token，登陆云通讯网站后，可在控制台-应用中看到开发者主账号AUTH TOKEN
+accountToken = '6202374657f446eab2da5fcbc09f0029'
+# 请使用管理控制台首页的APPID或自己创建应用的APPID
+appId = '8aaf070881ad8ad40181ba1b34f5025f'
 
 # QQ登录参数
 # 申请QQ登录成功后，分配给应用的appid。
 QQ_CLIENT_ID = '102016086'
-# 申请QQ登录成功后，分配给应用的appkey。
+# 申请QQ登录成功后，分配给应用的 appkey 。
 QQ_CLIENT_SECRET = 'FPM55xe8PSIuITSE'  # FPM55xe8PSIuITSE
 # 成功授权后的回调地址，必须是注册appid时填写的主域名下的地址，建议设置为网站首页或网站的用户中心。
 QQ_REDIRECT_URI = 'http://ov-vo.cn/oauth_callback'

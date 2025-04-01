@@ -26,9 +26,9 @@ class PermissionView(ModelViewSet):
     # 自己封装权限类型表操作
     def content_types(self,request):
         """
-        获取权限类型
-        :param request:
-        :return:
+            获取权限类型
+            :param request:
+            :return:
         """
         # 1.获取权限类型数据
         content = ContentType.objects.all()

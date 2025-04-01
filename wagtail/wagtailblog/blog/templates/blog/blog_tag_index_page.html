@@ -1,0 +1,21 @@
+{% extends "base.html" %} <!-- 继承自 base.html 模板 -->
+{% load wagtailcore_tags %} <!-- 加载 Wagtail 核心标签库 -->
+
+{% block content %} <!-- 定义 content 块 -->
+
+    {% if request.GET.tag %} <!-- 如果请求中包含 tag 参数 -->
+        <h4>显示标签的页面 "{{ request.GET.tag }}"</h4> <!-- 显示当前标签 -->
+    {% endif %}
+
+    {% for blogpage in blogpages %} <!-- 遍历 blogpages 列表 -->
+
+          <p>
+              <strong><a href="{% pageurl blogpage %}">{{ blogpage.title }}</a></strong><br /> <!-- 显示每个博客页面的标题并链接到该页面 -->
+              <small>修改实际: {{ blogpage.latest_revision_created_at }}</small><br /> <!-- 显示每个博客页面的最新修改时间 -->
+          </p>
+
+    {% empty %} <!-- 如果 blogpages 列为空 -->
+       未找到带有该标签的页面. <!-- 显示未找到页面的消息 -->
+    {% endfor %}
+
+{% endblock %} <!-- 结束 content 块 -->

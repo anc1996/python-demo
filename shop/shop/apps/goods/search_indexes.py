@@ -13,11 +13,11 @@ class SKUIndex(indexes.SearchIndex, indexes.Indexable):
         """返回建立索引的模型类"""
         return SKU
     # 返回内容context
+    
     # query：搜索关键字
     # paginator：分页paginator的模型对象
     # page：当前页的page对象（遍历page中的对象，可以得到result对象）
     # result.objects: 当前遍历出来的SKU对象。
     def index_queryset(self, using=None):
         """返回要建立索引的数据查询集"""
-
         return self.get_model().objects.filter(is_launched=True)

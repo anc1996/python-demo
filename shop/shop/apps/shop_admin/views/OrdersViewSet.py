@@ -22,6 +22,8 @@ class OrderViewSet(ReadOnlyModelViewSet):
     # 指定权限
     permission_classes = [IsAdminUser,]
 
+
+    # 指定查询集
     def get_queryset(self):
         """指定查询集"""
         keyword = self.request.query_params.get('keyword')

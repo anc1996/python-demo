@@ -1,10 +1,13 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.status import *
 from book_drf.Over_Basicclass.serializer import BookSerializer, BookModelSerializer
+from books.filters import BookInfoFilter
 from books.models import BookInfo
 
 """
@@ -18,11 +21,14 @@ action装饰器可以接收两个参数：
 
 class Books(GenericViewSet):
     """获取所有图书"""
-    """获取所有图书"""
     # 1、要指定当前类视图使用的查询数据
     queryset = BookInfo.objects.filter(is_delete=False)
-
-    #  2、要指定当前视图使用的序列化器，通过重写父类的gget_serializer_class方法返回应该用于序列化器的类。
+    # 2、筛选
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = BookInfoFilter
+    ordering_fields = ['readcount', 'commentcount', 'pub_date']
+    
+    #  2、要指定当前视图使用的序列化器，通过重写父类的get_serializer_class方法返回应该用于序列化器的类。
     # 才能使父类执行get_serializer函数这个serializer_class = self.get_serializer_class()内部定义的赋值
     def get_serializer_class(self):
         if self.action=='searchall':
@@ -37,11 +43,16 @@ class Books(GenericViewSet):
         print('serchall函数方法名：', self.action)  # action属性提取的是方法名,这里显示是searchall
         # 1、查询所有图书对象
         # 返回视图使用的查询集，是列表视图与详情视图获取数据的基础，默认返回queryset属性，可以重写
-        books = self.get_queryset()
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(filtered_queryset)
+        if page is not None:
+            # 4. 序列化分页后的数据
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         # 2、返回序列化器对象，被其他视图或扩展类使用，如果我们在视图中想要获取序列化器对象，可以直接调用此方法。
         # 使用指定序列化器，获取序列化对象
-        bookserializer = self.get_serializer(books, many=True) # 调用get_serializer_class的函数
-        return Response(bookserializer.data)
+        serializer = self.get_serializer(filtered_queryset, many=True) # 调用get_serializer_class的函数
+        return Response(serializer.data)
 
     """创建新的图书"""
     @action(methods=['post'],detail=False)
@@ -49,13 +60,13 @@ class Books(GenericViewSet):
         # 请求体获取数据
         data_dict = request.data
         # 2、验证数据
-        bookserializer = self.get_serializer(data=data_dict)
+        serializer = self.get_serializer(data=data_dict)
         # raise_exception=True,REST framework接收到此异常，会向前端返回HTTP 400 Bad Request响应。
-        bookserializer.is_valid(raise_exception=True)  # 验证方法
+        serializer.is_valid(raise_exception=True)  # 验证方法
         # 3、保存数据
-        bookserializer.save()
+        serializer.save()
         # 返回构建对象，这里的对象为data=book，然后序列化返回
-        return Response(bookserializer.data)
+        return Response(serializer.data)
 
     # 获取单一图书
     @action(methods=['get'], detail=True)
@@ -66,8 +77,8 @@ class Books(GenericViewSet):
             book = self.get_object()  # 从查询集获取指定的单一数据对象
         except BookInfo.DoesNotExist:
             return Response({'error': '当前数据不存在'}, status=HTTP_404_NOT_FOUND)
-        bookserializer = self.get_serializer(book)
-        return Response(bookserializer.data)
+        serializer = self.get_serializer(book)
+        return Response(serializer.data)
 
     """更新单一图书"""
     @action(methods=['put'], detail=True)
@@ -80,12 +91,12 @@ class Books(GenericViewSet):
         except BookInfo.DoesNotExist:
             return Response({'error': '当前数据不存在'}, status=HTTP_404_NOT_FOUND)
         # 3、验证数据
-        bookserializer =self.get_serializer(book, data=request.data)
-        bookserializer.is_valid(raise_exception=True)
+        serializer =self.get_serializer(book, data=request.data)
+        serializer.is_valid(raise_exception=True)
         # 4、更新数据
-        bookserializer.save()
+        serializer.save()
         # 6、返回结果
-        return Response(bookserializer.data)
+        return Response(serializer.data)
 
     # 删除数据
     @action(methods=['delete'], detail=True)
@@ -94,5 +105,6 @@ class Books(GenericViewSet):
             book = self.get_object()  # 从查询集获取指定的单一数据对象
         except BookInfo.DoesNotExist:
             return Response({'error': '数据库已存在'}, status=HTTP_404_NOT_FOUND)
-        book.delete()
+        book.is_delete = True
+        book.save()
         return Response({'ok': '删除成功'}, status=200)

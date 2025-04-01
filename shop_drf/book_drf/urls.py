@@ -52,7 +52,9 @@ urlpatterns = [
     # ReadOnlyModelViewSet,,继承自GenericAPIVIew与2个只能读取扩展类的子类视图集，它可以需要我们自己实现action方法。
     re_path(r'^ReadonlyModelviewset/$', ReadOnly_Modelviewset.Books.as_view({'get': 'list'})),
     re_path(r'^ReadonlyModelviewset/(?P<pk>\d+)/$', ReadOnly_Modelviewset.Books.as_view({'get': 'retrieve'})),
-
+    
+    # 看下面的router的urls
+    
     # mutifunction包
     re_path(r'^AuthPermit/$', AuthPermit.Books.as_view({'get': 'list', 'post': 'create'})),
     re_path(r'^AuthPermit/(?P<pk>\d+)/$', AuthPermit.Books.as_view({'get':'retrieve','put':'update','delete': 'destroy'})),
@@ -68,8 +70,8 @@ urlpatterns = [
 ]
 
 # 方法一：可以通过SimpleRouter，
-# 该路由器包括标准集合list, create, retrieve, update, partial_update 和 destroy动作的路由。
-# 视图集中还可以使用@ detail_route或@ list_route装饰器标记要被路由的其他方法。
+# 该路由器包括标准集合list, create, retrieve, update, partial_update 和 destroy 动作的路由。
+# 视图集中还可以使用 @detail_route 或 @list_route 装饰器标记要被路由的其他方法。
 simplerouter=routers.SimpleRouter()
 '''
 router.register(prefix,viewset, basename=None)

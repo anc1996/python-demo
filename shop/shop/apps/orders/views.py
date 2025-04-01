@@ -85,23 +85,25 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
 
     def post(self, request):
         """保存订单信息和订单商品信息"""
+        
         # 1.接受参数
         json_dict = json.loads(request.body.decode())
         address_id = json_dict.get('address_id')
         pay_method = json_dict.get('pay_method')
 
-
         # 2.校验参数
         if not all([address_id, pay_method]):
             return HttpResponseForbidden('缺少必传参数')
-        # 判断address_id是否合法
-        try:
-            address = Address.objects.get(id=address_id)
-        except Exception:
-            return HttpResponseForbidden('参数address_id错误')
         # 判断pay_method是否合法
         if pay_method not in [OrderInfo.PAY_METHODS_ENUM['CASH'], OrderInfo.PAY_METHODS_ENUM['ALIPAY']]:
             return HttpResponseForbidden('参数pay_method错误')
+        
+        # 判断address_id是否合法
+        try:
+            address = Address.objects.get(id=address_id)
+        except address.DoesNotExist:
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'address的id传错'})
+
 
         # 3.从redis读取购物车中被勾选的商品信息
         user = request.user
@@ -110,6 +112,7 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
         redis_sku_dict=redis_conn.hgetall('carts_%s' % user.id)
         # 查询set数据,SMEMBERS key命令返回存储在 key 中的集合的所有的成员。 不存在的集合被视为空集合。
         set_selected_list = redis_conn.smembers('selected_%s' % user.id)
+        
         # 构造购物车被勾选的商品数据
         if len(set_selected_list)==0:
             return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '下单失败'})
@@ -166,10 +169,8 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
                         sku.spu.save()
 
                         OrderGoods.objects.create(
-                            order=order,
-                            sku = sku,
-                            count = sku_count,
-                            price = sku.price,
+                            order=order,sku = sku,
+                            count = sku_count,price = sku.price,
                         )
 
                         # 累加订单商品的数量和总价到订单基本信息表
@@ -307,29 +308,31 @@ class OrderCommentView(LoginRequiredMixin, View):
 
         # 校验参数
         if not all([order_id, sku_id, score, comment]):
-            return HttpResponseForbidden('缺少必传参数')
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': '缺少必传参数'})
+        
+        if is_anonymous and not isinstance(is_anonymous, bool):
+                return HttpResponseForbidden('参数is_anonymous错误')
+        
         try:
             OrderInfo.objects.filter(order_id=order_id, user=request.user,
                                      status=OrderInfo.ORDER_STATUS_ENUM['UNCOMMENT'])
         except OrderInfo.DoesNotExist:
-            return HttpResponseForbidden('参数order_id错误')
+            return JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '参数order_id错误'})
+        
         try:
             sku = SKU.objects.get(id=sku_id)
         except SKU.DoesNotExist:
-            return HttpResponseForbidden('参数sku_id错误')
-        if is_anonymous:
-            if not isinstance(is_anonymous, bool):
-                return HttpResponseForbidden('参数is_anonymous错误')
+            return JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '参数sku_id错误'})
+        
+
         with transaction.atomic():
             # 设置事务保存点
             save_id = transaction.savepoint()
             try:
                 # 保存订单商品评价数据
                 OrderGoods.objects.filter(order_id=order_id, sku_id=sku_id, is_commented=False).update(
-                    comment=comment,
-                    score=score,
-                    is_anonymous=is_anonymous,
-                    is_commented=True
+                    comment=comment,score=score,
+                    is_anonymous=is_anonymous,is_commented=True
                 )
                 # 累计评images/l论数据
                 sku.comments += 1

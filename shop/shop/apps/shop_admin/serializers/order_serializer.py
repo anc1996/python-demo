@@ -9,6 +9,8 @@ class OrderSkuSerializer(serializers.ModelSerializer):
     class Meta:
         model = SKU
         fields = ['name','default_image']
+        
+        
 class OrderGoodsSerializer(serializers.ModelSerializer):
     """订单商品序列化器"""
     sku= OrderSkuSerializer(read_only=True)

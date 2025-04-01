@@ -17,7 +17,7 @@ from goods.models import SKU
 from shop.utils.views import LoginRequiredJSONMixin
 from .constants import USER_ADDRESS_COUNTS_LIMIT, USER_BROWSING_HISTORY_COUNTS_LIMIT, USER_BROWSING_HISTORY_EXPIRES
 from .models import User, Address
-from shop.utils.response_code import RETCODE
+from shop.utils.response_code import RETCODE,err_msg
 from .utils import generate_verify_email_url, check_verify_email_token
 from celery_tasks.email.tasks import send_verify_email
 
@@ -116,11 +116,14 @@ class RegisterView(View):
         if sms_code_server is None:
             return render(request,'register.html', {'sms_code_errmsg': '短信验证码已失效'})
         if sms_code_server!=sms_code_client:
+            redis_conn.delete('sms_%s' % mobile)
             return render(request, 'register.html', {'sms_code_errmsg': '输入短信验证码有误'})
         try:
             redis_conn.delete('sms_%s' % mobile)
         except Exception as e:
-            logger.error(e)
+            logger.error(f"从 Redis 中删除 SMS 验证码时出错: {e}")
+        
+        # 判断用户名是否存在
         count = User.objects.filter(username=username).count()
         mobile_count=User.objects.filter(mobile=mobile).count()
         if count!=0:
@@ -139,11 +142,14 @@ class RegisterView(View):
 
 
         # 4.实现状态保持
-        # 在请求中保留用户 ID 和后端。这样，用户就不必对每个请求重新进行身份验证。请注意，匿名会话期间的数据集将在用户登录时保留
-        # 该方法包含状态保持
-                # request.session[SESSION_KEY] = user._meta.pk.value_to_string(user)
-                # request.session[BACKEND_SESSION_KEY] = backend
-                # request.session[HASH_SESSION_KEY] = session_auth_hash
+        """
+        在请求中保留用户 ID 和后端。这样，用户就不必对每个请求重新进行身份验证。请注意，匿名会话期间的数据集将在用户登录时保留
+        该方法包含状态保持
+            request.session[SESSION_KEY] = user._meta.pk.value_to_string(user)
+            request.session[BACKEND_SESSION_KEY] = backend
+            request.session[HASH_SESSION_KEY] = session_auth_hash
+        这里的backend默认，指定你settings.py中的AUTHENTICATION_BACKENDS中的第一个认证后端
+        """
         login(request, user)
 
         # 5.响应结果：重定向首页
@@ -177,6 +183,7 @@ class LoginView(View):
         username=request.POST.get('username')
         password = request.POST.get('password')
         remembered = request.POST.get('remembered')
+        
         # 2.校验参数
         if not all([username, password]):
             return HttpResponseForbidden('登录时缺少必传参数，响应错误信息，403')
@@ -188,6 +195,8 @@ class LoginView(View):
             return HttpResponseForbidden('请输入8-20位的密码')
 
         # 3.认证登录用户：使用账号查询用户是否存在，如果用户存在，再校验密码是否正确
+        # 这里的request可以判断是否是前台登录和后台登录，转到user.utils.py中制定的UsernameMobileAuthBackend
+        # 要在settings.py中指定认证后端
         user=authenticate(username=username,password=password,request=request)
         if user is None:
             return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})
@@ -226,9 +235,9 @@ class LogoutView(View):
     """用户退出登录"""
     def get(self,request):
         """实现用户退出逻辑"""
-        ## 清楚状态信息
+        # 清楚状态信息
         logout(request)
-        ## 响应结果,并删除cookie内容
+        # 响应结果,并删除cookie内容
         response=redirect(reverse('contents:index'))
         response.delete_cookie('username')
         return response
@@ -242,12 +251,15 @@ class UserInfoView(LoginRequiredMixin,View):
         如果一个视图使用了这个混合类，所有非经过身份验证的用户的请求将被重定向到登录页面或显示
          HTTP 403 禁止访问的错误，这取决于 raise_exception 参数的设置。
     '''
+    
     def get(self,request):
         """提供用户中心的页面"""
+        
         # 判断用户是否登录
         # 你可以设置 AccessMixin 的任何参数来自定义未经授权用户的处理方式：
         # LoginRequiredMixin用法
-        # login_url ='/login/'   # 默认传：login_url = self.login_url or settings.LOGIN_URL==>LOGIN_URL = "/accounts/login/"
+        # login_url ='/login/'
+        # 默认传：login_url = self.login_url or settings.LOGIN_URL==>LOGIN_URL = "/accounts/login/"
         # redirect_field_name = 'redirect_to' # 默认：==> REDIRECT_FIELD_NAME = "next"，回到起点
 
         # 如果LoginRequiredMixin，判断用户已登录，那么request.user就是登录用户对象
@@ -262,56 +274,69 @@ class UserInfoView(LoginRequiredMixin,View):
 
 
 class EmailView(LoginRequiredJSONMixin,View):
+    
     """添加邮箱"""
+    
     # LoginRequiredJSONMixin判断用户是否登录
     def put(self,request):
-        # 接受参数
+        
+        # 1、接受参数
         json_str=request.body.decode() # body类型是bytes类型
-        json_dict=json.loads(json_str)
+        json_dict=json.loads(json_str) # json.loads()将bytes类型转成字典类型
         email=json_dict.get('email')
-        # 校验参数
+        
+        # 2、校验参数
         if not email:
             return HttpResponseForbidden('缺少email参数')
         if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
             return HttpResponseForbidden('参数email有误')
 
-        # 将用户传入的邮箱保持到user数据库的email字段中
+        # 3、将用户传入的邮箱保持到user数据库的email字段中
         try:
             request.user.email=email
             request.user.save()
         except Exception as e:
             logger.error(e)
             return JsonResponse({'code':RETCODE.DBERR,'errmsg':'添加邮箱失败'})
-        # 生产密文链接码
+        
+        # 4、生成密文链接码
         user_id=request.user.id
         verify_url=generate_verify_email_url(user_id,email)
-        # # 发送邮箱验证邮件
+        
+        # 5、发送邮箱验证邮件
         send_verify_email.delay(to_email=email,verify_url=verify_url)
-        # 响应结果
+        
+        # 6、响应结果
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
 
 
 class VerifyEmailView(View):
+    
     """验证邮箱"""
 
     def get(self,request):
-        # 接受参数
+        
+        # 1、接受参数
         token=request.GET.get('token')
-        # 校验参数
+        
+        # 2、校验参数
         if not token:
             return HttpResponseForbidden('缺少token验证信息')
-        # 从token中提前用户信息user_id=>user
+        # 3、从token中提前用户信息user_id=>user
         user=check_verify_email_token(token)
+        
         if not user:
             return HttpResponseBadRequest('无效的请求token')
-        # 将用户的email_active设置为True
+        
+        # 4、将用户的email_active设置为True
         try:
             user.email_active=True
             user.save()
         except Exception as e:
             logger.error(e)
             return HttpResponseServerError('激活邮件失败')
-        # 响应结果：重定向到用户中心
+        
+        # 5、响应结果：重定向到用户中心
         return redirect(reverse('users:info'))
 
 
@@ -327,9 +352,10 @@ class CreateAddressView(LoginRequiredJSONMixin, View):
         count=request.user.addresses.filter(is_deleted=False).count()  # 一查多 related_name='addresses'查询
         if count>=USER_ADDRESS_COUNTS_LIMIT:
             return JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': '超过地址数量上限'})
+        
         # 接收参数
-        json_str=request.body.decode()
-        json_dict=json.loads(json_str)
+        json_dict=json.loads(request.body.decode())
+        
         receiver = json_dict.get('receiver')
         province_id = json_dict.get('province_id')
         city_id = json_dict.get('city_id')
@@ -338,17 +364,16 @@ class CreateAddressView(LoginRequiredJSONMixin, View):
         mobile = json_dict.get('mobile')
         tel = json_dict.get('tel')
         email = json_dict.get('email')
+        
         # 校验参数
         if not all([receiver, province_id, city_id, district_id, place, mobile]):
-            return HttpResponseForbidden('缺少必传参数')
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg':err_msg[RETCODE.NECESSARYPARAMERR]})
         if not re.match(r'^1[3-9]\d{9}$', mobile):
-            return HttpResponseForbidden('参数mobile有误')
-        if tel:
-            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
-                return HttpResponseForbidden('参数tel有误')
-        if email:
-            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
-                return HttpResponseForbidden('参数email有误')
+            return JsonResponse({'code': RETCODE.MOBILEERR, 'errmsg': err_msg[RETCODE.MOBILEERR]})
+        if tel and not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+            return JsonResponse({'code': RETCODE.TELERR, 'errmsg': err_msg[RETCODE.TELERR]})
+        if email and not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return JsonResponse({'code': RETCODE.EMAILERR, 'errmsg': err_msg[RETCODE.EMAILERR]})
 
         # 保存用户传入的地址信息
         try:
@@ -388,6 +413,7 @@ class AddressView(LoginRequiredMixin,View):
 
     def get(self,request):
         """查询并展示用户地址信息"""
+        
         login_user=request.user
         # 将模型列表转成字典列表：因为Vue.js不认识模型类型，只有Django和jinja2模板引擎认识
         addresses=Address.objects.filter(user=login_user,is_deleted=False)
@@ -406,60 +432,56 @@ class AddressView(LoginRequiredMixin,View):
                 "email": address.email
             }
             address_list.append(address_dict)
+            
         # 构造上下文
         context={
             'default_address_id': login_user.default_address_id or '0',
             'addresses': address_list,
         }
+        
         return render(request,'user_center_site.html',context=context)
 
 class UpdateDestroyAddressView(LoginRequiredJSONMixin, View):
 
     def put(self,request,address_id):
         """修改地址"""
+        
         # 接收参数
         json_dict = json.loads(request.body.decode())
-        receiver = json_dict.get('receiver')
-        province_id = json_dict.get('province_id')
-        city_id = json_dict.get('city_id')
-        district_id = json_dict.get('district_id')
-        place = json_dict.get('place')
-        mobile = json_dict.get('mobile')
-        tel = json_dict.get('tel')
-        email = json_dict.get('email')
+        required_fields = ["receiver", "province_id", "city_id", "district_id", "place", "mobile"]
+        optional_fields = ["tel", "email"]
+        
+        # 提取必需参数和可选参数，构造字典
+        address_data = {key: json_dict.get(key) for key in required_fields + optional_fields}
 
-        # 校验参数
-        if not all([receiver, province_id, city_id, district_id, place, mobile]):
-            return HttpResponseForbidden('缺少必传参数')
-        if not re.match(r'^1[3-9]\d{9}$', mobile):
-            return HttpResponseForbidden('参数mobile有误')
-        if tel:
-            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
-                return HttpResponseForbidden('参数tel有误')
-        if email:
-            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
-                return HttpResponseForbidden('参数email有误')
+        # 验证所需参数
+        if not all(address_data[key] for key in required_fields):
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': err_msg[RETCODE.NECESSARYPARAMERR]})
+
+        # 验证电话设备
+        if not re.match(r'^1[3-9]\d{9}$', address_data["mobile"]):
+            return JsonResponse({'code': RETCODE.MOBILEERR, 'errmsg': err_msg[RETCODE.MOBILEERR]})
+
+        # 验证可选字段
+        if address_data["tel"] and not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', address_data["tel"]):
+            return JsonResponse({'code': RETCODE.TELERR, 'errmsg': err_msg[RETCODE.TELERR]})
+        if address_data["email"] and not re.match(r'^[a-z0-9][\w.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', address_data["email"]):
+            return JsonResponse({'code': RETCODE.EMAILERR, 'errmsg': err_msg[RETCODE.EMAILERR]})
+
 
         # 判断地址是否存在,并更新地址信息
         # 使用最新的地址信息覆盖指定的旧的地址信息
         try:
             Address.objects.filter(id=address_id).update(
                 user=request.user,
-                title=receiver,
-                receiver=receiver,
-                province_id=province_id,
-                city_id=city_id,
-                district_id=district_id,
-                place=place,
-                mobile=mobile,
-                tel=tel,
-                email=email
+                title=address_data["receiver"],
+                **address_data
             )
         except Exception as e:
             logger.error(e)
             return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '更新地址失败'})
+        
         # 响应新的地址信息给前端渲染
-        # 构造响应数据
         try:
             address = Address.objects.get(id=address_id)
         except Exception as e:
@@ -488,10 +510,10 @@ class UpdateDestroyAddressView(LoginRequiredJSONMixin, View):
             address.save()
         except Address.DoesNotExist as e:
             logger.error(e)
-            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '数据库删除失败'})
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '删除数据不存在'})
         except Exception as e:
             logger.error(e)
-            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '数据库删除失败'})
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '删除数据库失败'})
         # 响应删除地址结果
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '删除地址成功'})
 
@@ -502,11 +524,11 @@ class DefaultAddressView(LoginRequiredJSONMixin, View):
     def put(self,request,address_id):
         """实现设置默认地址的信息"""
         try:
-            # 接收参数,查询地址
+            # 1、接收参数,查询地址
             address = Address.objects.get(id=address_id)
-            if address.is_deleted:
+            if address.is_deleted or not address: # 如果地址已经被删除或者地址不存在
                 return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '地址已失效'})
-            # 设置地址为默认地址
+            # 2、设置地址为默认地址
             request.user.default_address = address
             request.user.save()
         except Exception as e:
@@ -527,13 +549,14 @@ class UpdateTitleAddressView(LoginRequiredJSONMixin, View):
         title=json_dict.get('title')
         # 校验参数
         if not title:
-            return HttpResponseForbidden('缺少title名字')
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': '缺少title参数'})
         # 查询当前要更新的地址
         try:
             Address.objects.filter(id=address_id).update(title=title)
-        except UpdateError  as e:
+        except UpdateError as e:
             logger.error(e)
             return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '设置地址标题失败'})
+        
         # 响应结果
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '设置地址标题成功'})
 
@@ -559,6 +582,7 @@ class ChangePasswordView(LoginRequiredMixin, View):
             return HttpResponseForbidden('请输入8-20位的密码')
         if new_password!=new_password2:
             return HttpResponseForbidden('两次输入的密码不一致')
+        
         # 检验数据库密码
         try:
             request.user.check_password(old_password)
@@ -586,31 +610,40 @@ class UserBrowseHistory(LoginRequiredJSONMixin, View):
 
     def post(self, request):
         """保存用户浏览记录"""
-        # 接收参数
+        
+        # 1、接收参数
         json_dict = json.loads(request.body.decode())
         sku_id = json_dict.get('sku_id')
         user_id=request.user.id
-        # 校验参数
+        
+        # 2、校验参数
         try:
             sku=SKU.objects.get(id=sku_id)
         except SKU.DoesNotExist:
-            return HttpResponseForbidden('浏览商品不存在')
-        # 保存sku_id到redis
+            return JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '商品不存在'})
+        
+        # 3、保存sku_id到redis
         redis_conn = get_redis_connection('history')
         pl = redis_conn.pipeline()  # 管道一次性操作
-        # 先去重,用于从列表 key 中删除前 count 个值等于 element 的元素。
-        # count > 0: 从头到尾删除值为 value 的元素。
-        # count = 0: 移除所有值为 value 的元素。
-        pl.lrem('history_%s' % user_id, 0, sku_id)
-        # 再存储,将一个或多个值插入到列表key 的头部。
+        """先去重,用于从列表 key 中删除前 count 个值等于 element 的元素。"""
+        
+        #  lrem(self, name: str, count: int, value: str)
+            # count > 0: 从头到尾删除值为 value 的元素。
+            # count = 0: 移除所有值为 value 的元素。
+        pl.lrem('history_%s' % user_id, 0, sku.id) # 移除所有值为 sku.id 的元素。
+        
+        # 再存储,将一个或多个值插入到列表 key 的头部。
         # LPUSH mylist a b c，返回的列表是 c 为第一个元素， b 为第二个元素， a 为第三个元素。
-        pl.lpush('history_%s' % user_id, sku_id)
+        pl.lpush('history_%s' % user_id, sku.id)
+        
         # 最后截取,用于修剪(trim)一个已存在的 list，这样 list 就会只包含指定范围的指定元素。
-        pl.ltrim('history_%s' % user_id, 0, USER_BROWSING_HISTORY_COUNTS_LIMIT)
+        pl.ltrim('history_%s' % user_id, 0, USER_BROWSING_HISTORY_COUNTS_LIMIT) # 保留最新的5个浏览记录
+        
         # 设置history_user_id键的过期时间为6个月
         pl.expire('history_%s' % user_id, USER_BROWSING_HISTORY_EXPIRES)
         pl.execute()
-        # 响应结果
+        
+        # 4、响应结果
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
 
@@ -652,8 +685,9 @@ class UserBrowseHistory(LoginRequiredJSONMixin, View):
                     })
             except Exception as e:
                 logger.error(e)
+                # 如果sku_id不存在，删除sku_id
                 redis_conn.lrem('history_%s' % user_id, 0, sku_id)
-                continue
+                
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': sku_list})
 
 

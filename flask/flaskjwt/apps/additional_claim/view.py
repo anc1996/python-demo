@@ -7,7 +7,8 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 
 claim_bp = Blueprint('claim', __name__, url_prefix='/claim')
 
-
+"""部分保护路由允许你在一个视图中同时处理已认证和未认证用户。在某些情况下，无论 JWT 是否有效，您都希望使用相同的路由 是否存在于请求中。
+在这些情况下，您可以使用 jwt_required()带有optional=True参数。这将允许访问端点，无论是否随请求发送 JWT。"""
 
 # 创建路由来验证您的用户并返回 JWT。这
 # create_access_token（） 函数用于实际生成 JWT。

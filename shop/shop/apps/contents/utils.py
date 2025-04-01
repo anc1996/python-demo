@@ -35,7 +35,7 @@ def get_categories():
     #         "sub_cats": []
     #     }
     # }
-    categories=OrderedDict()
+    categories=OrderedDict() # 有序字典
     # 查询所有的商品频道，1比1对应37个一级类别
     # 按照group_id和sequence对GoodsChannel表中的数据进行排序。
     good_channels = GoodsChannel.objects.order_by('group_id', 'sequence')
@@ -53,6 +53,7 @@ def get_categories():
         # {"id": 1, "name": "手机", "url": "http://shouji.jd.com/"},
         categories[channel_group_id]['channels'].append(
             {"id": category1.id, "name": category1.name, "url": channel.url})
+        
         # 查询二级
         for category2 in category1.subs.all():
             # 在面向对象过程中增加sub_cats属性，jinja2认识模型类对象
@@ -94,7 +95,7 @@ def get_breadcrumb(category):
     if category.parent is None:
         # 当前类别为一级类别
         breadcrumb['cat1'] = category
-        breadcrumb['cat1url']=category.goodschannel_set.all()[0].url
+        breadcrumb['cat1url']=category.goodschannel_set.all()[0].url # 一级类别的url
     elif category.subs.count() == 0:
         # 当前类别为三级
         breadcrumb['cat3'] = category

@@ -18,7 +18,9 @@ let vm = new Vue({
         provinces: [],
         cities: [],
         districts: [],
-        addresses: JSON.parse(JSON.stringify(addresses)),
+        // JSON.stringify()将字典转换为字符串
+        // JSON.parse()将字符串转换为字典
+        addresses: JSON.parse(JSON.stringify(addresses)), // 深拷贝
         default_address_id: default_address_id,
         editing_address_index: '',
         edit_title_index: '',

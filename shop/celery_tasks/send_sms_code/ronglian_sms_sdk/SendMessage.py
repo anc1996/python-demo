@@ -2,16 +2,16 @@ import json
 
 from celery_tasks.send_sms_code.ronglian_sms_sdk import SmsSDK
 
+from shop.settings import dev_settings as settings
 
 # 说明：主账号，登陆云通讯网站后，可在"控制台-应用"中看到开发者主账号ACCOUNT SID
-accountSid = '8a216da881ad97540181ba09d9b90215'
+accountSid = settings.accountSid
 
 # 说明：主账号Token，登陆云通讯网站后，可在控制台-应用中看到开发者主账号AUTH TOKEN
-accountToken = '6202374657f446eab2da5fcbc09f0029'
-
+accountToken = settings.accountToken
 
 # 请使用管理控制台首页的APPID或自己创建应用的APPID
-appId = '8aaf070881ad8ad40181ba1b34f5025f'
+appId = settings.appId
 
 def send_message():
 
@@ -54,7 +54,7 @@ class CCP(object):
         """
         # 判断单例是否存在:_instance是一个类属性，用于存储单例对象的引用
         if not hasattr(cls,'_instatance'):
-            #hasattr: This is done by calling getattr(obj, name) and catching AttributeError.
+            # hasattr: 这是通过调用 getattr（obj， name） 并捕获 AttributeError 来完成的。
             # 如果单例不存在，初始化单例
             cls._instance=super(CCP,cls).__new__(cls,*args,**kwargs)
             # 初始化REST SDK
@@ -69,9 +69,14 @@ class CCP(object):
         """
         # self指向对象方法cls._instance，结果self=<__main__.CCP object at 0x7facc21f6df0>
         resp_str = self._instance.sdk.sendMessage(tid, mobile, datas) # 返回字符串
-        resp_dict=json.loads(resp_str)
-        # 短信验证码发送有延迟
-        # {'statusCode': '000000', 'templateSMS': {'smsMessageSid': '87cab8cccace4fc6bc0d17e96f3eadb4', 'dateCreated': '20240428224744'}}
+        resp_dict=json.loads(resp_str) # 短信验证码发送有延迟
+        '''
+        {
+            'statusCode': '000000',
+            'templateSMS': {'smsMessageSid': '87cab8cccace4fc6bc0d17e96f3eadb4', 'dateCreated': '20240428224744'}
+        }
+        '''
+        
         if(resp_dict.get('statusCode')=='000000'):
             return 0
         else:

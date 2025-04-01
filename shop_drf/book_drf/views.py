@@ -39,6 +39,7 @@ class Books(View):
             # raw中前端，json请求
             data=request.body.decode()
             data_dict=json.loads(data)
+            
         # 2、验证数据，如果存在则更新，不存在则创建
         book = BookInfo.objects.filter(name=data_dict.get('name')).first()
         if book:
@@ -104,7 +105,7 @@ class Book(View):
 class BookmodelView(View):
     def get(self, request):
         # 获取所有图书
-        books = BookInfo.objects.all()
+        books = BookInfo.objects.filter(is_delete=False)
         # 使用 BookModelSerializer 对图书进行序列化
         books_serializer = BookModelSerializer(books, many=True)
         # 返回序列化后的图书数据
