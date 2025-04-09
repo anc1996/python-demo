@@ -56,6 +56,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.20.2:8051",
     "http://127.0.0.1:8051",
 ]
+
 # 允许携带cookie
 CORS_ALLOW_CREDENTIALS = True
 
@@ -485,11 +486,13 @@ FDFS_BASE_URL = 'http://192.168.20.2:8888/'
 # Haystack
 HAYSTACK_CONNECTIONS = {
     'default': {
-        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
+        'ENGINE': 'haystack.backends.elasticsearch7_backend.Elasticsearch7SearchEngine',
         'URL': 'http://192.168.20.2:9200/', # Elasticsearch服务器ip地址，端口号固定为9200
         'INDEX_NAME': 'shop', # Elasticsearch建立的索引库的名称
     },
 }
+
+
 
 # 当添加、修改、删除数据时，自动生成索引,配置项保证了在Django运行起来后，有新的数据产生时，Haystack仍然可以让Elasticsearch实时生成新数据的索引
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'

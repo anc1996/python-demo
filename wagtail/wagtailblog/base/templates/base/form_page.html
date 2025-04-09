@@ -1,0 +1,18 @@
+
+<!-- 这是显示我博客网站的联系页面-->
+
+{% extends "base.html" %} <!-- 继承自 base.html 模板 -->
+{% load wagtailcore_tags %} <!-- 加载 Wagtail 核心标签库 -->
+
+{% block body_class %}template-formpage{% endblock %} <!-- 定义 body_class 块，设置页面的 CSS 类为 template-formpage -->
+
+{% block content %} <!-- 定义 content 块 -->
+    <h1>{{ page.title }}</h1> <!-- 显示页面标题 -->
+    <div>{{ page.intro|richtext }}</div> <!-- 显示页面介绍，支持富文本格式 -->
+
+    <form class="page-form" action="{% pageurl page %}" method="POST"> <!-- 定义表单，提交到当前页面的 URL，使用 POST 方法 -->
+        {% csrf_token %} <!-- 包含 CSRF 令牌以防止跨站请求伪造 -->
+        {{ form.as_div }} <!-- 以 div 形式渲染表单字段 -->
+        <button type="Submit">Submit</button> <!-- 提交按钮 -->
+    </form>
+{% endblock content %} <!-- 结束 content 块 -->

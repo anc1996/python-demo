@@ -1,0 +1,11 @@
+{% extends "base.html" %} <!-- 继承自 base.html 模板 -->
+
+{% load wagtailcore_tags wagtailimages_tags %} <!-- 加载 Wagtail 核心标签库和图像标签库 -->
+
+{% block body_class %}template-portfolio{% endblock %} <!-- 定义 body_class 块，设置页面的 CSS 类为 template-portfolio -->
+
+{% block content %} <!-- 定义 content 块 -->
+    <h1>{{ page.title }}</h1> <!-- 显示页面标题 -->
+
+    {{ page.body }} <!-- 显示页面主体内容 -->
+{% endblock %} <!-- 结束 content 块 -->

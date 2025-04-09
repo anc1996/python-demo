@@ -1,0 +1,8 @@
+
+<!--来源blocks.py的CaptionedImageBlock模型-->
+{% load wagtailimages_tags %} <!-- 加载 Wagtail 图像标签库 -->
+
+<figure>
+    {% image self.image fill-600x338 loading="lazy" %} <!-- 显示图像，使用填充尺寸 600x338，并设置懒加载 -->
+    <figcaption>{{ self.caption }} - {{ self.attribution }}</figcaption> <!-- 显示图像说明和归属信息 -->
+</figure>

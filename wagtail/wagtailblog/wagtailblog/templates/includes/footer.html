@@ -1,3 +1,7 @@
+{# 在文件顶部加载 navigation_tags: #}
+{% load navigation_tags %}
+
+
 <footer>
     <p>Built with Wagtail</p>
 
@@ -17,4 +21,7 @@
             </p>
         {% endif %}
     {% endwith %}
+
+    {# Add 页脚文本: get_footer_text 标签使用 base/includes/footer_text.html 模板来渲染其输出 #}
+    {% get_footer_text %}
 </footer>
