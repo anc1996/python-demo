@@ -1,0 +1,21 @@
+{% load i18n %}
+
+<div class="w-panel">
+    <h2 class="w-panel__heading">{% trans "博客统计" %}</h2>
+    <div class="w-panel__content">
+        <ul class="w-stats">
+            <li class="w-stats__stat">
+                <span class="w-stats__count">{{ total_posts }}</span>
+                <span class="w-stats__label">{% trans "已发布文章" %}</span>
+            </li>
+            <li class="w-stats__stat">
+                <span class="w-stats__count">{{ draft_posts }}</span>
+                <span class="w-stats__label">{% trans "草稿文章" %}</span>
+            </li>
+            <li class="w-stats__stat">
+                <span class="w-stats__count">{{ recent_posts }}</span>
+                <span class="w-stats__label">{% trans "近30天发布" %}</span>
+            </li>
+        </ul>
+    </div>
+</div>

@@ -1,16 +1,130 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load wagtailcore_tags wagtailimages_tags static %}
+
+{% block extra_css %}
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+    <!-- MathJax 数学公式支持 -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Markdown 支持 -->
+    <link rel="stylesheet" href="{% static 'css/markdown.css' %}">
+{% endblock %}
 
 {% block body_class %}template-blogpage{% endblock %}
 
 {% block content %}
-    <h1>{{ page.title }}</h1>
-    <p class="meta">{{ page.date }} - 作者: {{ page.author }}</p>
-
-    <div class="blog-body">
-        {{ page.body|richtext }}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- 博客标题和元信息 -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-3">{{ page.title }}</h1>
+            
+            <div class="flex flex-wrap items-center text-gray-600 text-sm mb-4">
+                <span class="mr-4">{{ page.date|date:"Y年m月d日" }}</span>
+                
+                {% if page.last_published_at and page.last_published_at != page.first_published_at %}
+                <span class="mr-4">更新于: {{ page.last_published_at|date:"Y年m月d日" }}</span>
+                {% endif %}
+                
+                {% if page.owner %}
+                <span class="mr-4">作者: {{ page.owner.get_full_name|default:page.owner.username }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- 分类标签 -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                {% for category in page.categories.all %}
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                    {{ category.name }}
+                </span>
+                {% endfor %}
+                
+                {% if page.tags.all %}
+                    {% for tag in page.tags.all %}
+                    <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                        #{{ tag }}
+                    </span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <!-- 博客简介 -->
+            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500 mb-8">
+                <p class="text-gray-700">{{ page.intro }}</p>
+            </div>
+        </div>
+        
+        <!-- 博客内容 -->
+        <div class="prose prose-lg max-w-none mb-10 blog-content">
+            {% for block in page.body %}
+                <div class="block-{{ block.block_type }}">
+                    {% include_block block %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 相关文章 -->
+        {% with related_posts=page.get_related_posts %}
+            {% if related_posts %}
+            <div class="border-t pt-8 mt-8">
+                <h3 class="text-2xl font-bold mb-4">相关文章</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% for related in related_posts %}
+                        <div class="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-2">
+                                    <a href="{% pageurl related %}" class="text-blue-600 hover:text-blue-800">
+                                        {{ related.title }}
+                                    </a>
+                                </h4>
+                                <p class="text-sm text-gray-600">{{ related.date|date:"Y年m月d日" }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        {% endwith %}
     </div>
+</div>
+{% endblock %}
 
-    <p><a href="{{ page.get_parent.url }}">返回</a></p>
+{% block extra_js %}
+<!-- 代码高亮 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<!-- 支持常用编程语言 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/go.min.js"></script>
+<!-- Markdown 解析 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
 
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+    // 代码高亮初始化
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightBlock(block);
+    });
+    
+    // 处理Markdown内容
+    document.querySelectorAll('.block-markdown').forEach((block) => {
+        const markdownText = block.querySelector('.markdown-content').textContent;
+        block.innerHTML = marked.parse(markdownText);
+        
+        // 对markdown生成的代码块进行高亮
+        block.querySelectorAll('pre code').forEach((codeBlock) => {
+            hljs.highlightBlock(codeBlock);
+        });
+    });
+    
+    // 处理数学公式
+    if (typeof MathJax !== 'undefined') {
+        MathJax.typeset();
+    }
+});
+</script>
 {% endblock %}
