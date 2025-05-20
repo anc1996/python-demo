@@ -1,0 +1,137 @@
+/* archive/static/archive/css/archive.css */
+
+/* 归档侧边栏样式 */
+.archive-sidebar {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.archive-sidebar h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #343a40;
+}
+
+.archive-tree {
+    font-size: 0.95rem;
+}
+
+.archive-year {
+    margin-bottom: 1rem;
+}
+
+.year-link {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: #212529;
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.year-link:hover {
+    background-color: #e9ecef;
+    color: #0056b3;
+    text-decoration: none;
+}
+
+.year-link.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.archive-months {
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.month-link {
+    display: block;
+    padding: 0.375rem 0.75rem;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.9rem;
+    border-left: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.month-link:hover {
+    color: #0056b3;
+    border-left-color: #007bff;
+    background-color: #f8f9fa;
+    text-decoration: none;
+}
+
+.month-link.active {
+    color: #007bff;
+    font-weight: 500;
+    border-left-color: #007bff;
+    background-color: #e9ecef;
+}
+
+/* 归档页面样式 */
+.year-archive-page header,
+.month-archive-page header {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 1rem;
+}
+
+.blog-list .blog-item {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.blog-list .blog-item:last-child {
+    border-bottom: none;
+}
+
+.blog-item h3 {
+    margin-bottom: 0.75rem;
+}
+
+.blog-item .meta {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.blog-item .featured-image-link {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.blog-item .thumbnail {
+    width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+}
+
+.blog-item .intro {
+    margin-bottom: 1rem;
+}
+
+.blog-item .read-more {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.blog-item .read-more:hover {
+    text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .archive-sidebar {
+        margin-bottom: 2rem;
+    }
+
+    .archive-months {
+        margin-left: 1rem;
+    }
+}

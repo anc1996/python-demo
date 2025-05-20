@@ -1,0 +1,71 @@
+{% extends "wagtailadmin/base.html" %}
+{% load wagtailadmin_tags %}
+
+{% block titletag %}视频管理{% endblock %}
+
+{% block content %}
+    {% include "wagtailadmin/shared/header.html" with title="视频管理" icon="media" %}
+
+    <div class="nice-padding">
+        <a href="{% url 'video_upload' %}" class="button bicolor icon icon-plus">上传新视频</a>
+
+        {% if error %}
+            <div class="messages">
+                <ul>
+                    <li class="error">{{ error }}</li>
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if videos %}
+            <div class="video-list">
+                <table class="listing">
+                    <thead>
+                        <tr>
+                            <th>视频名称</th>
+                            <th>大小</th>
+                            <th>最后修改</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in videos %}
+                            <tr>
+                                <td>{{ video.name }}</td>
+                                <td>{{ video.size|filesizeformat }}</td>
+                                <td>{{ video.last_modified }}</td>
+                                <td>
+                                    <a href="{{ video.url }}" target="_blank" class="button button-small">查看</a>
+                                    <button class="button button-small copy-url" data-url="{{ video.url }}">复制URL</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>暂无上传的视频。</p>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 复制URL到剪贴板
+            document.querySelectorAll('.copy-url').forEach(button => {
+                button.addEventListener('click', function() {
+                    const url = this.dataset.url;
+                    navigator.clipboard.writeText(url).then(() => {
+                        // 显示成功消息
+                        const originalText = this.textContent;
+                        this.textContent = '已复制';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 2000);
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

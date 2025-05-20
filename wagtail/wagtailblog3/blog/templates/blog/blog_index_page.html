@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags blog_tags %}
+
+{% block body_class %}blog-index-page{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header>
+        <h1>{{ page.title }}</h1>
+        {% if page.intro %}
+            <div class="intro">{{ page.intro | richtext  }}</div>
+        {% endif %}
+    </header>
+
+    <div class="blog-list">
+        {% for post in blog_pages %}
+            <article class="blog-item">
+                <h2><a href="{% pageurl post %}">{{ post.title }}</a></h2>
+
+                <div class="meta">
+                    {{ post.specific.date }}
+                    <!-- 添加统计数据 -->
+                    {% include "blog/stats_block.html" with page=post %}
+
+                    <!-- 显示作者 -->
+                    {% if post.specific.authors.all %}
+                        <span class="authors">
+                            作者:
+                            {% for author in post.specific.authors.all %}
+                                {{ author.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </span>
+                    {% endif %}
+
+                </div>
+
+                {% if post.specific.featured_image %}
+                    <a href="{% pageurl post %}" class="featured-image-link">
+                        {% image post.specific.featured_image fill-300x200 class="thumbnail" %}
+                    </a>
+                {% endif %}
+
+                <div class="intro">{{ post.specific.intro }}</div>
+
+                <a href="{% pageurl post %}" class="read-more">阅读更多</a>
+
+                {% if post.specific.tags.all %}
+                    <div class="tags">
+                        {% for tag in post.specific.tags.all %}
+                            <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </article>
+        {% empty %}
+            <p>目前还没有博客文章。</p>
+        {% endfor %}
+    </div>
+
+    {% if blog_pages.paginator.num_pages > 1 %}
+    <div class="pagination">
+        <span class="page-info">
+            第 {{ blog_pages.number }} 页，共 {{ blog_pages.paginator.num_pages }} 页
+        </span>
+
+        {% if blog_pages.has_previous %}
+            <a href="?page={{ blog_pages.previous_page_number }}" class="previous">上一页</a>
+        {% endif %}
+
+        {% if blog_pages.has_next %}
+            <a href="?page={{ blog_pages.next_page_number }}" class="next">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+<div class="categories-list">
+    <h3 class="text-lg font-semibold mb-3">分类</h3>
+    <ul class="space-y-2">
+        {% for category in categories %}
+            <li>
+                <a href="{% url 'blog:category' category.slug %}" class="flex justify-between items-center hover:text-blue-600 transition-colors duration-200">
+                    <span>{{ category.name }}</span>
+                    <span class="text-sm text-gray-500">({{ category.post_count }})</span>
+                </a>
+            </li>
+        {% empty %}
+            <li class="text-gray-500">暂无分类</li>
+        {% endfor %}
+    </ul>
+</div>

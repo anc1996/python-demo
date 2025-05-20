@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags %}
+
+{% block title %}高级搜索{% endblock %}
+
+{% block body_class %}template-advanced-search{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">高级搜索</h1>
+    
+    <div class="max-w-4xl mx-auto">
+        <form action="{% url 'blog:advanced_search' %}" method="get" class="bg-white shadow-md rounded-lg p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 搜索关键词 -->
+                <div class="md:col-span-2">
+                    <label for="query" class="block text-sm font-medium text-gray-700 mb-1">关键词</label>
+                    <input type="text" id="query" name="query" value="{{ search_query|default:'' }}" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                           placeholder="输入搜索关键词">
+                </div>
+                
+                <!-- 分类筛选 -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+                    <select id="category" name="category" 
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">所有分类</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category.id|stringformat:"i" == current_category %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- 标签筛选 -->
+                <div>
+                    <label for="tag" class="block text-sm font-medium text-gray-700 mb-1">标签</label>
+                    <input type="text" id="tag" name="tag" value="{{ current_tag|default:'' }}" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                           placeholder="输入标签名称">
+                </div>
+                
+                <!-- 日期范围 -->
+                <div>
+                    <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
+                    <input type="date" id="date_from" name="date_from" value="{{ date_from|default:'' }}" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
+                    <input type="date" id="date_to" name="date_to" value="{{ date_to|default:'' }}" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-4">
+                <button type="reset" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    重置
+                </button>
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                    搜索
+                </button>
+            </div>
+        </form>
+        
+        <!-- 搜索结果 -->
+        {% if search_query or current_category or current_tag or date_from or date_to %}
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold mb-2">搜索结果</h2>
+                
+                <!-- 搜索条件摘要 -->
+                <div class="bg-gray-50 px-4 py-3 rounded-md mb-4">
+                    <p class="text-sm text-gray-600">
+                        {% if search_query %}关键词: <span class="font-medium">{{ search_query }}</span>{% endif %}
+                        {% if current_category %} | 分类: <span class="font-medium">
+                            {% for category in categories %}
+                                {% if category.id|stringformat:"i" == current_category %}{{ category.name }}{% endif %}
+                            {% endfor %}
+                        </span>{% endif %}
+                        {% if current_tag %} | 标签: <span class="font-medium">{{ current_tag }}</span>{% endif %}
+                        {% if date_from %} | 起始日期: <span class="font-medium">{{ date_from }}</span>{% endif %}
+                        {% if date_to %} | 结束日期: <span class="font-medium">{{ date_to }}</span>{% endif %}
+                    </p>
+                </div>
+                
+                {% if search_results %}
+                    <!-- 结果列表 -->
+                    <div class="space-y-6">
+                        {% for result in search_results %}
+                            <div class="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                <a href="{% pageurl result %}" class="block">
+                                    <h3 class="text-lg font-medium text-blue-600 mb-2">{{ result.title }}</h3>
+                                    
+                                    {% if result.specific.intro %}
+                                        <p class="text-gray-700 mb-3">{{ result.specific.intro|truncatewords:30 }}</p>
+                                    {% endif %}
+                                    
+                                    <div class="flex flex-wrap items-center text-sm text-gray-500">
+                                        {% if result.specific.date %}
+                                            <span class="mr-4">{{ result.specific.date|date:"Y年m月d日" }}</span>
+                                        {% endif %}
+                                        
+                                        {% if result.specific.categories.all %}
+                                            <div class="flex flex-wrap gap-2 mr-4">
+                                                {% for category in result.specific.categories.all %}
+                                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                                        {{ category.name }}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if result.specific.tags.all %}
+                                            <div class="flex flex-wrap gap-2">
+                                                {% for tag in result.specific.tags.all %}
+                                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                                                        #{{ tag }}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- 分页 -->
+                    {% if search_results.paginator.num_pages > 1 %}
+                        <div class="flex justify-center mt-8">
+                            <div class="inline-flex rounded-md shadow-sm">
+                                {% if search_results.has_previous %}
+                                    <a href="?query={{ search_query|urlencode }}&category={{ current_category }}&tag={{ current_tag|urlencode }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ search_results.previous_page_number }}" 
+                                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
+                                        上一页
+                                    </a>
+                                {% endif %}
+                                
+                                {% for i in search_results.paginator.page_range %}
+                                    {% if search_results.number == i %}
+                                        <span class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 hover:bg-blue-700">
+                                            {{ i }}
+                                        </span>
+                                    {% else %}
+                                        <a href="?query={{ search_query|urlencode }}&category={{ current_category }}&tag={{ current_tag|urlencode }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ i }}" 
+                                           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                                            {{ i }}
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if search_results.has_next %}
+                                    <a href="?query={{ search_query|urlencode }}&category={{ current_category }}&tag={{ current_tag|urlencode }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ search_results.next_page_number }}" 
+                                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
+                                        下一页
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="bg-yellow-50 p-4 rounded-md">
+                        <p class="text-yellow-700">没有找到匹配的结果。请尝试调整搜索条件。</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,259 @@
+/* 评论区基本样式 */
+.comments-section {
+    margin-top: 40px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 评论头部与排序 */
+.comments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e9ef;
+    padding-bottom: 10px;
+}
+
+.sort-btn {
+    background: none;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: #6d757a;
+}
+
+.sort-btn.active {
+    color: #00a1d6;
+    font-weight: bold;
+}
+
+/* 评论输入框 */
+.comment-form {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.comment-input-wrapper {
+    flex: 1;
+}
+
+.comment-input-wrapper textarea {
+    width: 100%;
+    border: 1px solid #e5e9ef;
+    border-radius: 4px;
+    padding: 10px;
+    resize: none;
+    margin-bottom: 10px;
+}
+
+.comment-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-submit, #submit-comment {
+    background: #00a1d6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.reply-to-info {
+    color: #6d757a;
+    font-size: 14px;
+}
+
+#cancel-reply {
+    background: none;
+    border: none;
+    color: #00a1d6;
+    cursor: pointer;
+}
+
+/* 评论列表样式 */
+.comment-item {
+    display: flex;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-header {
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #6d757a;
+    margin-right: 10px;
+}
+
+.comment-time, .comment-edited {
+    color: #99a2aa;
+    font-size: 12px;
+}
+
+.comment-text {
+    margin-bottom: 10px;
+    color: #222;
+    line-height: 1.5;
+}
+
+/* 点赞按钮样式 */
+.comment-votes {
+    display: flex;
+    margin-right: 15px;
+}
+
+.vote-btn {
+    background: none;
+    border: none;
+    padding: 3px 6px;
+    cursor: pointer;
+    color: #99a2aa;
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.vote-btn.active {
+    color: #00a1d6;
+}
+
+.like-count, .dislike-count {
+    margin-left: 3px;
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.reply-btn, .edit-btn, .delete-btn {
+    background: none;
+    border: none;
+    padding: 3px 8px;
+    cursor: pointer;
+    color: #99a2aa;
+    margin-right: 15px;
+}
+
+.reply-btn:hover, .edit-btn:hover, .delete-btn:hover {
+    color: #00a1d6;
+}
+
+/* 回复区域 */
+.comment-replies {
+    margin-top: 15px;
+    margin-left: 40px;
+    padding-left: 10px;
+    border-left: 2px solid #f1f1f1;
+}
+
+.show-replies-btn {
+    background: none;
+    border: none;
+    color: #00a1d6;
+    cursor: pointer;
+    padding: 5px 0;
+    margin-top: 8px;
+    display: block;
+}
+
+.reply-item {
+    display: flex;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #f1f1f1;
+}
+
+.reply-to-tag {
+    color: #00a1d6;
+    margin-right: 5px;
+}
+
+/* 加载更多按钮 */
+.load-more-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+#load-more-comments {
+    background: #f4f4f4;
+    border: 1px solid #e5e9ef;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #222;
+}
+
+#load-more-comments:hover {
+    background: #e5e9ef;
+}
+
+/* 登录提示 */
+.comment-login-prompt {
+    padding: 20px;
+    background: #f8f8f8;
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.comment-login-prompt a {
+    color: #00a1d6;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* 编辑评论表单 */
+.edit-comment-form textarea {
+    width: 100%;
+    border: 1px solid #e5e9ef;
+    border-radius: 4px;
+    padding: 10px;
+    resize: none;
+    margin-bottom: 10px;
+}
+
+.edit-actions {
+    text-align: right;
+}
+
+.edit-actions button {
+    margin-left: 10px;
+    padding: 5px 12px;
+    border-radius: 4px;
+}
+
+.cancel-edit {
+    background: #f4f4f4;
+    border: 1px solid #e5e9ef;
+    color: #6d757a;
+}
+
+.edit-actions [type="submit"] {
+    background: #00a1d6;
+    color: white;
+    border: none;
+}

@@ -1,0 +1,7 @@
+<div class="math-formula my-6">
+    {% if value.display_mode %}
+    <div class="tex-math">$${{ value.formula }}$$</div>
+    {% else %}
+    <span class="tex-math-inline">\({{ value.formula }}\)</span>
+    {% endif %}
+</div>

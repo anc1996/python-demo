@@ -1,0 +1,9 @@
+<div class="code-block my-6">
+    <div class="bg-gray-100 px-3 py-2 rounded-t flex justify-between items-center">
+        <span class="font-mono text-sm text-gray-700">{{ value.language }}</span>
+        <button class="copy-button text-sm text-gray-600 hover:text-gray-900" data-code="{{ value.code|escapejs }}">
+            复制代码
+        </button>
+    </div>
+    <pre class="{% if value.show_line_numbers %}line-numbers{% endif %}"><code class="language-{{ value.language }}">{{ value.code }}</code></pre>
+</div>

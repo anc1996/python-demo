@@ -1,0 +1,82 @@
+<!-- blog/templates/blog/blog_page.html -->
+<!-- 这是博客文章详情页模板，用于展示单篇博客文章的完整内容 -->
+
+{% extends "base.html" %}  <!-- 继承自基础模板 base.html，复用网站的基础布局和样式 -->
+
+{% load wagtailcore_tags wagtailimages_tags %}
+
+
+{% block content %}  <!-- 开始内容区块，会替换父模板中的同名区块 -->
+    <h1>{{ page.title }}</h1>  <!-- 显示博客文章的标题 -->
+    <p class="date">Published: {{ page.date }}</p>  <!-- 显示文章的发布日期，应用 date 类样式 -->
+
+    {% if page.categories.all %}  <!-- 检查文章是否有分类 -->
+        <div class="categories">  <!-- 分类信息容器 -->
+            Categories:
+            {% for category in page.categories.all %}  <!-- 循环遍历文章所属的所有分类 -->
+                <a href="{% pageurl category.get_page %}">{{ category.name }}</a>{% if not forloop.last %}, {% endif %}
+                <!-- 显示分类名称并链接到分类页面，如果不是最后一个分类则添加逗号分隔 -->
+            {% endfor %}
+        </div>
+    {% endif %}
+
+        <!-- 新增：显示作者信息 -->
+    {% with authors=page.authors.all %}
+        {% if authors %}
+            <h3>作者:</h3>
+            <ul>
+                {% for author in authors %}
+                    <li style="display: inline; margin-right: 10px;">
+                        {% if author.author_image %}
+                            <a href="#">
+                                {% image author.author_image fill-40x40 style="vertical-align: middle; border-radius: 50%;" %}
+                            </a>
+                        {% endif %}
+                        {{ author.name }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <!-- 显示文章的简介内容 -->
+    <div class="intro">{{ page.intro }}</div>
+    <div class="body">
+        {{ page.body|richtext }}  <!-- 显示文章的主体内容，使用 richtext 过滤器渲染富文本 -->
+    </div>
+
+    <!--  Gallery  -->
+    {% if page.gallery_images.count %}
+        <h2>Gallery</h2>
+        <div class="gallery">
+            {#  用于循环遍历 page.gallery_images.all 并显示图片和描述。#}
+            {% for item in page.gallery_images.all %}
+                <div class="gallery-item">
+                    {% image item.image fill-320x240 %}
+                    {% if item.caption %}
+                        <p class="caption">{{ item.caption }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!--  Display Tags  -->
+    {% with tags=page.tags.all %}
+        {% if tags %}
+            <div class="tags">
+                <h3>Tags</h3>
+                {% for tag in tags %}
+                    {% if tag_page %}
+                        <a href="{% pageurl tag_page %}?tag={{ tag }}"><button type="button">{{ tag }}</button></a>
+                    {% else %}
+                        <p>Tags page not found. Please create a BlogTagIndexPage under the Home page.</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+
+    <a href="{% pageurl page.get_parent %}">Back to blog list</a>  <!-- 返回博客列表页的链接 -->
+{% endblock %}  <!-- 结束内容区块 -->

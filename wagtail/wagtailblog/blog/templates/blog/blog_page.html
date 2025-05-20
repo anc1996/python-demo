@@ -1,0 +1,66 @@
+<!-- 更新: blog/templates/blog/blog_page.html -->
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+{% load static %}
+{% block body_class %}template-blogpage{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/blog.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/highlight.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>{{ page.title }}</h1>
+        <p class="meta">{{ page.date }}</p>
+
+        <div class="intro">{{ page.intro }}</div>
+
+        <div class="blog-content">
+            {% for block in page.body %}
+                {% include_block block %}
+            {% empty %}
+                <!-- 如果StreamField body为空，尝试获取上下文中的内容 -->
+                {% if mongo_content and mongo_content.body %}
+                    <div class="warning">内容正在从MongoDB加载...</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if page.tags.all.count %}
+            <div class="tags">
+                <h3>标签:</h3>
+                {% for tag in page.tags.all %}
+                    <a href="{% slugurl 'tags' %}?tag={{ tag }}">{{ tag }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <p><a href="{{ page.get_parent.url }}">返回</a></p>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // 代码高亮
+            document.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+
+            // 数学公式渲染
+            if (document.querySelector('.math')) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false}
+                    ]
+                });
+            }
+        });
+    </script>
+{% endblock %}

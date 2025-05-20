@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags blog_tags %} {# 添加 blog_tags 加载自定义模板标签 #}
+
+{% block body_class %}home-page{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="hero">
+        <h1>{{ page.title }}</h1>
+
+        {# 显示主页图片 #}
+        {% if page.banner_image  %}
+            {% image page.banner_image  width-800 class="featured-image" %}
+            {% if page.banner_image.caption %}
+                <figcaption class="image-caption">{{ page.banner_image.caption }}</figcaption>
+            {% endif %}
+        {% endif %}
+
+        {# 显示主页个人文本 #}
+        {% if page.hero_text %}
+            <p class="hero-text">{{ page.hero_text }}</p>
+        {% endif %}
+
+        {# 显示 CTA 按钮或链接 #}
+        {% if page.hero_cta_link %}
+            <a href="{% pageurl page.hero_cta_link %}" class="button hero-cta">
+                {# 使用 firstof 来显示 hero_cta 文本，如果为空则显示链接页面的标题 #}
+                {% firstof page.hero_cta page.hero_cta_link.title %}
+            </a>
+        {% elif page.hero_cta %}
+            {# 如果没有链接页面，但有 CTA 文本，可以考虑只显示文本或者禁用按钮 #}
+             <span class="button hero-cta disabled">{{ page.hero_cta }}</span>
+        {% endif %}
+
+    </header>
+
+    <div class="welcome-message">
+        {{ page.body| richtext }} {# 显示“简介”和“个人简介”内容 #}
+    </div>
+
+    {% if latest_posts %} {# 如果有最新的博客文章 #}
+    <div class="latest-posts">
+        <h2>最新文章</h2>
+        <div class="blog-list">
+            {% for post in latest_posts %} {# 遍历最新的博客文章 #}
+                <article class="blog-item">
+                    <h3><a href="{% pageurl post %}">{{ post.title }}</a></h3>
+
+                    {# 确保 BlogPage 模型中有 featured_image 字段 #}
+                    {% if post.featured_image %}
+                        <a href="{% pageurl post %}" class="featured-image-link">
+                            {% image post.featured_image fill-300x200 class="thumbnail" %}
+                        </a>
+                    {% endif %}
+
+                    {# 显示发布日期 #}
+                    <div class="meta">{{ post.date|date:"Y-m-d" }}</div> {# 格式化日期显示 #}
+                    <div class="intro">{{ post.intro }}</div> {# 确保 BlogPage 模型中有 intro 字段 #}
+
+                    {# 可选：显示文章的访问统计和反应 #}
+                    {% with view_counts=post.get_view_count reactions=post.get_reactions %}
+                        {% if view_counts or reactions %}
+                            <div class="post-stats">
+                                {% if view_counts %}
+                                    <span>访问量: {{ view_counts.total }}</span>
+                                {% endif %}
+                                {% if reactions %}
+                                    <span>反应:
+                                        {% for reaction in reactions %}
+                                            {{ reaction.icon }} {{ reaction.count }}
+                                        {% endfor %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+
+                    <a href="{% pageurl post %}" class="read-more">阅读更多</a>
+                </article>
+            {% endfor %}
+        </div>
+
+        {% if blog_index %} {# 如果博客索引页面存在 #}
+        <div class="view-all">
+            <a href="{% pageurl blog_index %}">查看所有文章</a> {# 生成查看所有文章的链接 #}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# 您可以在这里添加其他区块，例如热门分类、标签云等 #}
+
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %} {# 确保 wagtailcore_tags 已加载 #}
+
+{% block content %}
+<div class="container">
+    <h1>{{ page.title }}</h1>
+
+    {% if mode == "tag_detail" %}
+        {# --- 模式 A: 标签详情 --- #}
+        {% if current_tag %}
+            <h2>Posts tagged with "{{ current_tag.name }}"</h2>
+
+            {# 文章标题搜索表单 #}
+            <form method="get" action="{% pageurl page %}" class="mb-4">
+                <input type="hidden" name="tag" value="{{ current_tag.slug }}">
+                <div class="input-group">
+                    <input type="text" name="q" value="{{ search_query|default:'' }}" class="form-control" placeholder="Search articles in this tag...">
+                    <button type="submit" class="btn btn-primary">搜索文章</button>
+                    {% if search_query %}
+                        <a href="{% pageurl page %}?tag={{ current_tag.slug }}" class="btn btn-outline-secondary">Clear Search</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if paged_items and paged_items.object_list %}
+                <ul class="list-unstyled">
+                    {% for post in paged_items.object_list %} {# paged_items 包含文章 #}
+                        <li class="mb-3">
+                            <h4><a href="{% pageurl post %}">{{ post.title }}</a></h4>
+                            {% if post.specific.date %} {# 假设 BlogPage 有 date 字段 #}
+                                <p class="text-muted"><small>Published: {{ post.specific.date|date:"d M Y" }}</small></p>
+                            {% endif %}
+                            {% if post.specific.intro %}
+                                <p>{{ post.specific.intro|truncatewords:30 }}</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {# 文章列表的分页导航 #}
+                {% if paged_items.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        {% if paged_items.has_previous %}
+                            <li class="page-item"><a class="page-link" href="{% pageurl page %}?tag={{ current_tag.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&page={{ paged_items.previous_page_number }}">Previous</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">上一页</span></li>
+                        {% endif %}
+
+                        {% for num in paged_items.paginator.page_range %}
+                            {% if paged_items.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="{% pageurl page %}?tag={{ current_tag.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if paged_items.has_next %}
+                            <li class="page-item"><a class="page-link" href="{% pageurl page %}?tag={{ current_tag.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&page={{ paged_items.next_page_number }}">Next</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">下一页</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <p>No articles found {% if search_query %}匹配您的搜索 "{{ search_query }}" {% endif %} 使用此标签.</p>
+            {% endif %}
+            <hr>
+            <p><a href="{% pageurl page %}" class="btn btn-secondary mt-3">View all tags</a></p>
+
+        {% else %}
+             <p class="alert alert-warning">Tag "{{ request.GET.tag }}" not found.</p>
+             <p><a href="{% pageurl page %}" class="btn btn-secondary mt-3">View all tags</a></p>
+        {% endif %}
+
+    {% elif mode == "tag_list" %}
+        {# --- 模式 B: 标签列表 --- #}
+        <h2>All Tags</h2>
+
+        {# 标签名称搜索表单 #}
+        <form method="get" action="{% pageurl page %}" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="q" value="{{ search_query|default:'' }}" class="form-control" placeholder="Search tags...">
+                <button type="submit" class="btn btn-primary">Search Tags</button>
+                {% if search_query %}
+                    <a href="{% pageurl page %}" class="btn btn-outline-secondary">Clear Search</a>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if paged_items and paged_items.object_list %}
+            <ul class="list-inline">
+                {% for item in paged_items.object_list %} {# paged_items 包含标签 #}
+                    <li class="list-inline-item mb-2">
+                        <a href="{% pageurl page %}?tag={{ item.tag.slug }}" class="btn btn-info btn-sm">
+                            {{ item.tag.name }} <span class="badge bg-light text-dark">{{ item.count }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {# 标签列表的分页导航 #}
+            {% if paged_items.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if paged_items.has_previous %}
+                        <li class="page-item"><a class="page-link" href="{% pageurl page %}?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}page={{ paged_items.previous_page_number }}">Previous</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">上一页</span></li>
+                    {% endif %}
+
+                    {% for num in paged_items.paginator.page_range %}
+                        {% if paged_items.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="{% pageurl page %}?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if paged_items.has_next %}
+                        <li class="page-item"><a class="page-link" href="{% pageurl page %}?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}page={{ paged_items.next_page_number }}">Next</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">下一页</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <p>标签无法找到{% if search_query %} 匹配您的搜索 "{{ search_query }}"{% endif %}.</p>
+        {% endif %}
+
+    {% else %}
+        {# 默认情况或未定义模式时的回退（理论上 mode 应该总是被设置） #}
+        <p class="alert alert-info">欢迎来到标签页面。请选择标签或搜索.</p>
+        {# 可以再次显示标签列表作为回退 #}
+        {# (复制模式B中显示所有标签的逻辑到这里，或者确保 mode 总是有值) #}
+    {% endif %}
+</div>
+{% endblock %}

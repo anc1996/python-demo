@@ -1,15 +1,47 @@
+import os,uuid,logging
+
+from datetime import datetime
+
 from django.templatetags.static import static
 from django.utils.html import format_html
-from django.urls import reverse
 
 from wagtail import hooks
 from wagtail.admin.rich_text.converters.html_to_contentstate import BlockElementHandler
-from wagtail.admin.rich_text.editors.draftail import features as draftail_features
 import wagtail.admin.rich_text.editors.draftail.features as draftail_features
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 
 from blog.models import BlogCategory, BlogPage
+
+# 这个文档是用来处理Wagtail的钩子函数的
+
+logger = logging.getLogger(__name__)
+
+
+@hooks.register('before_create_document')
+def set_unique_document_filename(document, request):
+	"""
+	在文档创建前为文件设置唯一文件名
+	"""
+	if document.file:
+		# 获取原始文件名和扩展名
+		original_path = document.file.name
+		dir_name, file_name = os.path.split(original_path)
+		file_root, file_ext = os.path.splitext(file_name)
+		
+		# 生成新的唯一文件名（保留原文件名+时间戳+随机字符串）
+		timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+		random_str = uuid.uuid4().hex[:6]
+		new_filename = f"{file_root}_{timestamp}_{random_str}{file_ext}"
+		
+		# 构建新的文件路径
+		new_path = os.path.join(dir_name, new_filename)
+		
+		# 更新文件路径
+		document.file.name = new_path
+		
+		logger.info(f"设置唯一文档文件名: {original_path} -> {new_path}")
+
 
 
 # 富文本编辑器自定义功能
@@ -163,3 +195,5 @@ def sync_to_mongodb_after_publish(request, page):
 		from blog.utils import sync_to_mongodb, cache_blog_content
 		sync_to_mongodb(page)
 		cache_blog_content(page)
+
+

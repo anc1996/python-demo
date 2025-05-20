@@ -1,0 +1,43 @@
+{% load navigation_tags %}
+
+<!--wagtailblog3/templates/includes/footer.html-->
+
+<footer>
+    <p>Built with Wagtail</p>
+
+    {# 添加新的社交媒体字段别名 #}
+    {% with linkedin_url=settings.base.NavigationSettings.linkedin_url  github_url=settings.base.NavigationSettings.github_url bilibili_url=settings.base.NavigationSettings.bilibili_url  wechat_url=settings.base.NavigationSettings.wechat_url  %}
+
+
+
+        {# 检查是否有任何社交媒体链接 #}
+        {% if linkedin_url or github_url or bilibili_url or wechat_url or instagram_url %}
+            <p>
+                Follow me on:
+                {# 显示 GitHub 链接 #}
+                {% if github_url %}
+                    <a href="{{ github_url }}">GitHub</a>
+                {% endif %}
+                {# 显示 LinkedIn 链接 #}
+                {% if linkedin_url %}
+                    <a href="{{ linkedin_url }}">LinkedIn</a>
+                {% endif %}
+                {# 显示 Bilibili 链接 #}
+                {% if bilibili_url %}
+                    <a href="{{ bilibili_url }}">Bilibili</a>
+                {% endif %}
+                {# 显示 WeChat 链接 #}
+                {% if wechat_url %}
+                    <a href="{{ wechat_url }}">WeChat</a>
+                {% endif %}
+                {# 显示 Instagram 链接 #}
+                {% if instagram_url %}
+                    <a href="{{ instagram_url }}">Instagram</a>
+                {% endif %}
+            </p>
+        {% endif %}
+    {% endwith %}
+
+    {#  获取页脚内容：在base/naviagtion_tags.py #}
+    {% get_footer_text %}
+</footer>

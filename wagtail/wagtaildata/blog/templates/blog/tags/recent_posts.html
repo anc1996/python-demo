@@ -1,0 +1,15 @@
+<div class="recent-posts">
+    <h3 class="text-lg font-semibold mb-3">最近文章</h3>
+    <ul class="space-y-3">
+        {% for post in recent_posts %}
+            <li>
+                <a href="{% pageurl post %}" class="hover:text-blue-600 transition-colors duration-200">
+                    <h4 class="font-medium">{{ post.title }}</h4>
+                    <p class="text-sm text-gray-500">{{ post.date|date:"Y年m月d日" }}</p>
+                </a>
+            </li>
+        {% empty %}
+            <li class="text-gray-500">暂无文章</li>
+        {% endfor %}
+    </ul>
+</div>

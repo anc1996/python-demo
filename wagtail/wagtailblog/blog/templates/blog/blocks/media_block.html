@@ -1,0 +1,20 @@
+{% load wagtailcore_tags %}
+
+<div class="video-block">
+    <div class="video-container">
+        {% if value.media.type == 'video' %}
+            <video width="100%" controls>
+                <source src="{{ value.media.file.url }}" type="{{ value.media.file.mime_type }}">
+                您的浏览器不支持视频标签。
+            </video>
+        {% elif value.media.type == 'audio' %}
+            <audio controls>
+                <source src="{{ value.media.file.url }}" type="{{ value.media.file.mime_type }}">
+                您的浏览器不支持音频标签。
+            </audio>
+        {% endif %}
+    </div>
+    {% if value.caption %}
+        <div class="caption">{{ value.caption }}</div>
+    {% endif %}
+</div>

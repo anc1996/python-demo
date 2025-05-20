@@ -1,0 +1,429 @@
+/* 全局样式 */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f9f9f9;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+/* 博客标题和元数据 */
+h1 {
+  font-size: 2.4rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.meta {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.intro {
+  font-size: 1.2rem;
+  color: #34495e;
+  margin-bottom: 2rem;
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+/* 博客内容 */
+.blog-content {
+  margin-top: 2rem;
+}
+
+/* 警告提示 */
+.warning {
+  background-color: #fef9e7;
+  border-left: 4px solid #f1c40f;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0 4px 4px 0;
+}
+
+/* 标签样式 */
+.tags {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.tags h3 {
+  font-size: 1.2rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.tags a {
+  display: inline-block;
+  background-color: #ecf0f1;
+  color: #3498db;
+  padding: 0.4rem 0.8rem;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.tags a:hover {
+  background-color: #3498db;
+  color: #fff;
+}
+
+/* 返回链接 */
+.blog-content + p {
+  margin-top: 2rem;
+}
+
+.blog-content + p a {
+  display: inline-block;
+  color: #3498db;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border: 1px solid #3498db;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.blog-content + p a:hover {
+  background-color: #3498db;
+  color: #fff;
+}
+
+/* Markdown 内容样式 */
+.markdown-block {
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.markdown-content {
+  line-height: 1.8;
+  color: #333;
+  font-size: 1.05rem;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  color: #2c3e50;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  position: relative;
+}
+
+.markdown-content h1 {
+  font-size: 2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.6rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.3rem;
+}
+
+.markdown-content h2::before {
+  content: "§";
+  color: #3498db;
+  margin-right: 0.5rem;
+  opacity: 0.6;
+}
+
+.markdown-content h3 {
+  font-size: 1.3rem;
+}
+
+.markdown-content p {
+  margin-bottom: 1.5rem;
+  text-align: justify;
+}
+
+.markdown-content a {
+  color: #3498db;
+  text-decoration: none;
+  border-bottom: 1px dotted #3498db;
+  transition: all 0.2s ease;
+}
+
+.markdown-content a:hover {
+  color: #2980b9;
+  border-bottom: 1px solid #2980b9;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.markdown-content ul li::before {
+  content: "•";
+  color: #3498db;
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+/* 代码样式 */
+.markdown-content pre {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e9ecef;
+  position: relative;
+}
+
+.markdown-content code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  color: #e83e8c;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #333;
+  border-radius: 0;
+  font-size: 0.85rem;
+  display: block;
+  line-height: 1.7;
+}
+
+/* 水平线样式 */
+.markdown-content hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: #e1e4e8;
+  border: 0;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+/* 表格样式 */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  padding: 0.75rem;
+  border: 1px solid #e9ecef;
+}
+
+.markdown-content table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.markdown-content table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.markdown-content table tr:hover {
+  background-color: #f1f3f5;
+}
+
+/* 引用样式 */
+.markdown-content blockquote {
+  border-left: 4px solid #3498db;
+  padding: 0.5rem 1.2rem;
+  color: #555;
+  background-color: #f8f9fa;
+  margin-bottom: 1.5rem;
+  border-radius: 0 4px 4px 0;
+  font-style: italic;
+}
+
+.markdown-content blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* 任务列表样式 */
+.task-list-item {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.task-list-item input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+/* 数学公式样式 */
+.math {
+  overflow-x: auto;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+/* 图片块样式 */
+.image-block {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.image-block img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.image-block img:hover {
+  transform: scale(1.02);
+}
+
+.image-block figcaption {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* 响应式图片处理 */
+@media (max-width: 768px) {
+  .image-block {
+    margin: 1.5rem 0;
+  }
+
+  .image-block img {
+    max-width: 100%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 文档块样式 */
+.document-block {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e1e8ed;
+}
+
+.document-block a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #3498db;
+  font-weight: 500;
+}
+
+.document-block a:hover {
+  text-decoration: underline;
+}
+
+.document-block svg {
+  margin-right: 0.75rem;
+}
+
+/* 视频块样式 */
+.video-block {
+  margin: 2rem 0;
+}
+
+.video-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 比例 */
+  height: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.video-container iframe,
+.video-block video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+}
+
+.video-thumbnail {
+  margin-top: 1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .intro {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  .markdown-content h1 {
+    font-size: 1.7rem;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.4rem;
+  }
+}

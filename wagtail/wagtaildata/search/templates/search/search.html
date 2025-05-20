@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags %}
+
+{% block title %}搜索结果{% endblock %}
+
+{% block body_class %}template-searchresults{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">搜索结果</h1>
+
+    <div id="blog-search-app">
+        <div class="max-w-2xl mx-auto mb-8">
+            <form action="{% url 'search' %}" method="get" class="search-input-wrapper">
+                <input type="text" name="query" value="{{ search_query|default:'' }}" placeholder="搜索博客内容..." class="search-input" />
+                <button type="submit" class="search-button">
+                    搜索
+                </button>
+            </form>
+
+            {% if search_query %}
+                <p class="text-gray-600 mt-4">
+                    搜索 "{{ search_query }}" 的结果:
+                </p>
+            {% endif %}
+        </div>
+
+        {% if search_picks %}
+            <div class="bg-blue-50 p-4 rounded-lg mb-8 max-w-4xl mx-auto">
+                <h2 class="text-lg font-semibold mb-2">推荐结果</h2>
+                <ul>
+                    {% for pick in search_picks %}
+                        <li class="mb-3">
+                            <a href="{% pageurl pick.page %}" class="text-blue-600 hover:underline">
+                                <h3 class="font-medium">{{ pick.page.title }}</h3>
+                            </a>
+                            {% if pick.description %}
+                                <p class="text-sm text-gray-600">{{ pick.description }}</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if search_results %}
+            <div class="search-results max-w-4xl mx-auto">
+                <h2 class="text-xl font-semibold mb-4">搜索结果</h2>
+
+                <ul class="space-y-6">
+                    {% for result in search_results %}
+                        <li class="result-item">
+                            <a href="{% pageurl result %}" class="result-link">
+                                <h3 class="text-lg font-medium text-blue-600 mb-1">{{ result.title }}</h3>
+
+                                {% if result.specific.intro %}
+                                    <p class="text-gray-700">{{ result.specific.intro|truncatewords:30 }}</p>
+                                {% endif %}
+
+                                {% if result.specific.date %}
+                                    <span class="result-date">{{ result.specific.date|date:"Y年m月d日" }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if search_results.paginator.num_pages > 1 %}
+                    <div class="flex justify-center mt-8">
+                        <div class="inline-flex rounded-md shadow-sm">
+                            {% if search_results.has_previous %}
+                                <a href="?query={{ search_query|urlencode }}&page={{ search_results.previous_page_number }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
+                                    上一页
+                                </a>
+                            {% endif %}
+
+                            {% for i in search_results.paginator.page_range %}
+                                {% if search_results.number == i %}
+                                    <span class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 hover:bg-blue-700">
+                                        {{ i }}
+                                    </span>
+                                {% else %}
+                                    <a href="?query={{ search_query|urlencode }}&page={{ i }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                                        {{ i }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if search_results.has_next %}
+                                <a href="?query={{ search_query|urlencode }}&page={{ search_results.next_page_number }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
+                                    下一页
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% elif search_query %}
+            <div class="no-results max-w-4xl mx-auto">
+                <p>没有找到匹配 "{{ search_query }}" 的结果。</p>
+                <p class="mt-2">建议：</p>
+                <ul class="list-disc list-inside mt-1 text-gray-600">
+                    <li>检查您的拼写</li>
+                    <li>尝试更一般的搜索词</li>
+                    <li>尝试使用同义词</li>
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="max-w-4xl mx-auto mt-12">
+            <h2 class="text-xl font-semibold mb-4">高级搜索</h2>
+            <a href="{% url 'blog:advanced_search' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                使用高级搜索
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

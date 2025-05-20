@@ -1,0 +1,94 @@
+{% comment %}
+用户反应按钮块 - 用于文章详情页
+参数:
+- page: 页面对象
+- user_reaction: 当前用户的反应ID(可选)
+{% endcomment %}
+
+<div class="article-reactions">
+    <h4>文章反应</h4>
+    <div class="reaction-buttons" data-page-id="{{ page.id }}">
+        {% for reaction in page.specific.get_reactions %}
+            <button
+                class="reaction-btn {% if user_reaction == reaction.id %}active{% endif %}"
+                data-reaction-id="{{ reaction.id }}"
+                title="{{ reaction.name }}"
+            >
+                <i class="{{ reaction.icon }}"></i>
+                <span class="count">{{ reaction.count }}</span>
+            </button>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 选择所有反应按钮
+    const reactionButtons = document.querySelectorAll('.reaction-btn');
+
+    reactionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const pageId = this.closest('.reaction-buttons').dataset.pageId;
+            const reactionId = this.dataset.reactionId;
+
+            // 创建表单数据
+            const formData = new FormData();
+            formData.append('reaction_type', reactionId);
+
+            // 发送POST请求
+            fetch(`/blog/api/reactions/${pageId}/toggle/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 更新UI
+                    updateReactionCounts(data.counts);
+
+                    // 更新活动状态
+                    if (data.action === 'removed') {
+                        this.classList.remove('active');
+                    } else {
+                        // 先移除所有active类
+                        reactionButtons.forEach(btn => btn.classList.remove('active'));
+                        // 添加到当前按钮
+                        this.classList.add('active');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('反应处理出错:', error);
+            });
+        });
+    });
+
+    // 获取CSRF Cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 更新反应计数
+    function updateReactionCounts(counts) {
+        reactionButtons.forEach(button => {
+            const reactionId = parseInt(button.dataset.reactionId);
+            const countSpan = button.querySelector('.count');
+            countSpan.textContent = counts[reactionId] || 0;
+        });
+    }
+});
+</script>

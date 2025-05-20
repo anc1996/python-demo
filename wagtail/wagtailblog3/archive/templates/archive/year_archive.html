@@ -1,0 +1,54 @@
+<!-- archive/templates/archive/year_archive.html -->
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags archive_tags blog_tags %}
+
+{% block body_class %}year-archive-page{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <header>
+                <h1>{{ year }}年文章归档</h1>
+                <p class="lead">共 {{ pages.count }} 篇文章</p>
+            </header>
+
+            <div class="blog-list">
+                {% for post in pages %}
+                    <article class="blog-item">
+                        <h3><a href="{% pageurl post %}">{{ post.title }}</a></h3>
+
+                        <div class="meta">
+                            <i class="fas fa-calendar"></i> {{ post.date|date:"Y年m月d日" }}
+                            {% include "blog/stats_block.html" with page=post %}
+                        </div>
+
+                        {% if post.featured_image %}
+                            <a href="{% pageurl post %}" class="featured-image-link">
+                                {% image post.featured_image fill-300x200 class="thumbnail" %}
+                            </a>
+                        {% endif %}
+
+                        <div class="intro">{{ post.intro }}</div>
+                        <a href="{% pageurl post %}" class="read-more">阅读更多</a>
+
+                        {% if post.tags.all %}
+                            <div class="tags">
+                                {% for tag in post.tags.all %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </article>
+                {% empty %}
+                    <p>{{ year }}年没有文章。</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            {% archive_sidebar current_year=year %}
+        </div>
+    </div>
+</div>
+{% endblock %}

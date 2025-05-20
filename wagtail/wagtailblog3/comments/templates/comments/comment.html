@@ -1,0 +1,66 @@
+{% load static comment_tags %}
+
+<div class="comment-item" id="comment-{{ comment.id }}" data-comment-id="{{ comment.id }}">
+    <div class="comment-avatar">
+        <img src="{% static 'comments/img/default-avatar.png' %}" alt="{{ comment.author_user.username }}">
+    </div>
+
+    <div class="comment-content">
+        <div class="comment-header">
+            <span class="comment-author">{{ comment.author_user.username }}</span>
+            <span class="comment-time">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+            {% if comment.updated_at != comment.created_at %}
+                <span class="comment-edited">(已编辑)</span>
+            {% endif %}
+        </div>
+
+        <div class="comment-text" id="comment-text-{{ comment.id }}">
+            {{ comment.content|linebreaks }}
+        </div>
+
+        <div class="comment-actions">
+            <!-- 点赞/踩 按钮 -->
+            <div class="comment-votes">
+                <button type="button" class="vote-btn like-btn {% if not user.is_authenticated %}auth-required{% endif %} {% if user_reactions|get_item:comment.id == 1 %}active{% endif %}" data-comment-id="{{ comment.id }}" data-reaction="1">
+                    <i class="icon-like">👍</i>
+                    <span class="like-count">{{ comment.like_count }}</span>
+                </button>
+                <button type="button" class="vote-btn dislike-btn {% if not user.is_authenticated %}auth-required{% endif %} {% if user_reactions|get_item:comment.id == -1 %}active{% endif %}" data-comment-id="{{ comment.id }}" data-reaction="-1">
+                    <i class="icon-dislike">👎</i>
+                    <span class="dislike-count">{{ comment.dislike_count }}</span>
+                </button>
+            </div>
+
+            <!-- 回复按钮 -->
+            <button type="button" class="reply-btn {% if not user.is_authenticated %}auth-required{% endif %}" data-comment-id="{{ comment.id }}" data-username="{{ comment.author_user.username }}" data-user-id="{{ comment.author_user.id }}">
+                回复
+            </button>
+
+            <!-- 编辑按钮 (仅作者) -->
+            {% if user.is_authenticated and user.id == comment.author_user.id and comment.is_editable %}
+                <button type="button" class="edit-btn" data-comment-id="{{ comment.id }}">
+                    编辑
+                </button>
+            {% endif %}
+
+            <!-- 删除按钮 (作者或管理员) -->
+            {% if user.is_authenticated and user.id == comment.author_user.id or user.is_staff %}
+                <button type="button" class="delete-btn" data-comment-id="{{ comment.id }}">
+                    删除
+                </button>
+            {% endif %}
+        </div>
+
+        <!-- 回复区域 -->
+        {% if comment.replies.all|length > 0 %}
+            <div class="comment-replies-wrapper">
+                <button type="button" class="show-replies-btn" data-comment-id="{{ comment.id }}">
+                    查看全部 {{ comment.replies.all|length }} 条回复
+                </button>
+                <div class="comment-replies" id="replies-{{ comment.id }}" style="display: none;"></div>
+            </div>
+        {% else %}
+            <div class="comment-replies" id="replies-{{ comment.id }}"></div>
+        {% endif %}
+    </div>
+</div>

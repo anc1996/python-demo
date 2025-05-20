@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+{% block body_class %}template-blogindexpage{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/blog.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="blog-index-header">
+        <h1 class="page-title">{{ page.title }}</h1>
+
+        {% if page.intro %}
+            <div class="intro">{{ page.intro }}</div>
+        {% endif %}
+
+        <div class="search-form">
+            <form action="{% url 'search' %}" method="get">
+                <input type="text" name="query" class="form-control" placeholder="搜索博客文章...">
+                <button type="submit" class="btn">搜索</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="blog-list">
+        <div class="row">
+            {% for blog in blogpages %}
+                <div class="col-lg-4 col-md-6">
+                    <article class="blog-card">
+                        {% if blog.featured_image %}
+                            <div class="blog-card-image">
+                                {% image blog.featured_image fill-400x240 class="img-fluid" %}
+                                <div class="blog-card-date">
+                                    {{ blog.date|date:"Y-m-d" }}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="blog-card-content">
+                            <h2 class="blog-card-title"><a href="{% pageurl blog %}">{{ blog.title }}</a></h2>
+
+                            <div class="blog-card-meta">
+                                {% if blog.author %}<span class="author">{{ blog.author }}</span>{% endif %}
+                            </div>
+
+                            <div class="blog-card-excerpt">
+                                {{ blog.intro|truncatewords:25 }}
+                            </div>
+
+                            <a href="{% pageurl blog %}" class="read-more">阅读全文</a>
+                        </div>
+                    </article>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert">
+                        暂时没有博客文章。敬请期待！
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 保留分页功能 -->
+    <nav class="pagination-container">
+        <ul class="pagination">
+            <li class="page-item">
+                <a class="page-link" href="#">上一页</a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+                <a class="page-link" href="#">下一页</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endblock %}

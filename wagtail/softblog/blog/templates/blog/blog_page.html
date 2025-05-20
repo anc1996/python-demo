@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags wagtailimages_tags wagtailmarkdown %}
+
+{% block body_class %}template-blogpage{% endblock %}
+
+{% block extra_css %}
+    <!-- 功能性CSS，保留 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <link rel="stylesheet" href="{% static 'css/blog.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <article class="blog-post">
+        <header class="post-header">
+            <h1 class="post-title">{{ page.title }}</h1>
+            <div class="post-meta">
+                <span class="post-date">{{ page.date|date:"Y年m月d日" }}</span>
+                {% if page.author %}
+                <span class="post-author">{{ page.author }}</span>
+                {% endif %}
+            </div>
+        </header>
+
+        {% if page.featured_image %}
+        <div class="featured-image">
+            {% image page.featured_image fill-1200x600 class="img-fluid" %}
+        </div>
+        {% endif %}
+
+        <div class="post-intro">
+            {{ page.intro }}
+        </div>
+
+        <div class="post-content">
+            {% for block in page.body %}
+                <div class="content-block {% if block.block_type == 'markdown' %}markdown-block{% elif block.block_type == 'rich_text' %}rich-text-block{% elif block.block_type == 'table' %}table-block{% elif block.block_type == 'media' or block.block_type == 'audio' or block.block_type == 'video' %}media-block{% elif block.block_type == 'embed' %}embed-block{% elif block.block_type == 'raw_html' %}raw-html-block{% endif %}">
+                    {% if block.block_type == 'markdown' %}
+                        {{ block.value|markdown }}
+                    {% else %}
+                        {% include_block block %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- 功能性JS，保留 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="{% static 'js/blog.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% load wagtailcore_tags %}
+
+{% extends "base.html" %}
+{#base.html 指的是父模板。它必须始终是模板中使用的第一个模板标签。在模板加载之前，将自定义的Wagtail标签库加载到模板中，以便在HTML代码中使用Wagtail提供的模板标签。#}
+
+
+{% load static %}
+<!-- Wagtail 还提供了许多自己的模板标签和过滤器 ，您可以通过wagtailcore_tags进行加载 -->
+
+
+{% block body_class %}template-homepage{% endblock %}
+
+
+<!-- 将以下内容替换为： -->
+{% block content %}
+    <h1>{{ page.title }}</h1>
+    {# 使用 richtext 过滤器来转义和打印 RichTextField 的内容#}
+    {{ page.body | richtext }}
+{% endblock %}
