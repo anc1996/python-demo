@@ -1,0 +1,154 @@
+{% extends "wagtailadmin/base.html" %}
+{% load wagtailadmin_tags %}
+
+{% block titletag %}上传视频{% endblock %}
+
+{% block content %}
+    {% include "wagtailadmin/shared/header.html" with title="上传视频" icon="media" %}
+
+    <div class="nice-padding">
+        <div id="upload-form-container">
+            <form id="video-upload-form" enctype="multipart/form-data" method="post">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                    <div class="field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="help">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="error-message">{{ field.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                <div class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p class="progress-text">上传中... <span class="progress-percentage">0%</span></p>
+                </div>
+                
+                <div class="actions">
+                    <input type="submit" value="上传视频" class="button" />
+                    <a href="{% url 'video_management' %}" class="button button-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+        
+        <div id="upload-success" style="display: none;">
+            <div class="messages">
+                <ul>
+                    <li class="success">视频上传成功！</li>
+                </ul>
+            </div>
+            
+            <div class="video-details">
+                <h3>视频详情</h3>
+                <p><strong>标题:</strong> <span id="video-title"></span></p>
+                <p><strong>URL:</strong> <code id="video-url"></code> <button class="button button-small copy-url">复制URL</button></p>
+                <p><strong>路径:</strong> <code id="video-path"></code> <button class="button button-small copy-path">复制路径</button></p>
+                <p>可以在视频块中使用上述路径来引用此视频。</p>
+                
+                <div class="video-preview">
+                    <h3>预览</h3>
+                    <video controls width="100%" id="video-preview"></video>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <a href="{% url 'video_management' %}" class="button">返回视频管理</a>
+                <a href="{% url 'video_upload' %}" class="button button-secondary">上传另一个视频</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('video-upload-form');
+            const formContainer = document.getElementById('upload-form-container');
+            const successContainer = document.getElementById('upload-success');
+            const progressBar = document.querySelector('.progress-fill');
+            const progressText = document.querySelector('.progress-percentage');
+            const progressContainer = document.querySelector('.upload-progress');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                const xhr = new XMLHttpRequest();
+                
+                // 显示进度条
+                progressContainer.style.display = 'block';
+                
+                xhr.upload.addEventListener('progress', function(event) {
+                    if (event.lengthComputable) {
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
+                        progressBar.style.width = percentComplete + '%';
+                        progressText.textContent = percentComplete + '%';
+                    }
+                });
+                
+                xhr.addEventListener('load', function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        
+                        if (response.success) {
+                            // 显示成功信息
+                            document.getElementById('video-title').textContent = response.video_title;
+                            document.getElementById('video-url').textContent = response.video_url;
+                            document.getElementById('video-path').textContent = response.video_path;
+                            document.getElementById('video-preview').src = response.video_url;
+                            
+                            formContainer.style.display = 'none';
+                            successContainer.style.display = 'block';
+                        } else {
+                            alert('上传失败: ' + response.message);
+                            progressContainer.style.display = 'none';
+                        }
+                    } else {
+                        alert('上传过程中发生错误');
+                        progressContainer.style.display = 'none';
+                    }
+                });
+                
+                xhr.addEventListener('error', function() {
+                    alert('上传失败，请检查网络连接');
+                    progressContainer.style.display = 'none';
+                });
+                
+                xhr.open('POST', form.action || window.location.href, true);
+                xhr.send(formData);
+            });
+            
+            // 复制按钮功能
+            document.querySelector('.copy-url')?.addEventListener('click', function() {
+                copyText(document.getElementById('video-url').textContent);
+                this.textContent = '已复制';
+                setTimeout(() => { this.textContent = '复制URL'; }, 2000);
+            });
+            
+            document.querySelector('.copy-path')?.addEventListener('click', function() {
+                copyText(document.getElementById('video-path').textContent);
+                this.textContent = '已复制';
+                setTimeout(() => { this.textContent = '复制路径'; }, 2000);
+            });
+            
+            function copyText(text) {
+                navigator.clipboard.writeText(text).catch(() => {
+                    // 如果剪贴板API不可用，创建一个临时元素
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                });
+            }
+        });
+    </script>
+{% endblock %}

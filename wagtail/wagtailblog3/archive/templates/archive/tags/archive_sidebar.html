@@ -1,0 +1,25 @@
+<!-- archive/templates/archive/tags/archive_sidebar.html -->
+<div class="archive-sidebar">
+    <h3>文章归档</h3>
+    <div class="archive-tree">
+        {% for year, year_data in archive_tree.items %}
+            <div class="archive-year">
+                <a href="{{ year_data.url }}"
+                   class="year-link {% if year == current_year %}active{% endif %}">
+                    <i class="fas fa-calendar-alt"></i> {{ year }}年 ({{ year_data.count }})
+                </a>
+
+                {% if year == current_year or archive_tree|length == 1 %}
+                    <div class="archive-months">
+                        {% for month, month_data in year_data.months.items %}
+                            <a href="{{ month_data.url }}"
+                               class="month-link {% if year == current_year and month == current_month %}active{% endif %}">
+                                <i class="fas fa-calendar-day"></i> {{ month_data.display_name }} ({{ month_data.count }})
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>

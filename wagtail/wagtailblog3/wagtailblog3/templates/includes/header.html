@@ -1,0 +1,24 @@
+{% load wagtailcore_tags navigation_tags %} {# 加载 Wagtail 核心模板标签和自定义的导航模板标签库 #}
+
+<header> {# 定义网站的头部区域 #}
+    {% get_site_root as site_root %} {# 调用自定义的 'get_site_root' 模板标签，获取网站的根页面对象，并将其赋值给变量 'site_root' #}
+    <nav> {# 定义导航区域 #}
+        <p>
+        <a href="{% pageurl site_root %}">Home</a> | {# 创建指向网站主页的链接。'pageurl' 是 Wagtail 核心标签，根据给定的 Page 对象生成 URL。链接文本是 "Home"，后面跟着一个分隔符 "|" #}
+        {% for menuitem in site_root.get_children.live.in_menu %} {# 循环遍历网站根页面 (site_root) 的子页面 #}
+            {# 过滤条件： #}
+            {# .get_children: 获取当前页面的所有子页面 #}
+            {# .live: 过滤出已发布的子页面 #}
+            {# .in_menu: 过滤出在 Wagtail 后台设置为“在菜单中显示”的子页面 #}
+            {#  如果当前迭代是循环中的最后一个元素，forloop.last 的值为 True。则没有 | #}
+             <a href="{% pageurl menuitem %}">{{ menuitem.title }}</a>{% if not forloop.last %} | {% endif %}
+            {# href 属性：使用 'pageurl' 标签生成当前子页面 (menuitem) 的 URL #}
+            {# 链接文本：显示子页面的标题 (menuitem.title) #}
+        {% endfor %}
+
+        {# 展示搜索功能: #}
+        | <a href="{% url 'search:search' %}">搜索</a>
+        </p>
+    </nav>
+
+</header>

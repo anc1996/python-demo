@@ -1,0 +1,21 @@
+{% load wagtailmedia_tags %}
+
+<div class="media-block">
+    {% if self.block_type == 'audio' %}
+    <div class="audio-player">
+        <h4 class="media-title">{{ value.title }}</h4>
+        <audio controls>
+            <source src="{{ value.file.url }}" type="audio/{{ value.file.url|slice:'-3:' }}">
+            您的浏览器不支持音频播放。
+        </audio>
+    </div>
+    {% elif self.block_type == 'video' %}
+    <div class="video-player">
+        <h4 class="media-title">{{ value.title }}</h4>
+        <video width="{{ value.width|default:'100%' }}" height="{{ value.height|default:'auto' }}" controls>
+            <source src="{{ value.file.url }}" type="video/{{ value.file.url|slice:'-3:' }}">
+            您的浏览器不支持视频播放。
+        </video>
+    </div>
+    {% endif %}
+</div>

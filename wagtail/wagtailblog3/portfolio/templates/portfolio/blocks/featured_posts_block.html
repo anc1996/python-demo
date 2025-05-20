@@ -1,0 +1,20 @@
+{# portfolio/templates/portfolio/blocks/featured_posts_block.html #}
+{# 这个模板用于渲染 FeaturedPostsBlock 块。它显示一个标题、可选的文本和一组链接到文章的卡片。 #}
+
+
+{% load wagtailcore_tags %}
+<div>
+    <h2>{{ self.heading }}</h2>
+    {% if self.text %}
+        <p>{{ self.text|richtext }}</p>
+    {% endif %}
+
+    <div class="grid">
+        {% for page in self.posts %}
+            <div class="card">
+                <p><a href="{% pageurl page %}">{{ page.title }}</a></p>
+                <p>{{ page.specific.date }}</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>

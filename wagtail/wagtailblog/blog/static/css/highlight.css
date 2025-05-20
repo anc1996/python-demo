@@ -1,0 +1,59 @@
+/* 创建新文件: blog/static/css/highlight.css */
+.highlight { background-color: #f8f8f8; }
+.highlight pre { padding: 15px; border-radius: 4px; overflow-x: auto; }
+.highlight .hll { background-color: #ffc; }
+.highlight .c { color: #888; font-style: italic } /* 注释 */
+.highlight .err { color: #a00; background-color: #faa } /* 错误 */
+.highlight .k { color: #008; font-weight: bold } /* 关键字 */
+.highlight .o { color: #666 } /* 运算符 */
+.highlight .cm { color: #888; font-style: italic } /* 注释.多行 */
+.highlight .cp { color: #888; } /* 注释.预处理器 */
+.highlight .c1 { color: #888; font-style: italic } /* 注释.单行 */
+.highlight .cs { color: #888; font-weight: bold } /* 注释.特殊 */
+.highlight .gd { color: #a00; } /* 通用.删除 */
+.highlight .ge { font-style: italic } /* 通用.强调 */
+.highlight .gr { color: #a00; } /* 通用.错误 */
+.highlight .gh { color: #000080; font-weight: bold } /* 通用.标题 */
+.highlight .gi { color: #0a0; } /* 通用.插入 */
+.highlight .go { color: #888; } /* 通用.输出 */
+.highlight .gp { color: #555; } /* 通用.提示 */
+.highlight .gs { font-weight: bold } /* 通用.强 */
+.highlight .gu { color: #800080; font-weight: bold; } /* 通用.子标题 */
+.highlight .gt { color: #a00; } /* 通用.追踪返回 */
+.highlight .kc { color: #008; font-weight: bold } /* 关键字.常量 */
+.highlight .kd { color: #008; font-weight: bold } /* 关键字.声明 */
+.highlight .kn { color: #008; font-weight: bold } /* 关键字.命名空间 */
+.highlight .kp { color: #008 } /* 关键字.伪 */
+.highlight .kr { color: #008; font-weight: bold } /* 关键字.保留 */
+.highlight .kt { color: #b68; font-weight: bold } /* 关键字.类型 */
+.highlight .m { color: #099 } /* 文字.数字 */
+.highlight .s { color: #d50 } /* 文字.字符串 */
+.highlight .na { color: #5678ad } /* 名称.属性 */
+.highlight .nb { color: #008 } /* 名称.内置 */
+.highlight .nc { color: #0a8; font-weight: bold } /* 名称.类 */
+.highlight .no { color: #360 } /* 名称.常量 */
+.highlight .nd { color: #777; } /* 名称.装饰器 */
+.highlight .ni { color: #999; font-weight: bold } /* 名称.实体 */
+.highlight .ne { color: #f00; font-weight: bold } /* 名称.异常 */
+.highlight .nf { color: #00f; } /* 名称.函数 */
+.highlight .nl { color: #970; font-weight: bold } /* 名称.标签 */
+.highlight .nn { color: #0cf; } /* 名称.命名空间 */
+.highlight .nt { color: #2f6f9f; font-weight: bold } /* 名称.标签 */
+.highlight .nv { color: #033 } /* 名称.变量 */
+.highlight .ow { color: #000; font-weight: bold } /* 运算符.字 */
+.highlight .w { color: #bbb } /* 文本.空白 */
+.highlight .mf { color: #099 } /* 文字.数字.浮点 */
+.highlight .mh { color: #099 } /* 文字.数字.十六进制 */
+.highlight .mi { color: #099 } /* 文字.数字.整数 */
+.highlight .mo { color: #099 } /* 文字.数字.八进制 */
+.highlight .sb { color: #d50 } /* 文字.字符串.反引号 */
+.highlight .sc { color: #d50 } /* 文字.字符串.字符 */
+.highlight .sd { color: #d50; font-style: italic } /* 文字.字符串.文档 */
+.highlight .s2 { color: #d50 } /* 文字.字符串.双引号 */
+.highlight .se { color: #d50; font-weight: bold } /* 文字.字符串.转义 */
+.highlight .sh { color: #d50 } /* 文字.字符串.heredoc */
+.highlight .si { color: #d50; font-style: italic } /* 文字.字符串.插值 */
+.highlight .sx { color: #d50 } /* 文字.字符串.其他 */
+.highlight .sr { color: #099 } /* 文字.字符串.正则 */
+.highlight .s1 { color: #d50 } /* 文字.字符串.单引号 */
+.highlight .ss { color: #d50 } /* 文字.字符串.符号 */

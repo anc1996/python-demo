@@ -1,0 +1,19 @@
+/* 简化管理界面样式 */
+.w-field__input {
+  max-width: 900px;
+}
+
+.w-panel--nested {
+  margin-left: 1rem;
+  padding-left: 1rem;
+}
+
+/* 编辑器高度 */
+.CodeMirror {
+  height: 400px !important;
+}
+
+/* 内容预览区域 */
+.EasyMDEContainer .editor-preview {
+  padding: 1rem;
+}

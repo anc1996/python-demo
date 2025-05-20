@@ -1,0 +1,54 @@
+<!-- archive/templates/archive/month_archive.html -->
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags archive_tags blog_tags %}
+
+{% block body_class %}month-archive-page{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <header>
+                <h1>{{ year }}年{{ month }}月文章归档</h1>
+                <p class="lead">共 {{ pages.count }} 篇文章</p>
+            </header>
+
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">首页</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'archive:year_archive' year %}">{{ year }}年</a></li>
+                    <li class="breadcrumb-item active">{{ month }}月</li>
+                </ol>
+            </nav>
+
+            <div class="blog-list">
+                {% for post in pages %}
+                    <article class="blog-item">
+                        <h3><a href="{% pageurl post %}">{{ post.title }}</a></h3>
+
+                        <div class="meta">
+                            <i class="fas fa-calendar"></i> {{ post.date|date:"Y年m月d日" }}
+                            {% include "blog/stats_block.html" with page=post %}
+                        </div>
+
+                        {% if post.featured_image %}
+                            <a href="{% pageurl post %}" class="featured-image-link">
+                                {% image post.featured_image fill-300x200 class="thumbnail" %}
+                            </a>
+                        {% endif %}
+
+                        <div class="intro">{{ post.intro }}</div>
+                        <a href="{% pageurl post %}" class="read-more">阅读更多</a>
+                    </article>
+                {% empty %}
+                    <p>{{ year }}年{{ month }}月没有文章。</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            {% archive_sidebar current_year=year current_month=month %}
+        </div>
+    </div>
+</div>
+{% endblock %}

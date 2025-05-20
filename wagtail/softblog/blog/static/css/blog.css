@@ -1,0 +1,77 @@
+/* 博客文章样式 */
+.blog-post {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.post-title {
+  margin-bottom: 0.5rem;
+}
+
+.post-meta {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.post-intro {
+  margin-bottom: 1.5rem;
+}
+
+/* 代码块样式 */
+pre {
+  background: #f6f8fa;
+  border-radius: 3px;
+  padding: 1rem;
+  overflow: auto;
+}
+
+code {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #eaecef;
+  padding: 0.5rem;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.copy-button {
+  background: transparent;
+  border: 1px solid #ddd;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* 媒体块样式 */
+.media-block {
+  margin: 1rem 0;
+}
+
+.media-block audio,
+.media-block video {
+  width: 100%;
+}
+
+/* 博客索引页样式 */
+.blog-card {
+  margin-bottom: 1.5rem;
+}
+
+.blog-card-title {
+  font-size: 1.25rem;
+}
+
+.blog-card-excerpt {
+  margin: 0.5rem 0;
+}
+
+.pagination {
+  margin-top: 1.5rem;
+  justify-content: center;
+}

@@ -1,0 +1,9 @@
+<!-- 创建新文件: blog/templates/blog/blocks/image_block.html -->
+{% load wagtailimages_tags %}
+
+<figure class="image-block">
+    {% image value width-800 class="blog-image" %}
+    {% if value.caption %}
+        <figcaption>{{ value.caption }}</figcaption>
+    {% endif %}
+</figure>
