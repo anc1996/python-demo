@@ -9,7 +9,6 @@ from myproject.utils.models import BasePage
 
 
 class StandardPage(BasePage):
-    
     template = "pages/standard_page.html"
 
     introduction = models.TextField(blank=True)

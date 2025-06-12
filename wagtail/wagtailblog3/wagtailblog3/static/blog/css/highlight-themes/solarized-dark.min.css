@@ -1,0 +1,11 @@
+
+/* Solarized Dark Theme for Highlight.js - 简化版 */
+.hljs {
+    background: #002b36;
+    color: #839496;
+}
+.hljs-comment { color: #586e75; }
+.hljs-keyword { color: #859900; }
+.hljs-string { color: #2aa198; }
+.hljs-number { color: #d33682; }
+.hljs-built_in { color: #b58900; }

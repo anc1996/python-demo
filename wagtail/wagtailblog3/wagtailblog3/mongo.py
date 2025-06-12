@@ -33,8 +33,9 @@ class MongoManager:
 				port=mongo_settings['PORT'],
 				serverSelectionTimeoutMS=5000  # 添加服务器选择超时
 			)
+			
 			# 验证连接
-			client.server_info()
+			client.server_info() # 触发连接异常，如果无法连接会抛出异常
 			
 			self.db = client[mongo_settings['NAME']]
 			self.blog_content = self.db['blog_content']
@@ -93,8 +94,8 @@ class MongoManager:
 	
 	def _prepare_for_mongo(self, data):
 		"""
-		将数据准备为可存储到MongoDB的格式
-		处理StreamField的RawDataView对象和其他不可直接序列化的类型
+			将数据准备为可存储到MongoDB的格式
+			处理StreamField的RawDataView对象和其他不可直接序列化的类型
 		"""
 		# 处理None值
 		if data is None:
@@ -102,18 +103,23 @@ class MongoManager:
 		
 		# 处理数据类型
 		if isinstance(data, dict):
+			"""递归处理字典中的每个键值对，确保所有数据都是MongoDB可序列化的"""
 			result = {}
 			for key, value in data.items():
 				result[key] = self._prepare_for_mongo(value)
 			return result
+		
 		elif isinstance(data, list):
 			return [self._prepare_for_mongo(item) for item in data]
+		
 		elif hasattr(data, 'isoformat') and callable(data.isoformat):
 			# 处理日期时间对象
 			return data.isoformat()
+		
 		elif hasattr(data, 'raw_data') and callable(getattr(data, 'raw_data')):
 			# 处理StreamValue对象
 			return self._prepare_for_mongo(data.raw_data)
+		
 		elif hasattr(data, '__iter__') and not isinstance(data, (str, bytes, dict)):
 			# 处理其他可迭代对象
 			return [self._prepare_for_mongo(item) for item in data]
@@ -148,7 +154,7 @@ class MongoManager:
 					{'_id': mongo_id},
 					{'$set': prepared_data}
 				)
-				if result.matched_count == 0:
+				if result.matched_count == 0: # 如果没有匹配到内容
 					logger.warning(f"未找到MongoDB内容ID: {content_id}, 创建新内容")
 					result = self.blog_content.insert_one(prepared_data)
 					return str(result.inserted_id)
@@ -161,7 +167,7 @@ class MongoManager:
 			logger.error(f"MongoDB保存内容错误: {e}")
 			# 尝试更严格的JSON序列化
 			try:
-				json_str = json.dumps(prepared_data, default=json_util.default)
+				json_str = json.dumps(prepared_data, default=json_util.default) # 使用json_util处理MongoDB特有类型,json_util.default表示处理ObjectId等类型
 				clean_data = json.loads(json_str)
 				result = self.blog_content.insert_one(clean_data)
 				return str(result.inserted_id)
@@ -192,10 +198,10 @@ class MongoManager:
 				from html import unescape
 				from bs4 import BeautifulSoup
 				try:
-					soup = BeautifulSoup(str(block_value), 'html.parser')
-					text_parts.append(soup.get_text(separator=' ', strip=True))
+					soup = BeautifulSoup(str(block_value), 'html.parser') # 使用BeautifulSoup解析HTML
+					text_parts.append(soup.get_text(separator=' ', strip=True)) # 获取纯文本
 				except:
-					text_parts.append(str(block_value))
+					text_parts.append(str(block_value)) # 如果解析失败，直接转换为字符串
 			
 			elif block_type == 'markdown_block':
 				# Markdown块

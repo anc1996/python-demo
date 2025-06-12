@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags static blog_tags comment_tags %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+
+    <!-- 代码高亮系统样式 -->
+    <link rel="stylesheet" href="{% static 'blog/css/highlighting.css' %}">
+
+    <!-- 其他功能样式 -->
+    <link rel="stylesheet" href="{% static 'blog/css/katex/katex.min.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/lightbox/lightbox.min.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/jquery-ui/jquery-ui.min.css' %}">
+
+    <!-- 博客核心样式 -->
+    <link rel="stylesheet" href="{% static 'blog/css/blog.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/image_blocks.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/video_blocks.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/audio_blocks.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/embed_blocks.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/table_blocks.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<div class="blog-page-wrapper">
+    <!-- 博客头部区域 -->
+    <section class="blog-hero">
+        {% if page.featured_image %}
+            {% image page.featured_image original class="blog-featured-image" %}
+        {% endif %}
+
+        <div class="blog-container">
+            <div class="blog-hero-content">
+                <h1 class="blog-title">{{ page.title }}</h1>
+
+                {% if page.intro %}
+                    <p class="blog-intro">{{ page.intro }}</p>
+                {% endif %}
+
+                <div class="blog-meta">
+                    <div class="blog-meta-item">
+                        <i class="fa fa-calendar"></i>
+                        <span>{{ page.date|date:"Y年m月d日" }}</span>
+                    </div>
+
+                    {% if page.authors.all %}
+                        <div class="blog-meta-item">
+                            <i class="fa fa-user"></i>
+                            <span>
+                                {% for author in page.authors.all %}
+                                    {{ author.name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    <div class="blog-meta-item">
+                        <i class="fa fa-eye"></i>
+                        <span>{{ page.get_view_count.total }} 次浏览</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要内容区域 -->
+    <div class="blog-container">
+        <article class="blog-main">
+            <!-- StreamField 内容 -->
+            <div class="blog-content-area">
+                <div class="content-blocks">
+                    {% for block in page.body %}
+                        <div class="content-block-wrapper" data-block-type="{{ block.block_type }}"
+                             {% if block.block_type == "image_block" and block.value.alt %}data-image-title="{{ block.value.alt }}"{% endif %}>
+                            {% include_block block %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 图片画廊 -->
+            {% if page.gallery_images.all %}
+                <div class="blog-gallery">
+                    <h4><i class="fa fa-images"></i> 图片画廊</h4>
+                    <div class="gallery-grid">
+                        {% for gallery_image in page.gallery_images.all %}
+                            <div class="gallery-item">
+                                <a href="{% image_url gallery_image.image 'original' %}"
+                                   data-lightbox="gallery"
+                                   data-title="{{ gallery_image.caption }}">
+                                    {% image gallery_image.image width-400 %}
+                                </a>
+                                {% if gallery_image.caption %}
+                                    <p class="caption">{{ gallery_image.caption }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </article>
+
+        <!-- 文章底部互动区域 -->
+        <div class="blog-interactions">
+            <!-- 访问统计 -->
+            {% include 'blog/stats_block.html' %}
+
+            <!-- 反应按钮 -->
+            {% include 'blog/reactions_block.html' %}
+
+            <!-- 相关文章推荐 -->
+            {% with related_posts=page.get_related_posts_by_tags %}
+                {% if related_posts %}
+                    <div class="related-posts">
+                        <h3><i class="fa fa-lightbulb"></i> 相关推荐</h3>
+                        <div class="related-posts-grid">
+                            {% for post in related_posts %}
+                                <article class="related-post-item">
+                                    <a href="{{ post.url }}" class="related-post-link">
+                                        {% if post.featured_image %}
+                                            {% image post.featured_image width-200 class="related-post-image" %}
+                                        {% endif %}
+                                        <div class="related-post-content">
+                                            <h4>{{ post.title }}</h4>
+                                            <p>{{ post.intro|truncatewords:15 }}</p>
+                                            <span class="related-post-date">{{ post.date|date:"Y-m-d" }}</span>
+                                        </div>
+                                    </a>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- 上一篇/下一篇导航 -->
+            {% with prev_post=page.get_prev_post next_post=page.get_next_post %}
+                {% if prev_post or next_post %}
+                    <nav class="post-navigation">
+                        {% if prev_post %}
+                            <a href="{{ prev_post.url }}" class="nav-link nav-prev">
+                                <i class="fa fa-chevron-left"></i>
+                                <div>
+                                    <span class="nav-label">上一篇</span>
+                                    <span class="nav-title">{{ prev_post.title }}</span>
+                                </div>
+                            </a>
+                        {% endif %}
+
+                        {% if next_post %}
+                            <a href="{{ next_post.url }}" class="nav-link nav-next">
+                                <div>
+                                    <span class="nav-label">下一篇</span>
+                                    <span class="nav-title">{{ next_post.title }}</span>
+                                </div>
+                                <i class="fa fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </nav>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<!-- 评论模块 -->
+<div class="blog-comments">
+    {% render_comments page %}
+</div>
+{% endblock %}
+
+
+
+{% block extra_js %}
+    {{ block.super }}
+
+
+    <!-- 其他功能库 -->
+    <script src="{% static 'blog/js/katex/katex.min.js' %}"></script>
+    <script src="{% static 'blog/js/katex/auto-render.min.js' %}"></script>
+    <script src="{% static 'blog/js/lightbox/lightbox.min.js' %}"></script>
+    <script src="{% static 'blog/js/jquery-ui/jquery-ui.min.js' %}"></script>
+
+    <!-- Mermaid JS (用于图表) -->
+    <script src="{% static 'blog/js/mermaid.min.js' %}"></script>
+    <!-- 代码高亮系统 -->
+    <script src="{% static 'blog/js/highlighting.js' %}"></script>
+
+    <!-- 其他功能脚本 -->
+    <script src="{% static 'blog/js/image_blocks.js' %}"></script>
+    <script src="{% static 'blog/js/video_blocks.js' %}"></script>
+    <script src="{% static 'blog/js/table_blocks.js' %}"></script>
+    <script src="{% static 'comments/js/comments.js' %}"></script>
+
+{% endblock %}

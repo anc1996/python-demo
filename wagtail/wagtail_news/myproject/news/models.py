@@ -80,7 +80,7 @@ class ArticlePage(BasePage):
 class NewsListingPage(BasePage):
     template = "pages/news_listing_page.html"
     subpage_types = ["news.ArticlePage"]
-    max_count = 1  # 仅允许一个新闻列表页面将文章页面保存在一个位置
+    max_count = 1  # Allow only one news listing page to keep article pages in one place
 
     introduction = RichTextField(
         blank=True, features=["bold", "italic", "link"]

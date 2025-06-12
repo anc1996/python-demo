@@ -1,0 +1,162 @@
+/* wagtailblog3/static/blog/css/highlighting.css */
+/* 全新的一体化样式文件，请完整替换旧文件 */
+
+/*
+ * ========================================================================
+ * Pygments 'github-dark' Theme & Customizations
+ * ========================================================================
+ */
+
+/* 为 .highlight 容器添加现代外观 */
+.highlight {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    border-radius: 6px;
+    margin: 2em 0;
+    overflow: hidden;
+    position: relative; /* 为了定位复制按钮 */
+    border: 1px solid #30363d;
+}
+
+.highlight pre {
+    margin: 0 !important;
+    padding: 16px !important;
+    font-family: 'Fira Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* 行号样式 */
+.highlight table { border-collapse: collapse; }
+.highlight table td { padding: 0; }
+.highlight .linenos { color: #8b949e; padding-right: 16px !important; user-select: none; border-right: 1px solid #30363d; text-align: right; }
+.highlight .linenos pre { color: #8b949e; } /* 确保行号颜色 */
+
+
+/* 复制按钮样式 */
+.code-copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.highlight:hover .code-copy-button {
+    opacity: 1;
+}
+
+.code-copy-button:hover {
+    background-color: #30363d;
+    border-color: #8b949e;
+}
+
+.code-copy-button.copied {
+    background-color: #238636;
+    color: white;
+    border-color: #2ea043;
+}
+
+/* Pygments 'github-dark' Theme tokens */
+.highlight .k { color: #ff7b72 } /* Keyword */
+.highlight .kn { color: #ff7b72 } /* Keyword.Namespace */
+.highlight .kp { color: #ff7b72 } /* Keyword.Pseudo */
+.highlight .kr { color: #ff7b72 } /* Keyword.Reserved */
+.highlight .kt { color: #ff7b72 } /* Keyword.Type */
+.highlight .n { color: #c9d1d9 } /* Name */
+.highlight .na { color: #79c0ff } /* Name.Attribute */
+.highlight .nb { color: #c9d1d9 } /* Name.Builtin */
+.highlight .nc { color: #f0883e; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79c0ff; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #d2a8ff; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #c9d1d9 } /* Name.Entity */
+.highlight .ne { color: #ff7b72; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #d2a8ff; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #c9d1d9 } /* Name.Label */
+.highlight .nn { color: #ff7b72 } /* Name.Namespace */
+.highlight .nx { color: #c9d1d9 } /* Name.Other */
+.highlight .py { color: #c9d1d9 } /* Name.Property */
+.highlight .nt { color: #7ee787 } /* Name.Tag */
+.highlight .nv { color: #79c0ff; font-weight: bold } /* Name.Variable */
+.highlight .l { color: #a5d6ff } /* Literal */
+.highlight .ld { color: #a5d6ff } /* Literal.Date */
+.highlight .s { color: #a5d6ff } /* Literal.String */
+.highlight .sa { color: #a5d6ff } /* Literal.String.Affix */
+.highlight .sb { color: #a5d6ff } /* Literal.String.Backtick */
+.highlight .sc { color: #a5d6ff } /* Literal.String.Char */
+.highlight .dl { color: #a5d6ff } /* Literal.String.Delimiter */
+.highlight .sd { color: #a5d6ff } /* Literal.String.Doc */
+.highlight .s2 { color: #a5d6ff } /* Literal.String.Double */
+.highlight .se { color: #a5d6ff } /* Literal.String.Escape */
+.highlight .sh { color: #a5d6ff } /* Literal.String.Heredoc */
+.highlight .si { color: #a5d6ff } /* Literal.String.Interpol */
+.highlight .sx { color: #a5d6ff } /* Literal.String.Other */
+.highlight .sr { color: #a5d6ff } /* Literal.String.Regex */
+.highlight .s1 { color: #a5d6ff } /* Literal.String.Single */
+.highlight .ss { color: #a5d6ff } /* Literal.String.Symbol */
+.highlight .m { color: #79c0ff } /* Literal.Number */
+.highlight .mb { color: #79c0ff } /* Literal.Number.Bin */
+.highlight .mf { color: #79c0ff } /* Literal.Number.Float */
+.highlight .mh { color: #79c0ff } /* Literal.Number.Hex */
+.highlight .mi { color: #79c0ff } /* Literal.Number.Integer */
+.highlight .mo { color: #79c0ff } /* Literal.Number.Oct */
+.highlight .il { color: #79c0ff } /* Literal.Number.Integer.Long */
+.highlight .o { color: #ff7b72; font-weight: bold } /* Operator */
+.highlight .ow { color: #ff7b72; font-weight: bold } /* Operator.Word */
+.highlight .p { color: #c9d1d9 } /* Punctuation */
+.highlight .c { color: #8b949e; font-style: italic } /* Comment */
+.highlight .ch { color: #8b949e; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8b949e; font-style: italic } /* Comment.Multiline */
+.highlight .c1 { color: #8b949e; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8b949e; font-style: italic } /* Comment.Special */
+.highlight .cp { color: #8b949e; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8b949e; font-style: italic } /* Comment.PreprocFile */
+.highlight .gd { color: #ffa198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gr { color: #ff7b72 } /* Generic.Error */
+.highlight .gh { color: #79c0ff; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56d364; background-color: #0f5323 } /* Generic.Inserted */
+.highlight .go { color: #8b949e } /* Generic.Output */
+.highlight .gp { color: #8b949e } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79c0ff; text-decoration: underline } /* Generic.Subheading */
+.highlight .gt { color: #ff7b72 } /* Generic.Traceback */
+.highlight .w { color: #6e7681 } /* Text.Whitespace */
+
+
+/*
+ * ========================================================================
+ * Mermaid, KaTeX, and Tasklist Styles
+ * ========================================================================
+ */
+.mermaid {
+  margin: 2em 0;
+  text-align: center;
+  background-color: #f9f9f9;
+  padding: 1em;
+  border-radius: 6px;
+}
+
+.arithmatex .katex-display {
+    padding: 1em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+ul.task-list {
+  list-style-type: none;
+  padding-left: 1.5em;
+}
+ul.task-list .task-list-item input[type="checkbox"] {
+  margin-right: 0.5em;
+  vertical-align: middle;
+}

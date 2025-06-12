@@ -1,9 +1,0 @@
-{% extends "base.html" %} {# 继承基础模板 #}
-{% load wagtailcore_tags %} {# 加载 Wagtail 核心标签 #}
-
-{% block body_class %}template-formpage{% endblock %} {# 为 body 标签添加一个 CSS 类 #}
-
-{% block content %} {# 覆盖基础模板中的 content 块 #}
-    <h1>{{ page.title }}</h1> {# 显示页面的标题 #}
-    <div>{{ page.thank_you_text|richtext }}</div> {# 显示 thank_you_text 字段的内容，使用 richtext 过滤器渲染富文本 #}
-{% endblock content %}

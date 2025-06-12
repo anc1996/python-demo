@@ -39,8 +39,9 @@ class Rendition(AbstractRendition):
     @property
     def object_position_style(self):
         """
-        返回一个 'object-position' 规则，以添加到 img 元素的内联样式属性中。
-        类似的代码用于 wagtail image 的 background_position_style 方法。
+        Returns a `object-position` rule to add to an img element's inline style attribute.
+
+        Similar code is used for wagtail image's background_position_style method.
         Reference: https://github.com/wagtail/wagtail/blob/845a2acb365241643c2f453e4b962a586ae5e713/wagtail/images/models.py#L1229
         """
         focal_point = self.focal_point

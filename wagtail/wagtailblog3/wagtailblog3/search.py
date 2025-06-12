@@ -186,7 +186,6 @@ class CustomSearchBackend(DatabaseSearchBackend):
 				else:
 					# 尝试从数据库获取页面
 					try:
-						from blog.models import BlogPage
 						page = BlogPage.objects.get(id=page_id)
 						page_scores[page_id] = {
 							'page': page,

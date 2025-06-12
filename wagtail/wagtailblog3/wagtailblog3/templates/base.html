@@ -3,57 +3,134 @@
 
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <title>
-            {% block title %}
+<head>
+    <meta charset="utf-8" />
+    <title>
+        {% block title %}
             {% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }}{% endif %}
-            {% endblock %}
-            {% block title_suffix %}
+        {% endblock %}
+        {% block title_suffix %}
             {% wagtail_site as current_site %}
             {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
-            {% endblock %}
-        </title>
-
-        <!-- blogpage页面统计样式 -->
-        <link rel="stylesheet" href="{% static 'css/blog_interactions.css' %}">
-        <!-- Font Awesome图标 -->
-        <link rel="stylesheet" href="{% static 'css/all.min.css' %}">
-
-        {% if page.search_description %}
-        <meta name="description" content="{{ page.search_description }}" />
-        {% endif %}
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-        {# Force all links in the live preview panel to be opened in a new tab #}
-        {% if request.in_preview_panel %}
-        <base target="_blank">
-        {% endif %}
-
-        {# Global stylesheets #}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/wagtailblog3.css' %}">
-
-        {% block extra_css %}
-        {# Override this in templates to add extra stylesheets #}
         {% endblock %}
-    </head>
+    </title>
 
-    <body class="{% block body_class %}{% endblock %}">
-        {% wagtailuserbar %}
+    {% if page.search_description %}
+        <meta name="description" content="{{ page.search_description }}" />
+    {% endif %}
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 
-        {% include "includes/header.html" %}
+    {# Force all links in the live preview panel to be opened in a new tab #}
+    {% if request.in_preview_panel %}
+        <base target="_blank">
+    {% endif %}
+
+    {# Global stylesheets #}
+    {# 全局 CSS #}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/wagtailblog3.css' %}">
+    <link href="{% static 'gretzia/css/bootstrap.css' %}" rel="stylesheet">
+    <link href="{% static 'gretzia/css/style.css' %}" rel="stylesheet">
+    <link href="{% static 'gretzia/css/responsive.css' %}" rel="stylesheet">
+
+    <link href="{% static 'gretzia/css/font-awesome.css' %}" rel="stylesheet">
+    <link href="{% static 'gretzia/css/animate.css' %}" rel="stylesheet">
+    <link href="{% static 'gretzia/css/owl.css' %}" rel="stylesheet">
+    <link href="{% static 'gretzia/css/jquery.fancybox.css' %}" rel="stylesheet">
+    <link href="{% static 'gretzia/css/jquery.mCustomScrollbar.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gretzia/css/hover.css' %}" rel="stylesheet">
+
+    <!-- Responsive -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 
 
+    <!--Favicon-->
+    <link rel="shortcut icon" href="{% static 'gretzia/images/favicon.ico' %}" type="image/x-icon">
+    <link rel="icon" href="{% static 'gretzia/images/favicon.ico' %}" type="image/x-icon">
+
+    {% block extra_css %}
+
+        {# 原有的 flatpickr.min.css 移到这里或保留，根据需要 #}
+        <link href="{% static 'css/flatpickr.min.css' %}" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'css/blog_interactions.css' %}">
+
+        {# 归档侧边栏样式 #}
+        <link rel="stylesheet" href="{% static 'archive/css/archive.css' %}">
+
+
+    {% endblock %}
+
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+    {% wagtailuserbar %}
+
+    {# ================== Gretzia Body Structure (Placeholder) ================== #}
+
+    {# 方案 1: 修改你现有的 includes 来包含 Gretzia 结构 #}
+    {# 暂时保留你现有的结构，但你可能需要修改它们 #}
+    <div class="page-wrapper"> {# Gretzia 通常会有一个主包装器，检查一下 index.html #}
+
+        {# Preloader (如果 Gretzia 有) #}
+         <div class="preloader"></div>
+
+        {# 主头部（Main Header） (从 Gretzia index.html 复制/改编) #}
+        {% block header %}
+           {#  这里可以放 Gretzia 的 header HTML，或者 include 一个新文件 #}
+           {#  你需要从 Gretzia/index.html 提取 Header 部分 #}
+           {#  同时，你需要考虑替换你原有的 includes/header.html #}
+           {% include "includes/header.html" %} {# 暂时保留 #}
+        {% endblock %}
+
+        {# Main Content #}
         {% block content %}{% endblock %}
 
-        {# 页脚 #}
-        {% include "includes/footer.html" %}
-
-        {# Global javascript #}
-        <script type="text/javascript" src="{% static 'js/wagtailblog3.js' %}"></script>
-
-        {% block extra_js %}
-        {# Override this in templates to add extra javascript #}
+        {# Main Footer (从 Gretzia index.html 复制/改编) #}
+        {% block footer %}
+           {#  这里可以放 Gretzia 的 footer HTML，或者 include 一个新文件 #}
+           {#  你需要从 Gretzia/index.html 提取 Footer 部分 #}
+           {#  同时，你需要考虑替换你原有的 includes/footer.html #}
+           {% include "includes/footer.html" %} {# 暂时保留 #}
         {% endblock %}
-    </body>
+
+    </div>{# ================== End Gretzia Body Structure ================== #}
+
+
+    {# Global javascript #}
+
+    {# 全局 JS #}
+    <script type="text/javascript" src="{% static 'js/wagtailblog3.js' %}"></script>
+    <script src="{% static 'gretzia/js/jquery.js' %}"></script>
+    <script src="{% static 'gretzia/js/popper.min.js' %}"></script>
+    <script src="{% static 'gretzia/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'gretzia/js/isotope.js' %}"></script>
+    <script src="{% static 'gretzia/js/jquery.mCustomScrollbar.concat.min.js' %}"></script>
+    <script src="{% static 'gretzia/js/jquery.fancybox.pack.js' %}"></script>
+    <script src="{% static 'gretzia/js/jquery.fancybox-media.js' %}"></script>
+    <script src="{% static 'gretzia/js/owl.js' %}"></script>
+    <script src="{% static 'gretzia/js/appear.js' %}"></script>
+    <script src="{% static 'gretzia/js/wow.js' %}"></script>
+    <script src="{% static 'gretzia/js/validate.js' %}"></script>
+    <script src="{% static 'gretzia/js/script.js' %}"></script>
+    <!-- jQuery兼容性修复 - 必须最先加载 -->
+    <script src="{% static 'gretzia/js/enhanced-jquery-compatibility.js' %}"></script>
+
+    <!--[if lt IE 9]><script src="{% static 'gretzia/js/html5shiv.js' %}"><![endif]-->
+    <!--[if lt IE 9]><script src="{% static "gretzia/js/respond.js" %}"></script><![endif]-->
+
+    {% block extra_js %}
+        {# 你可以在这里加载页面特定的 JS 文件 #}
+        {# 前端日期选择器 #}
+        <script src="{% static 'js/flatpickr.js' %}"></script>
+        <script src="{% static 'js/zh.js' %}"></script>
+        <script src="{% static 'js/frontend_datepicker.js' %}"></script>
+
+        {# 归档侧边栏脚本 #}
+        <script src="{% static 'archive/js/archive.js' %}"></script>
+
+    {% endblock %}
+
+</body>
 </html>

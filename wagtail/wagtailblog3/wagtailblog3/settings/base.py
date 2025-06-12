@@ -5,7 +5,8 @@ Django settings for wagtailblog3 project.
 """
 
 # 在项目中构建路径，如下所示： os.path.join（BASE_DIR， ...）
-import os
+import os,sys
+from django.contrib import messages
 
 # 当前文件的目录,/xxx/xx/wagtailblog3/wagtailblog3
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -14,7 +15,11 @@ print(PROJECT_DIR)
 # 项目的根目录:/xx/xx/wagtailblog3
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-# 应用定义
+# ===== 新增：将 apps 目录添加到 Python 路径 =====
+# 这样 Django 就能找到移动到 apps 目录下的应用
+sys.path.insert(0, os.path.join(PROJECT_DIR, 'apps'))
+# ===============================================
+
 # 应用定义
 INSTALLED_APPS = [
     "home",  # 首页应用
@@ -216,7 +221,7 @@ STATICFILES_DIRS = [
     os.path.join(PROJECT_DIR, "static"), # 项目级静态文件目录
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, "static") # 静态文件收集目录
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles_collected") # 静态文件收集目录
 STATIC_URL = "/static/" # 静态文件的 URL 前缀
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media") # 媒体文件存储目录
@@ -306,15 +311,19 @@ WAGTAILMARKDOWN = {
     "extensions": [  # 启用的Markdown扩展
         'markdown.extensions.extra',  # 包含表格、围栏代码块等扩展功能
         'markdown.extensions.codehilite',  # 代码高亮
+        "markdown.extensions.fenced_code",# 支持 ```code``` 语法
         'markdown.extensions.toc',  # 目录生成
         'markdown.extensions.smarty',  # 智能标点转换
         'markdown.extensions.nl2br',  # 自动将换行符转为<br>标签
+        "markdown.extensions.tables", # 支持表格语法
+        "markdown.extensions.sane_lists", # 安全列表处理
         'pymdownx.arithmatex',  # 数学公式支持
         'pymdownx.superfences',  # 增强的围栏代码块
         'pymdownx.details',  # 可折叠详情块
         'pymdownx.tabbed',  # 选项卡内容
         'pymdownx.tasklist',  # 任务列表
         'pymdownx.highlight',  # 代码高亮增强
+
     ],
     "extension_configs": {  # 扩展的具体配置选项
         "pymdownx.arithmatex": {
@@ -402,4 +411,151 @@ SWAGGER_SETTINGS = {
             'in': 'header'  # 在HTTP头中传递
         }
     }
+}
+
+# ===============================================================
+# Celery 异步任务队列配置
+# ===============================================================
+
+# Celery 基础配置
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+# Celery 消息代理和结果后端配置
+CELERY_BROKER_URL = f'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/2'
+CELERY_RESULT_BACKEND = f'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/3'
+
+# Celery 序列化配置
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Celery 任务执行配置
+CELERY_TASK_ALWAYS_EAGER = False  # 生产环境设为False，开发时可设为True进行测试
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ACKS_LATE = True
+
+# Celery 任务路由和队列配置
+CELERY_TASK_ROUTES = {
+    # 邮件发送任务使用email队列
+    'base.tasks.send_form_confirmation_email': {'queue': 'email'},
+    'base.tasks.send_admin_notification_email': {'queue': 'email'},
+    'base.tasks.send_bulk_email': {'queue': 'email'},
+    # 清理任务使用maintenance队列
+    'base.tasks.cleanup_email_logs': {'queue': 'maintenance'},
+}
+
+# 定义队列配置
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TASK_QUEUES = {
+    'default': {
+        'exchange': 'default',
+        'exchange_type': 'direct',
+        'routing_key': 'default',
+    },
+    'email': {
+        'exchange': 'email',
+        'exchange_type': 'direct',
+        'routing_key': 'email',
+    },
+    'maintenance': {
+        'exchange': 'maintenance',
+        'exchange_type': 'direct',
+        'routing_key': 'maintenance',
+    },
+}
+
+# Celery 任务重试和超时配置
+CELERY_TASK_DEFAULT_RETRY_DELAY = 60  # 默认重试延迟60秒
+CELERY_TASK_MAX_RETRIES = 3  # 最大重试次数
+CELERY_TASK_SOFT_TIME_LIMIT = 300  # 软时间限制（5分钟）
+CELERY_TASK_TIME_LIMIT = 600  # 硬时间限制（10分钟）
+
+# Celery 结果过期时间
+CELERY_RESULT_EXPIRES = 3600  # 1小时后过期
+
+# Celery 错误处理配置
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_TASK_IGNORE_RESULT = False
+
+# Celery 监控配置
+CELERY_SEND_TASK_EVENTS = True
+CELERY_SEND_EVENTS = True
+CELERY_TASK_SEND_SENT_EVENT = True
+
+# Celery Beat 定时任务配置（可选）
+CELERY_BEAT_SCHEDULE = {
+    # 每天凌晨2点清理邮件日志
+    'cleanup-email-logs': {
+        'task': 'base.tasks.cleanup_email_logs',
+        'schedule': 60 * 60 * 24,  # 24小时
+        'options': {'queue': 'maintenance'}
+    },
+}
+
+# ===============================================================
+# 邮件发送频率限制配置
+# ===============================================================
+
+# 启用邮件发送频率限制
+EMAIL_RATE_LIMIT_ENABLED = True
+
+# 全局邮件发送频率限制时间（秒）- 默认5分钟
+EMAIL_RATE_LIMIT_SECONDS = 300
+
+# 针对特定表单页面的个性化频率限制配置
+# 格式：{表单页面ID: 限制时间（秒）}
+EMAIL_RATE_LIMIT_PER_FORM = {
+    # 示例：表单ID为1的页面设置为3分钟限制
+    # 1: 180,
+    # 表单ID为2的页面设置为10分钟限制
+    # 2: 600,
+}
+
+# ===============================================================
+# 邮件发送增强配置
+# ===============================================================
+
+# QQ邮箱SMTP配置（推荐配置）
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = '834195283@qq.com'
+EMAIL_HOST_PASSWORD =  'rahnxfdaywhgbfah'
+DEFAULT_FROM_EMAIL = '834195283@qq.com'
+
+# 表单设置
+WAGTAILFORMS_CONFIRMATION_EMAIL_TEMPLATE = 'emails/form_confirmation.html'
+
+
+# 邮件发送相关设置
+EMAIL_TIMEOUT = 30  # 邮件发送超时时间（秒）
+EMAIL_MAX_RECIPIENTS = 50  # 单封邮件最大收件人数量
+
+# 异步邮件发送开关（可在管理后台动态控制）
+ASYNC_EMAIL_ENABLED = True
+
+# 邮件发送统计和日志配置
+EMAIL_LOGGING_ENABLED = True
+EMAIL_STATS_ENABLED = True
+
+# 消息框架设置（用于表单反馈）
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
+
+# 表单邮件发送配置
+FORM_EMAIL_SETTINGS = {
+    'CONFIRMATION_EMAIL_ENABLED': True,
+    'ADMIN_NOTIFICATION_ENABLED': True,
+    'DEFAULT_PRIORITY': 'normal',
+    'RETRY_ATTEMPTS': 3,
+    'RETRY_DELAY': 60,
 }

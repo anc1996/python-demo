@@ -1,0 +1,34 @@
+/*
+ * 文件路径: wagtailblog3/static/blog/css/table_blocks.css
+ * 最终解决方案：直接控制 Wagtail 生成的块容器
+*/
+
+/*
+ * 1. 控制整个表格块的宽度并使其居中。
+ * 这会使其行为与音频/视频块完全一致。
+*/
+.block-table_block {
+    width: 80% !important; /* 使用 !important 确保最高优先级，覆盖任何其他样式 */
+    margin: 0 auto 1.5rem auto !important; /* 同样使用 !important 确保居中和下边距生效 */
+}
+
+/*
+ * 2. 内部的 table-responsive 和 table 元素保持100%宽度，
+ * 以填满我们上面设置的80%的容器。
+ * 这样可以确保响应式滚动条在需要时仍然能正常工作。
+*/
+.block-table_block .table-responsive {
+    width: 80%;
+}
+
+/*
+ * 3. 设置表格标题 (caption) 的样式
+*/
+.block-table_block table caption {
+    caption-side: top;
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    padding-bottom: 15px;
+}
