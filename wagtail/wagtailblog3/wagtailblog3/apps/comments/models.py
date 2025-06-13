@@ -69,6 +69,7 @@ class Comment(models.Model):
 
 class BlogPageComment(Orderable, Comment):
 	"""博客页面评论实现"""
+	
 	page = ParentalKey('blog.BlogPage', on_delete=models.CASCADE, related_name='comments')
 	
 	panels = [

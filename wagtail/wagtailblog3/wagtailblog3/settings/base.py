@@ -145,6 +145,14 @@ CACHES = {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'PASSWORD': '123456'
         }
+    },
+    'comment_rate_limit_cache': {  # 新的缓存实例，专门用于评论频率限制
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/2',  # 使用不同的Redis DB，例如 DB 2
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': '123456'
+        }
     }
 }
 
@@ -558,4 +566,15 @@ FORM_EMAIL_SETTINGS = {
     'DEFAULT_PRIORITY': 'normal',
     'RETRY_ATTEMPTS': 3,
     'RETRY_DELAY': 60,
+}
+
+# ===============================================================
+# 评论系统配置
+
+# 评论频率限制设置
+COMMENT_RATE_LIMIT = {
+    'ENABLED': True,
+    'INTERVAL_SECONDS': 60, # 1分钟
+    'MAX_COMMENTS': 3,      # 1分钟内最多3条评论
+    'CACHE_ALIAS': 'comment_rate_limit_cache', # 指定用于频率限制的缓存别名
 }

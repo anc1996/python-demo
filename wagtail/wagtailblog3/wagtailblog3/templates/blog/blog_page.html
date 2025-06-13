@@ -22,6 +22,9 @@
     <link rel="stylesheet" href="{% static 'blog/css/embed_blocks.css' %}">
     <link rel="stylesheet" href="{% static 'blog/css/table_blocks.css' %}">
 
+    <!-- 评论模块样式 -->
+    <link rel="stylesheet" href="{% static 'comments/css/comments.css' %}">
+
 {% endblock %}
 
 {% block content %}
@@ -101,6 +104,8 @@
                     </div>
                 </div>
             {% endif %}
+
+
         </article>
 
         <!-- 文章底部互动区域 -->
@@ -162,13 +167,13 @@
                     </nav>
                 {% endif %}
             {% endwith %}
+
+               <div class="blog-comments"> {# 保留原有容器 #}
+                    {% render_comments page %}
+                </div>
+
         </div>
     </div>
-</div>
-
-<!-- 评论模块 -->
-<div class="blog-comments">
-    {% render_comments page %}
 </div>
 {% endblock %}
 
@@ -177,22 +182,23 @@
 {% block extra_js %}
     {{ block.super }}
 
+    <script src="{% static 'blog/js/katex/katex.min.js' %}" async></script>
+    <script src="{% static 'blog/js/katex/auto-render.min.js' %}" async></script>
+    <script src="{% static 'blog/js/lightbox/lightbox.min.js' %}" async></script>
+    <script src="{% static 'blog/js/jquery-ui/jquery-ui.min.js' %}" async></script>
 
-    <!-- 其他功能库 -->
-    <script src="{% static 'blog/js/katex/katex.min.js' %}"></script>
-    <script src="{% static 'blog/js/katex/auto-render.min.js' %}"></script>
-    <script src="{% static 'blog/js/lightbox/lightbox.min.js' %}"></script>
-    <script src="{% static 'blog/js/jquery-ui/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'blog/js/mermaid.min.js' %}" async></script>
+    <script src="{% static 'blog/js/highlighting.js' %}" async></script>
 
-    <!-- Mermaid JS (用于图表) -->
-    <script src="{% static 'blog/js/mermaid.min.js' %}"></script>
-    <!-- 代码高亮系统 -->
-    <script src="{% static 'blog/js/highlighting.js' %}"></script>
+    <script src="{% static 'blog/js/image_blocks.js' %}" async></script>
+    <script src="{% static 'blog/js/video_blocks.js' %}" async></script>
+    <script src="{% static 'blog/js/editor-enhancements.js' %}" async></script>
 
-    <!-- 其他功能脚本 -->
-    <script src="{% static 'blog/js/image_blocks.js' %}"></script>
-    <script src="{% static 'blog/js/video_blocks.js' %}"></script>
-    <script src="{% static 'blog/js/table_blocks.js' %}"></script>
-    <script src="{% static 'comments/js/comments.js' %}"></script>
+    <script src="{% static 'comments/js/comments.js' %}" defer></script> {# defer 确保DOM加载后再执行 #}
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 这里可以放置全局的JS初始化逻辑
+        });
+    </script>
 {% endblock %}
