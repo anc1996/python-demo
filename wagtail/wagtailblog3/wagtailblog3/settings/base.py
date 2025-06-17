@@ -293,64 +293,61 @@ WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'tx
 
 # Wagtail Markdown配置
 WAGTAILMARKDOWN = {
-    "autodownload_fontawesome": False,  # 禁用自动下载Font Awesome图标库
-    "allowed_tags": [  # Markdown中允许使用的HTML标签白名单
+    "autodownload_fontawesome": False,
+    "allowed_tags": [
         'div', 'span', 'p', 'a', 'img', 'pre', 'code', 'br', 'hr',
         'table', 'tr', 'th', 'td', 'thead', 'tbody', 'tfoot',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'del',
-        'audio', 'video', 'source'  # 允许音视频标签
+        'audio', 'video', 'source'
     ],
-    "allowed_styles": [  # 允许在HTML标签中使用的CSS样式属性
+    "allowed_styles": [
         'color', 'background-color', 'font-family', 'font-weight',
         'text-align', 'width', 'height', 'margin', 'padding'
     ],
-    "allowed_attributes": {  # 各HTML标签允许的属性列表
-        'a': ['href', 'title', 'target', 'rel'],  # 链接标签属性
-        'img': ['src', 'alt', 'title', 'width', 'height', 'loading', 'class'],  # 图片标签属性
-        'code': ['class'],  # 代码标签属性
-        'pre': ['class'],  # 预格式化文本属性
-        'div': ['class', 'id'],  # div容器属性
-        'span': ['class', 'id'],  # 行内容器属性
-        'table': ['class', 'border', 'cellspacing', 'cellpadding'],  # 表格属性
-        'audio': ['controls', 'autoplay', 'loop', 'muted', 'src'],  # 音频标签属性
-        'video': ['controls', 'autoplay', 'loop', 'muted', 'width', 'height', 'src'],  # 视频标签属性
-        'source': ['src', 'type']  # 媒体源标签属性
+    "allowed_attributes": {
+        'a': ['href', 'title', 'target', 'rel'],
+        'img': ['src', 'alt', 'title', 'width', 'height', 'loading', 'class'],
+        'code': ['class'],
+        'pre': ['class'],
+        'div': ['class', 'id'],
+        'span': ['class', 'id'],
+        'table': ['class', 'border', 'cellspacing', 'cellpadding'],
+        'audio': ['controls', 'autoplay', 'loop', 'muted', 'src'],
+        'video': ['controls', 'autoplay', 'loop', 'muted', 'width', 'height', 'src'],
+        'source': ['src', 'type']
     },
-    "extensions": [  # 启用的Markdown扩展
-        'markdown.extensions.extra',  # 包含表格、围栏代码块等扩展功能
-        'markdown.extensions.codehilite',  # 代码高亮
-        "markdown.extensions.fenced_code",# 支持 ```code``` 语法
-        'markdown.extensions.toc',  # 目录生成
-        'markdown.extensions.smarty',  # 智能标点转换
-        'markdown.extensions.nl2br',  # 自动将换行符转为<br>标签
-        "markdown.extensions.tables", # 支持表格语法
-        "markdown.extensions.sane_lists", # 安全列表处理
-        'pymdownx.arithmatex',  # 数学公式支持
-        'pymdownx.superfences',  # 增强的围栏代码块
-        'pymdownx.details',  # 可折叠详情块
-        'pymdownx.tabbed',  # 选项卡内容
-        'pymdownx.tasklist',  # 任务列表
-        'pymdownx.highlight',  # 代码高亮增强
-
+    "extensions": [
+        'markdown.extensions.extra',
+        "markdown.extensions.fenced_code",
+        'markdown.extensions.toc',
+        'markdown.extensions.smarty',
+        'markdown.extensions.nl2br',
+        "markdown.extensions.tables",
+        "markdown.extensions.sane_lists",
+        'pymdownx.arithmatex',
+        'pymdownx.superfences',
+        'pymdownx.details',
+        'pymdownx.tabbed',
+        'pymdownx.tasklist',
+        'pymdownx.highlight',
     ],
-    "extension_configs": {  # 扩展的具体配置选项
+    "extension_configs": {
         "pymdownx.arithmatex": {
-            "generic": True  # 使用通用MathJax配置
+            "generic": True
         },
-        # 增强代码高亮配置
         "pymdownx.highlight": {
-            "linenums": True,  # 显示代码行号
-            "guess_lang": True,  # 自动猜测代码语言
-            "pygments_style": "github-dark",  # 使用GitHub暗色主题风格
-            "use_pygments": True,  # 启用Pygments引擎
-            "css_class": "highlight"  # CSS类名
+            "linenums": True,                      # 显示行号
+            "guess_lang": True,
+            "pygments_style": "github-dark",
+            "use_pygments": True,
+            "css_class": "highlight"               # 生成的 class 是 'highlight'
         },
         "pymdownx.superfences": {
-            "custom_fences": [  # 自定义围栏代码块
+            "custom_fences": [
                 {
                     "name": "mermaid", "class": "mermaid",
                     "format": "!!python/name:pymdownx.superfences.fence_div_format"
-                }  # 添加Mermaid图表支持
+                }
             ]
         }
     }

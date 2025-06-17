@@ -6,8 +6,9 @@ from django.utils import timezone
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
 from django import forms
-from django.conf import settings
 from django.db.models import Count,Sum
+from markdown import markdown
+from django.conf import settings
 
 from django.utils.html import strip_tags  # 用于去除HTML标签
 from django.utils.safestring import mark_safe  # 用于标记HTML安全
@@ -36,7 +37,6 @@ from wagtailmarkdown.blocks import MarkdownBlock
 from blog.blocks import AudioBlock, VideoBlock, CustomTableBlock
 from wagtailblog3.mongo import MongoManager
 from wagtailblog3.mongodb import MongoDBStreamFieldAdapter
-from blog.markdown_helpers import MarkdownHelper
 
 logger = logging.getLogger(__name__)
 
@@ -417,33 +417,21 @@ class BlogPage(Page):
 	
 	# 在BlogPage类中
 	def save(self, *args, **kwargs):
-		"""重写保存方法，将内容存储到MongoDB，同时保留基本元数据在MySQL"""
-		
 		is_new = self.pk is None
-		# 保存StreamField内容的副本
 		temp_body = self.body
 		
-		# 保存到MySQL (不含body内容)
 		# 临时清空body以避免存储到MySQL
-		temp_body_raw = None
-		if hasattr(self.body, 'raw_data'):
-			temp_body_raw = self.body.raw_data
-			self.body = []
-		
-		# 调用父类的save方法保存元数据到MySQL
+		temp_body_raw = self.body.raw_data if hasattr(self.body, 'raw_data') else None
+		self.body = []
 		super().save(*args, **kwargs)
 		
-		# 恢复body以便处理
+		# 恢复body
 		if temp_body_raw is not None:
-			
 			self.body = StreamValue(self.body.stream_block, temp_body_raw, is_lazy=True)
 		else:
 			self.body = temp_body
 		
-		# 准备MongoDB内容数据
-		mongo_manager = MongoManager()
-		
-		# 构建完整的内容对象
+		# 准备MongoDB内容
 		content_data = {
 			'page_id': self.pk,
 			'title': self.title,
@@ -451,131 +439,106 @@ class BlogPage(Page):
 			'last_updated': self.last_published_at.isoformat() if self.last_published_at else None,
 		}
 		
-		# 获取body内容的JSON表示
 		try:
-			
-			from blog.markdown_helpers import MarkdownHelper
-			
-			# 核心改进：确保body有效
 			if hasattr(self.body, 'raw_data') and self.body.raw_data:
-				# 处理Markdown块
-				raw_data = self.body.raw_data
-				for block in raw_data:
-					if isinstance(block, dict) and block.get('type') == 'markdown_block' and 'value' in block:
-						block['value'] = MarkdownHelper.process_markdown_for_storage(block['value'])
-				
-				content_data['body'] = raw_data
+				content_data['body'] = self.body.raw_data
 			else:
-				# 使用适配器处理
 				content_data['body'] = MongoDBStreamFieldAdapter.to_mongodb(self.body)
-		
 		except Exception as e:
-			logger.error(f"转换StreamField数据出错: {e}")
-			logger.error(traceback.format_exc())
-			# 尝试使用原始raw_data
-			if temp_body_raw is not None:
+			logger.error(f"转换StreamField数据出错: {e}, {traceback.format_exc()}")
+			if temp_body_raw:
 				content_data['body'] = temp_body_raw
 		
 		# 保存到MongoDB
+		mongo_manager = MongoManager()
 		content_id = mongo_manager.save_blog_content(content_data, self.mongo_content_id)
 		
-		# 更新mongo_content_id (如果有变化)
-		if is_new or not self.mongo_content_id or self.mongo_content_id != content_id:
+		# 更新mongo_content_id
+		if is_new or self.mongo_content_id != content_id:
 			self.mongo_content_id = content_id
-			# 直接更新数据库，避免递归调用save
 			type(self).objects.filter(pk=self.pk).update(mongo_content_id=content_id, body=[])
 	
 	def get_content_from_mongodb(self):
-		"""从MongoDB获取内容并转换为适合编辑器的格式"""
-		
 		if not self.mongo_content_id:
-			logger.warning(f"页面没有 mongo_content_id: 页面ID={self.id}")
 			return None
-		
 		try:
 			mongo_manager = MongoManager()
 			content = mongo_manager.get_blog_content(self.mongo_content_id)
-			
-			if not content:
-				logger.warning(f"MongoDB中未找到内容: mongo_content_id={self.mongo_content_id}")
+			if not content or 'body' not in content or not isinstance(content['body'], list):
 				return None
-			
-			if 'body' not in content:
-				logger.warning(f"从MongoDB获取的内容缺少body字段: {list(content.keys())}")
-				return None
-			
-			# 验证内容格式
-			if not isinstance(content['body'], list):
-				logger.warning(f"MongoDB中的body不是列表格式: {type(content['body'])}")
-				# 尝试转换
-				if isinstance(content['body'], str):
-					import json
-					try:
-						content['body'] = json.loads(content['body'])
-					except:
-						logger.error("无法将字符串格式的body转换为列表")
-						return None
-				else:
-					return None
-			
-			# 确保所有块都有必要的字段
+
 			for i, block in enumerate(content['body']):
 				if isinstance(block, dict):
-					# 确保有类型字段
-					if 'type' not in block:
-						logger.warning(f"块 #{i} 缺少type字段")
-						continue
-					
-					# 确保有ID字段
 					if 'id' not in block or not block['id']:
 						import uuid
 						block['id'] = str(uuid.uuid4())
-					
-					# 确保有value字段
 					if 'value' not in block:
-						logger.warning(f"块 #{i} 缺少value字段，添加空值")
 						block['value'] = ""
-					
-					# 特殊处理markdown块
-					if block['type'] == 'markdown_block':
-						
-						block['value'] = MarkdownHelper.process_markdown_for_editor(block['value'])
-			
 			return content
 		except Exception as e:
-			logger.error(f"从MongoDB获取内容时出错: {e}")
-			logger.error(traceback.format_exc())
+			logger.error(f"从MongoDB获取内容时出错: {e}, {traceback.format_exc()}")
 			return None
 	
-	def serve(self, request):
-		"""重写serve方法以确保展示MongoDB中的内容"""
+	def _render_markdown_in_body(self, body_data):
+		"""
+		一个辅助函数，接收从MongoDB获取的body原始数据列表，
+		找到其中的 'markdown_block' 并就地进行渲染。
+
+		:param body_data: 从MongoDB获取的body字段的原始列表。
+		:return: 经过处理的body列表，其中Markdown已渲染为HTML。
+		"""
+		try:
+			# 导入需要的模块
+			# 获取WAGTAILMARKDOWN的配置
+			WAGTAILMARKDOWN = settings.WAGTAILMARKDOWN
+			
+			# 遍历body数据列表
+			for block_data in body_data:
+				# 检查是否是我们要处理的 markdown_block
+				if isinstance(block_data, dict) and block_data.get('type') == 'markdown_block':
+					# 获取原始的Markdown文本
+					raw_markdown_text = block_data.get('value', '')
+					
+					# 使用settings.py中的配置进行渲染
+					rendered_html = markdown(
+						raw_markdown_text,
+						extensions=WAGTAILMARKDOWN.get('extensions', []),
+						extension_configs=WAGTAILMARKDOWN.get('extension_configs', {})
+					)
+					
+					# 用渲染好的、安全的HTML替换掉原来的原始文本
+					block_data['value'] = mark_safe(rendered_html)
+			
+			return body_data
+		
+		except Exception as e:
+			import traceback
+			logger.error(f"渲染Markdown时出错: {e}")
+			logger.error(traceback.format_exc())
+			# 如果出错，返回原始数据，避免整个页面崩溃
+			return body_data
 	
-		# 获取MongoDB内容
+	def serve(self, request):
+		"""
+		重写serve方法，在将数据传递给模板前，对MongoDB中的Markdown内容进行渲染。
+		"""
+		# 1. 从MongoDB获取最原始、最纯净的内容
 		mongo_content = self.get_content_from_mongodb()
 		
 		if mongo_content and 'body' in mongo_content:
-			# 临时保存原始body
-			original_body = self.body
 			
+			# 2. 调用独立的辅助函数来渲染Markdown
+			rendered_body_data = self._render_markdown_in_body(mongo_content['body'])
+			
+			# 3. 将处理过的数据设置到页面body中
 			try:
-				# 设置MongoDB中的body内容
-				# 使用MongoDBStreamFieldAdapter处理转换
-				try:
-					self.body = MongoDBStreamFieldAdapter.from_mongodb(mongo_content['body'], self.body.stream_block)
-				except Exception as e:
-					logger.error(f"使用适配器创建StreamValue失败: {e}")
-					# 回退到简单方法
-					self.body = StreamValue(self.body.stream_block, mongo_content['body'], is_lazy=True)
-			
+				self.body = MongoDBStreamFieldAdapter.from_mongodb(rendered_body_data, self.body.stream_block)
 			except Exception as e:
-				logger.error(f"设置MongoDB内容到StreamField时出错: {e}")
-				logger.error(traceback.format_exc())
-				# 恢复原始body
-				self.body = original_body
-		else:
-			logger.warning(f"未能从MongoDB获取页面内容，使用数据库中的body")
+				from wagtail.blocks.stream_block import StreamValue
+				logger.error(f"使用适配器创建StreamValue失败: {e}")
+				self.body = StreamValue(self.body.stream_block, rendered_body_data, is_lazy=True)
 		
-		# 调用父类的serve方法渲染页面
+		# 4. 调用父类的serve方法，使用我们准备好的body内容去渲染模板
 		return super().serve(request)
 
 	def get_prev_post(self):

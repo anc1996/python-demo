@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags static blog_tags comment_tags %}
-
+{% load wagtailcore_tags wagtailimages_tags static blog_tags comment_tags debug_tags %}
 {% block title %}{{ page.title }}{% endblock %}
 
 {% block extra_css %}
@@ -11,8 +10,8 @@
 
     <!-- 其他功能样式 -->
     <link rel="stylesheet" href="{% static 'blog/css/katex/katex.min.css' %}">
-    <link rel="stylesheet" href="{% static 'blog/css/lightbox/lightbox.min.css' %}">
-    <link rel="stylesheet" href="{% static 'blog/css/jquery-ui/jquery-ui.min.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/lightbox/lightbox.css' %}">
+    <link rel="stylesheet" href="{% static 'blog/css/jquery-ui/jquery-ui.css' %}">
 
     <!-- 博客核心样式 -->
     <link rel="stylesheet" href="{% static 'blog/css/blog.css' %}">
@@ -27,7 +26,10 @@
 
 {% endblock %}
 
+
+
 {% block content %}
+{% debug_markdown_settings %}
 <div class="blog-page-wrapper">
     <!-- 博客头部区域 -->
     <section class="blog-hero">
@@ -182,13 +184,12 @@
 {% block extra_js %}
     {{ block.super }}
 
-    <script src="{% static 'blog/js/katex/katex.min.js' %}" async></script>
+    <script src="{% static 'blog/css/katex/katex.js' %}" async></script>
     <script src="{% static 'blog/js/katex/auto-render.min.js' %}" async></script>
-    <script src="{% static 'blog/js/lightbox/lightbox.min.js' %}" async></script>
-    <script src="{% static 'blog/js/jquery-ui/jquery-ui.min.js' %}" async></script>
+    <script src="{% static 'blog/js/lightbox/lightbox.js' %}" async></script>
+    <script src="{% static 'blog/js/jquery-ui/jquery-ui.js' %}" async></script>
 
     <script src="{% static 'blog/js/mermaid.min.js' %}" async></script>
-    <script src="{% static 'blog/js/highlighting.js' %}" async></script>
 
     <script src="{% static 'blog/js/image_blocks.js' %}" async></script>
     <script src="{% static 'blog/js/video_blocks.js' %}" async></script>
@@ -198,7 +199,23 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 这里可以放置全局的JS初始化逻辑
+            // 全局的JS初始化逻辑
+
+            // ===== 新增：激活KaTeX数学公式渲染 =====
+            try {
+                // 此函数由 /static/blog/js/katex/auto-render.min.js 提供
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "\\[", right: "\\]", display: true},
+                        {left: "$", right: "$", display: false},
+                        {left: "\\(", right: "\\)", display: false}
+                    ],
+                    throwOnError: false
+                });
+            } catch (e) {
+                console.error("KaTeX rendering failed: ", e);
+            }
         });
     </script>
 {% endblock %}
