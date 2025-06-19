@@ -1,8 +1,9 @@
 {% comment %}
-    wagtailblog3/templates/blog/streams/markdown_block.html
-    我们现在使用官方的 `wagtailmarkdown` 过滤器。
-    它会自动调用您在 settings.py 中配置的所有插件。
+    文件路径: wagtailblog3/templates/blog/streams/markdown_block.html
+    最终方案: 为 Markdown 输出包裹一个 div.markdown-body，便于 CSS 精确定位。
 {% endcomment %}
 {% load wagtailmarkdown %}
 
-{{ value|markdown }}
+<div class="markdown-body">
+    {{ value|markdown }}
+</div>

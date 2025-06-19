@@ -410,8 +410,6 @@ margin-right: 8px;
 }
 
 
-
-
 /* 图片块加载动画与博客主题的整合 */
 .image-block-wrapper.loading {
     opacity: 0.7;
@@ -424,60 +422,3 @@ margin-right: 8px;
     transition: opacity 0.3s ease;
 }
 
-/*
- * 确保富文本块容器内的元素，能够继承 Gretzia 模板的基础排版风格。
- * 'Lato', sans-serif 是 Gretzia 模板的主要字体。
- */
-.custom-rich-text-block {
-    font-family: 'Lato', sans-serif; /* 继承 Gretzia 主字体 */
-    color: #777777;                 /* 继承 Gretzia 主文本颜色 */
-    font-size: 15px;                 /* 继承 Gretzia 字体大小 */
-    line-height: 1.8em;              /* 继承 Gretzia 行高 */
-    font-weight: 400;                /* 继承 Gretzia 字体粗细 */
-}
-
-/* 为富文本块内的标题、段落、列表等元素设置更精细的样式 */
-.custom-rich-text-block h1,
-.custom-rich-text-block h2,
-.custom-rich-text-block h3,
-.custom-rich-text-block h4,
-.custom-rich-text-block h5,
-.custom-rich-text-block h6 {
-    font-family: 'Montserrat', sans-serif; /* 标题可以使用 Gretzia 的标题字体 */
-    color: #333333; /* 标题颜色更深一些 */
-    margin-top: 2em;
-    margin-bottom: 1em;
-}
-
-.custom-rich-text-block p {
-    margin-bottom: 1.5em; /* 段落间距 */
-}
-
-.custom-rich-text-block a {
-    color: #c5996c; /* Gretzia 的链接颜色 */
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.custom-rich-text-block a:hover {
-    text-decoration: underline;
-    color: #333333;
-}
-
-.custom-rich-text-block ul,
-.custom-rich-text-block ol {
-    margin-left: 20px;
-    margin-bottom: 1.5em;
-}
-
-.custom-rich-text-block li {
-    margin-bottom: 0.5em;
-}
-
-.custom-rich-text-block blockquote {
-    border-left: 4px solid #c5996c;
-    padding-left: 20px;
-    margin: 1.5em 0;
-    font-style: italic;
-    color: #555;
-}

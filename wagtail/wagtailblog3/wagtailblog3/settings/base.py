@@ -322,7 +322,6 @@ WAGTAILMARKDOWN = {
         'markdown.extensions.toc',
         'markdown.extensions.smarty',
         'markdown.extensions.nl2br',
-        "markdown.extensions.tables",
         "markdown.extensions.sane_lists",
         'pymdownx.arithmatex',
         'pymdownx.superfences',
@@ -333,7 +332,7 @@ WAGTAILMARKDOWN = {
     ],
     "extension_configs": {
         "pymdownx.arithmatex": {
-            "generic": True
+            "generic": True # 启用通用KaTeX渲染
         },
         "pymdownx.highlight": {
             "linenums": True,                      # 显示行号

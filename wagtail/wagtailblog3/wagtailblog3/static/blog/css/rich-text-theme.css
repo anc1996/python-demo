@@ -1,0 +1,116 @@
+/*
+ * =================================================================
+ * 文件: rich-text-theme.css
+ * 描述: 专门用于 RichTextBlock 的、与 Gretzia 主题风格一致的阅读器样式。
+ * =================================================================
+*/
+
+/* 1. 设定富文本块的基础排版风格，继承 Gretzia 主题 */
+.custom-rich-text-block {
+    font-family: 'Lato', sans-serif;
+    color: #777777;
+    font-size: 16px; /* 稍微增大字体，更易于阅读 */
+    line-height: 1.8;
+    font-weight: 400;
+}
+
+/* 2. 为标题设置 Gretzia 的专属字体和样式 */
+.custom-rich-text-block h1,
+.custom-rich-text-block h2,
+.custom-rich-text-block h3,
+.custom-rich-text-block h4,
+.custom-rich-text-block h5,
+.custom-rich-text-block h6 {
+    font-family: 'Montserrat', sans-serif;
+    color: #333333;
+    font-weight: 600;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    line-height: 1.3;
+}
+.custom-rich-text-block h1 { font-size: 2.2em; }
+.custom-rich-text-block h2 { font-size: 1.8em; }
+.custom-rich-text-block h3 { font-size: 1.5em; }
+
+/* 3. 设置段落和链接的样式 */
+.custom-rich-text-block p {
+    margin-bottom: 1.5em;
+}
+
+.custom-rich-text-block a {
+    color: #c5996c; /* 使用 Gretzia 的链接颜色 */
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-bottom: 1px dotted #c5996c; /* 添加虚线下划线，更优雅 */
+}
+
+.custom-rich-text-block a:hover {
+    color: #333;
+    border-bottom-style: solid;
+}
+
+/* 4. 美化列表 (ul/ol) */
+.custom-rich-text-block ul,
+.custom-rich-text-block ol {
+    margin-bottom: 1.5em;
+    padding-left: 2em;
+}
+.custom-rich-text-block li {
+    margin-bottom: 0.5em;
+}
+
+/* 5. 美化引用块 (blockquote) */
+.custom-rich-text-block blockquote {
+    font-size: 1em;
+    color: #6a737d;
+    border-left: 4px solid #c5996c; /* 使用主题色作为边框 */
+    padding: 10px 20px;
+    margin: 2em 0;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+.custom-rich-text-block blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+/* 6. 美化代码片段 (code) 和代码块 (pre) */
+/* 行内代码 */
+.custom-rich-text-block code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 85%;
+    padding: .2em .4em;
+    margin: 0;
+    background-color: rgba(197, 153, 108, 0.1); /* 使用淡淡的主题色背景 */
+    border-radius: 3px;
+    color: #333;
+}
+
+/* 代码块 */
+.custom-rich-text-block pre {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 85%;
+    line-height: 1.45;
+    padding: 16px;
+    margin: 2em 0;
+    overflow: auto;
+    background-color: #f6f8fa; /* 使用浅灰色背景，与 GitHub 类似 */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* 确保代码块里的 code 标签不会有额外的背景和 padding */
+.custom-rich-text-block pre code {
+    padding: 0;
+    margin: 0;
+    background-color: transparent;
+    border: 0;
+    color: inherit;
+}
+
+/* 7. 分割线样式 */
+.custom-rich-text-block hr {
+    border: 0;
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 3em 0;
+}

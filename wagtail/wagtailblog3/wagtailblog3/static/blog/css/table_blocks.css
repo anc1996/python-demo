@@ -1,34 +1,30 @@
 /*
  * 文件路径: wagtailblog3/static/blog/css/table_blocks.css
- * 最终解决方案：直接控制 Wagtail 生成的块容器
+ * 修正方案：使用属性选择器精确定位 CustomTableBlock，并强制提升标题样式优先级。
 */
 
-/*
- * 1. 控制整个表格块的宽度并使其居中。
- * 这会使其行为与音频/视频块完全一致。
+/* * 1. 使用属性选择器，确保我们能精确地选中由 CustomTableBlock 生成的块。
+ * 这比使用 class 选择器更健壮。
 */
-.block-table_block {
-    width: 80% !important; /* 使用 !important 确保最高优先级，覆盖任何其他样式 */
-    margin: 0 auto 1.5rem auto !important; /* 同样使用 !important 确保居中和下边距生效 */
+.content-block-wrapper[data-block-type="table_block"] {
+    /* 您可以在这里控制整个表格块的外边距等 */
+    margin-bottom: 1.5rem;
 }
 
-/*
- * 2. 内部的 table-responsive 和 table 元素保持100%宽度，
- * 以填满我们上面设置的80%的容器。
- * 这样可以确保响应式滚动条在需要时仍然能正常工作。
-*/
-.block-table_block .table-responsive {
-    width: 80%;
-}
 
-/*
- * 3. 设置表格标题 (caption) 的样式
+/* * 2. 修正核心：定位到表格标题 (caption) 并应用所需样式
 */
-.block-table_block table caption {
-    caption-side: top;
+.content-block-wrapper[data-block-type="table_block"] table caption {
+    /* 强制标题显示在表格顶部，!important 用于覆盖任何其他库的设置 */
+    caption-side: top !important;
+
+    /* 实现您要的居中、放大、加粗效果 */
     text-align: center;
-    font-size: 1.2em;
+    font-size: 1.25em;  /* 字体比普通文本大25% */
     font-weight: bold;
-    color: #333;
+    color: #333333; /* 使用深色，更清晰 */
+
+    /* 调整标题与表格的间距，使其看起来更舒服 */
+    padding-top: 10px;
     padding-bottom: 15px;
 }

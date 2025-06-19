@@ -1,12 +1,5 @@
-<!-- templates/blog/streams/raw_html_block.html -->
-<div class="raw-html-block">
-    <div class="raw-html-wrapper">
-        <div class="raw-html-content">
-            {{ value|safe }}
-        </div>
-        <div class="raw-html-note">
-            <i class="fa fa-info-circle"></i>
-            此内容由原始HTML代码渲染
-        </div>
-    </div>
+{% load wagtailcore_tags %}
+
+<div class="custom-rich-text-block">
+    {{ value|richtext|safe }}
 </div>
