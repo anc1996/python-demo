@@ -1,9 +1,12 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags static blog_tags comment_tags debug_tags %}
+{% load wagtailcore_tags wagtailimages_tags static blog_tags comment_tags %}
 {% block title %}{{ page.title }}{% endblock %}
 
+
+
 {% block extra_css %}
-    {{ block.super }}
+
+
 
     <!-- markdown样式 -->
     <link rel="stylesheet" href="{% static 'blog/css/markdown-theme.css' %}">
@@ -26,10 +29,16 @@
     <!-- 评论模块样式 -->
     <link rel="stylesheet" href="{% static 'comments/css/comments.css' %}">
 
+    {{ block.super }}
+
+
+    {% block custom_scrollbar_assets_css %}
+    {# 此块留空，以阻止在博客页面上加载 mCustomScrollbar.css #}
+    {% endblock custom_scrollbar_assets_css %}
+
 {% endblock %}
 
 {% block content %}
-{% debug_markdown_settings %}
 <div class="blog-page-wrapper">
     <!-- 博客头部区域 -->
     <section class="blog-hero">
@@ -183,6 +192,10 @@
 
 {% block extra_js %}
     {{ block.super }}
+
+    {% block custom_scrollbar_assets_js %}
+    {# 此块留空，以阻止在博客页面上加载 mCustomScrollbar.js #}
+    {% endblock custom_scrollbar_assets_js %}
 
     <script src="{% static 'blog/css/katex/katex.js' %}" async></script>
     <script src="{% static 'blog/js/katex/auto-render.min.js' %}" async></script>

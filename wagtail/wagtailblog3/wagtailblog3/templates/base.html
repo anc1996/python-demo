@@ -37,8 +37,12 @@
     <link href="{% static 'gretzia/css/animate.css' %}" rel="stylesheet">
     <link href="{% static 'gretzia/css/owl.css' %}" rel="stylesheet">
     <link href="{% static 'gretzia/css/jquery.fancybox.css' %}" rel="stylesheet">
-    <link href="{% static 'gretzia/css/jquery.mCustomScrollbar.min.css' %}" rel="stylesheet">
     <link href="{% static 'gretzia/css/hover.css' %}" rel="stylesheet">
+
+    {% block custom_scrollbar_assets %}
+    <link href="{% static 'gretzia/css/jquery.mCustomScrollbar.min.css' %}" rel="stylesheet">
+    {% endblock custom_scrollbar_assets %}
+
 
     <!-- Responsive -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -106,7 +110,11 @@
     <script src="{% static 'gretzia/js/popper.min.js' %}"></script>
     <script src="{% static 'gretzia/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'gretzia/js/isotope.js' %}"></script>
+
+    {% block custom_scrollbar_assets_js %}
     <script src="{% static 'gretzia/js/jquery.mCustomScrollbar.concat.min.js' %}"></script>
+    {% endblock custom_scrollbar_assets_js %}
+
     <script src="{% static 'gretzia/js/jquery.fancybox.pack.js' %}"></script>
     <script src="{% static 'gretzia/js/jquery.fancybox-media.js' %}"></script>
     <script src="{% static 'gretzia/js/owl.js' %}"></script>

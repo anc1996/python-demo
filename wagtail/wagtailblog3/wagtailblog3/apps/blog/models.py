@@ -2,11 +2,12 @@
 
 import traceback,logging
 
-from django.utils import timezone  
+from django.db.models.functions import Coalesce, Lower
+from django.utils import timezone
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
 from django import forms
-from django.db.models import Count,Sum
+from django.db.models import Count, Sum, Subquery, OuterRef,F
 from markdown import markdown
 from django.conf import settings
 
@@ -81,7 +82,7 @@ class BlogTagIndexPage(Page):
     subpage_types = ['blog.BlogIndexPage']  # 根据你的实际情况调整
 
     # 通用分页设置 (可以根据需要为文章和标签设置不同的值)
-    items_per_page = 50
+    items_per_page = 20
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
@@ -226,65 +227,77 @@ class BlogIndexPage(Page):
 	]
 	
 	def get_context(self, request):
-		"""更新上下文以包含当前目录下的子页面，支持搜索筛选"""
+		"""
+		更新上下文。
+		使用数据库注解(Annotation)实现对不同类型子页面的高性能筛选和排序，
+		从根本上解决 FieldError。
+		"""
 		context = super().get_context(request)
 		
-		# 获取搜索和过滤参数
+		# --- 参数获取 ---
 		search_query = request.GET.get('search', '')
-		start_date = request.GET.get('start_date', '')
-		end_date = request.GET.get('end_date', '')
+		start_date_str = request.GET.get('start_date', '')
+		end_date_str = request.GET.get('end_date', '')
 		page_number = request.GET.get('page')
+		sort_primary = request.GET.get('sort_primary', 'date_desc')
+		sort_secondary = request.GET.get('sort_secondary', 'title_asc')
 		
-		# 只获取当前目录的直接子页面
-		child_pages = self.get_children().live()
+		# --- 核心优化：数据库注解 ---
 		
-		# 应用搜索过滤
+		# 1. 为每种带 'date' 字段的子页面类型准备一个子查询
+		#    OuterRef('pk') 指的是父查询（Page）的主键
+		blog_page_date_subquery = Subquery(
+			BlogPage.objects.filter(page_ptr_id=OuterRef('pk')).values('date')[:1]
+		)
+		blog_index_page_date_subquery = Subquery(
+			BlogIndexPage.objects.filter(page_ptr_id=OuterRef('pk')).values('date')[:1]
+		)
+		
+		# 2. 开始构建惰性查询集，并使用 annotate 添加虚拟字段
+		child_pages = self.get_children().live().annotate(
+			# a. 创建 'sort_date' 虚拟字段：
+			#    使用 Coalesce 函数按顺序查找可用的日期，这会生成高效的 SQL CASE WHEN 语句
+			sort_date=Coalesce(
+				blog_page_date_subquery,
+				blog_index_page_date_subquery,
+				F('first_published_at'),  # 最后的备用选项
+				output_field=models.DateField()
+			),
+			
+			# b. 创建 'sort_title' 虚拟字段，并转换为小写以便排序
+			sort_title=Lower('title')
+		)
+		
+		# --- 数据库层面的筛选 (现在可以安全地使用了) ---
 		if search_query:
 			child_pages = child_pages.filter(title__icontains=search_query)
 		
-		# 将查询集转换为具体页面实例列表
-		specific_child_pages = list(child_pages.specific())
+		# 【关键】现在我们可以直接在注解后的虚拟字段上进行过滤，不会再报错
+		if start_date_str:
+			child_pages = child_pages.filter(sort_date__gte=datetime.strptime(start_date_str, '%Y-%m-%d').date())
+		if end_date_str:
+			child_pages = child_pages.filter(sort_date__lte=datetime.strptime(end_date_str, '%Y-%m-%d').date())
 		
-		# 应用日期范围过滤
-		if start_date or end_date:
-			filtered_pages = []
-			
-			for page in specific_child_pages:
-				# 检查页面是否有date属性
-				if not hasattr(page, 'date'):
-					continue
-				
-				include_page = True
-				
-				if start_date:
-					start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
-					if page.date < start_date_obj:
-						include_page = False
-				
-				if end_date and include_page:
-					end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-					if page.date > end_date_obj:
-						include_page = False
-				
-				if include_page:
-					filtered_pages.append(page)
-			
-			specific_child_pages = filtered_pages
+		# --- 数据库层面的排序 ---
+		valid_sort_fields = {
+			'date_asc': 'sort_date',
+			'date_desc': '-sort_date',
+			'title_asc': 'sort_title',
+			'title_desc': '-sort_title',
+		}
 		
-		# 对结果进行排序（按日期降序，但要注意处理没有date字段的页面）
-		def sort_key(page):
-			if hasattr(page, 'date'):
-				return page.date
-			# 对于没有date字段的页面，使用发布日期或默认最早日期
-			if page.first_published_at:
-				return page.first_published_at.date()
-			return date.min
+		ordering = []
+		if sort_primary in valid_sort_fields:
+			ordering.append(valid_sort_fields[sort_primary])
+		if sort_secondary in valid_sort_fields and valid_sort_fields[sort_secondary].strip('-') != valid_sort_fields[
+			sort_primary].strip('-'):
+			ordering.append(valid_sort_fields[sort_secondary])
 		
-		specific_child_pages.sort(key=sort_key, reverse=True)
+		if ordering:
+			child_pages = child_pages.order_by(*ordering)
 		
-		# 分页处理
-		paginator = Paginator(specific_child_pages, 20)  # 每页20篇
-		
+		# --- 高效分页 ---
+		paginator = Paginator(child_pages, 20)
 		try:
 			paginated_pages = paginator.page(page_number)
 		except PageNotAnInteger:
@@ -292,18 +305,21 @@ class BlogIndexPage(Page):
 		except EmptyPage:
 			paginated_pages = paginator.page(paginator.num_pages)
 		
-		# 将结果添加到上下文
-		context['blog_pages'] = paginated_pages
+		# --- 更新上下文 ---
+		# 在获取了分页结果后，再调用.specific()，开销最小
+		context['blog_pages'] = paginated_pages.object_list.specific()
 		context['search_query'] = search_query
-		context['start_date'] = start_date
-		context['end_date'] = end_date
+		context['start_date'] = start_date_str
+		context['end_date'] = end_date_str
+		context['sort_primary'] = sort_primary
+		context['sort_secondary'] = sort_secondary
+		context['page_obj'] = paginated_pages
 		
 		return context
 	
 	class Meta:
 		verbose_name = "博客索引页"
 		verbose_name_plural = "博客索引页"
-
 
 
 		

@@ -8,13 +8,13 @@ from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
-
+mongo_manager = MongoManager()
 class CustomSearchBackend(DatabaseSearchBackend):
 	"""自定义搜索后端，结合MySQL和MongoDB搜索，优化中文搜索支持"""
 	
 	def __init__(self, params):
 		super().__init__(params)
-		self.mongo = MongoManager()
+		self.mongo = mongo_manager
 	
 	def search(self, query, model_or_queryset, fields=None, operator=None,
 	           order_by_relevance=True, **kwargs):

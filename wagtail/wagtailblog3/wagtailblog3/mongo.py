@@ -1,5 +1,6 @@
 # wagtailblog3/mongo.py
 # 基于MongoDB社区版的中文搜索优化实现
+import re
 
 import pymongo
 import json, logging
@@ -89,7 +90,7 @@ class MongoManager:
 			return ""
 		
 		# 使用jieba分词
-		seg_list = jieba.cut(text, cut_all=False)
+		seg_list = jieba.cut_for_search(text)
 		return " ".join(seg_list)
 	
 	def _prepare_for_mongo(self, data):
@@ -295,34 +296,55 @@ class MongoManager:
 			return False
 	
 	def search_blog_content(self, query):
-		"""在 MongoDB 中搜索博客内容，支持中文分词"""
+		"""
+		【最终优化版】在 MongoDB 中搜索博客内容，采用三阶段搜索策略，兼顾精确、性能和召回率。
+		"""
+		
 		try:
-			# 对查询进行分词处理
+			# 对用户查询进行一次分词，后续流程将复用此结果
 			processed_query = self._process_chinese_text(query)
 			
-			# 执行文本搜索
-			results = self.blog_content.find(
-				{'$text': {'$search': processed_query}},
+			# =================================================================
+			# 第一阶段：基于分词的“精确短语搜索”
+			# =================================================================
+			exact_phrase_query = f'"{processed_query}"'
+			logger.info(f"阶段一：尝试精确短语搜索: {exact_phrase_query}")
+			
+			exact_results = list(self.blog_content.find(
+				{'$text': {'$search': exact_phrase_query}},
 				{'score': {'$meta': 'textScore'}}
-			).sort([('score', {'$meta': 'textScore'})])
+			)) # 包含title_tokens, intro_tokens, body_text的全文索引
 			
-			# 转换结果为列表，并处理ObjectId
-			result_list = []
-			for doc in results:
-				doc['_id'] = str(doc['_id'])
-				result_list.append(doc)
+			if exact_results:
+				logger.info(f"精确短语搜索找到 {len(exact_results)} 个结果，直接返回。")
+				final_list = [json.loads(json_util.dumps(doc)) for doc in exact_results]
+				final_list.sort(key=lambda x: x.get('score', 0), reverse=True)
+				return final_list
 			
-			logger.info(f"MongoDB文本搜索 '{query}' 找到 {len(result_list)} 个结果")
+			# =================================================================
+			# 第二阶段：分词模糊搜索
+			# =================================================================
+			logger.info(f"阶段二：精确短语搜索未找到结果，开始分词模糊搜索。")
 			
-			# 如果文本搜索没有找到结果，尝试正则表达式搜索
-			if len(result_list) == 0:
-				logger.info(f"MongoDB文本搜索未找到结果，尝试正则表达式搜索")
-				return self._regex_search_fallback(query)
+			# 复用已分词的 processed_query
+			fuzzy_results = list(self.blog_content.find(
+				{'$text': {'$search': processed_query}},  # 注意这里不再需要引号
+				{'score': {'$meta': 'textScore'}}
+			).sort([('score', {'$meta': 'textScore'})]))
 			
-			return result_list
+			if fuzzy_results:
+				logger.info(f"分词模糊搜索找到 {len(fuzzy_results)} 个结果。")
+				return [json.loads(json_util.dumps(doc)) for doc in fuzzy_results]
+			
+			# =================================================================
+			# 第三阶段：正则表达式回退搜索
+			# =================================================================
+			logger.info(f"阶段三：分词搜索未找到结果，尝试正则表达式搜索。")
+			return self._regex_search_fallback(query)
+		
 		except Exception as e:
-			logger.error(f"MongoDB搜索错误: {e}")
-			# 搜索出错时尝试正则表达式搜索
+			logger.error(f"MongoDB搜索过程发生错误: {e}")
+			logger.info("因发生错误，尝试正则表达式回退搜索。")
 			return self._regex_search_fallback(query)
 	
 	def _regex_search_fallback(self, query):
@@ -352,6 +374,7 @@ class MongoManager:
 			
 			logger.info(f"MongoDB正则搜索 '{query}' 找到 {len(result_list)} 个结果")
 			return result_list
+		
 		except Exception as e:
 			logger.error(f"MongoDB备用搜索错误: {e}")
 			return []

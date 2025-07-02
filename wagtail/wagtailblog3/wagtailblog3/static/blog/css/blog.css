@@ -422,3 +422,49 @@ margin-right: 8px;
     transition: opacity 0.3s ease;
 }
 
+
+
+
+/* --- 为博客文章内容区添加独立滚动条 --- */
+
+.blog-content-area {
+  /* * 1. 设置一个最大高度。
+   * '80vh' 的意思是浏览器可视窗口高度的 80%。
+   * 这意味着无论屏幕多大，这个内容区最高只会占屏幕的80%。
+   * 您可以根据喜好调整这个值，例如 '75vh' 或 'calc(100vh - 250px)'。
+   */
+  max-height: 80vh;
+
+  /* * 2. 设置Y轴（垂直方向）的溢出处理方式为 'auto'。
+   * 'auto' 是关键：当内容没有超出 max-height 时，什么也不发生；
+   * 当内容超出 max-height 时，浏览器会自动在这个元素上显示一个垂直滚动条。
+   */
+  overflow-y: auto;
+
+  /* * 3. (推荐) 在右侧增加一点内边距。
+   * 这可以防止滚动条出现时与您的文本或图片紧贴在一起，
+   * 让布局看起来更舒适。
+   */
+  padding-right: 15px;
+}
+
+/* * (可选) 美化滚动条样式 (兼容 Chrome, Edge, Safari)
+ * 让滚动条不那么突兀，更符合现代设计。
+*/
+.blog-content-area::-webkit-scrollbar {
+  width: 8px; /* 滚动条宽度 */
+}
+
+.blog-content-area::-webkit-scrollbar-track {
+  background: #f1f1f1; /* 滚动条轨道颜色 */
+  border-radius: 10px;
+}
+
+.blog-content-area::-webkit-scrollbar-thumb {
+  background: #888; /* 滚动条滑块颜色 */
+  border-radius: 10px;
+}
+
+.blog-content-area::-webkit-scrollbar-thumb:hover {
+  background: #555; /* 鼠标悬浮时滑块颜色 */
+}

@@ -190,14 +190,19 @@ class AuthorListView(ListView):
 	def get_queryset(self):
 		queryset = super().get_queryset()
 		search_query = self.request.GET.get('q')  # 获取搜索参数 'q'
+		page_number = self.request.GET.get('page')
 		
 		if search_query:
 			# 如果有搜索参数，则根据姓名过滤
 			queryset = queryset.filter(name__icontains=search_query)
+		# 分页
+		
+		
 		
 		return queryset.order_by('name')  # 按姓名排序
 	
 	def get_context_data(self, **kwargs):
+		# 获取上下文数据
 		context = super().get_context_data(**kwargs)
 		# 将搜索查询传递给模板，以便在搜索框中显示
 		context['search_query'] = self.request.GET.get('q', '')

@@ -292,13 +292,16 @@ WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'tx
 
 
 # Wagtail Markdown配置
+# wagtailblog3/settings/base.py
 WAGTAILMARKDOWN = {
     "autodownload_fontawesome": False,
     "allowed_tags": [
         'div', 'span', 'p', 'a', 'img', 'pre', 'code', 'br', 'hr',
         'table', 'tr', 'th', 'td', 'thead', 'tbody', 'tfoot',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'del',
-        'audio', 'video', 'source'
+        'audio', 'video', 'source',
+        # --- 添加以下三个标签 ---
+        'ul', 'ol', 'li',
     ],
     "allowed_styles": [
         'color', 'background-color', 'font-family', 'font-weight',
@@ -314,7 +317,10 @@ WAGTAILMARKDOWN = {
         'table': ['class', 'border', 'cellspacing', 'cellpadding'],
         'audio': ['controls', 'autoplay', 'loop', 'muted', 'src'],
         'video': ['controls', 'autoplay', 'loop', 'muted', 'width', 'height', 'src'],
-        'source': ['src', 'type']
+        'source': ['src', 'type'],
+        # --- (可选) 为 <ul> 和 <ol> 添加 class 属性支持 ---
+        'ul': ['class'],
+        'ol': ['class'],
     },
     "extensions": [
         'markdown.extensions.extra',
@@ -332,14 +338,14 @@ WAGTAILMARKDOWN = {
     ],
     "extension_configs": {
         "pymdownx.arithmatex": {
-            "generic": True # 启用通用KaTeX渲染
+            "generic": True
         },
         "pymdownx.highlight": {
-            "linenums": True,                      # 显示行号
+            "linenums": True,
             "guess_lang": True,
             "pygments_style": "github-dark",
             "use_pygments": True,
-            "css_class": "highlight"               # 生成的 class 是 'highlight'
+            "css_class": "highlight"
         },
         "pymdownx.superfences": {
             "custom_fences": [
@@ -351,7 +357,6 @@ WAGTAILMARKDOWN = {
         }
     }
 }
-
 
 # Wagtail Media配置
 WAGTAILMEDIA = {
@@ -520,7 +525,6 @@ EMAIL_RATE_LIMIT_PER_FORM = {
 # ===============================================================
 # 邮件发送增强配置
 # ===============================================================
-
 # QQ邮箱SMTP配置（推荐配置）
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.qq.com'
