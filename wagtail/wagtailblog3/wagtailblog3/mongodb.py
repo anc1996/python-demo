@@ -2,7 +2,6 @@
 
 import json
 import uuid
-from bson import json_util
 from django.core.serializers.json import DjangoJSONEncoder
 from wagtail.blocks.stream_block import StreamValue
 import logging
@@ -96,7 +95,6 @@ class MongoDBStreamFieldAdapter:
 			# 针对不同类型的块进行处理
 			if block_type == 'markdown_block':
 				# Markdown块特殊处理
-				logger.debug(f"处理markdown块")
 				
 				# 如果是字符串，直接返回
 				if isinstance(value, str):
@@ -116,6 +114,14 @@ class MongoDBStreamFieldAdapter:
 					return value.id
 				return None
 			
+			elif block_type == 'code_block':
+				logger.debug(f"处理代码块")
+				if isinstance(value, dict):
+					return value
+				# 如果格式不正确，记录日志并返回一个安全的默认值
+				logger.warning(f"代码块的值不是预期的字典格式: {type(value)}")
+				return {'language': 'plaintext', 'code': str(value)}
+			
 			elif block_type in ['rich_text', 'raw_html']:
 				# 文本类型块，直接返回值
 				logger.debug(f"处理文本类型块: {block_type}")
@@ -123,7 +129,6 @@ class MongoDBStreamFieldAdapter:
 			
 			elif block_type == 'embed_block':
 				# 嵌入块，可能是URL或配置对象
-				logger.debug(f"处理嵌入块")
 				if hasattr(value, 'url'):
 					return {'url': value.url, 'title': getattr(value, 'title', ''), 'html': getattr(value, 'html', '')}
 				return value

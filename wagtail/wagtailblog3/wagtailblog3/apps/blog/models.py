@@ -34,6 +34,7 @@ from wagtail.snippets.models import register_snippet
 from wagtail.blocks.stream_block import StreamValue
 
 from wagtailmarkdown.blocks import MarkdownBlock
+from wagtailcodeblock.blocks import CodeBlock
 
 from blog.blocks import AudioBlock, VideoBlock, CustomTableBlock
 from wagtailblog3.mongo import MongoManager
@@ -360,6 +361,9 @@ class BlogPage(Page):
 			          'blockquote'],
 			label="富文本"
 		)),
+		
+		# 代码块 - 使用wagtail-codeblock
+		("code_block", CodeBlock(label='Code', default_language='python')),
 
 		# Markdown块 - 使用wagtail-markdown (包含代码高亮和数学公式支持)
 		('markdown_block', MarkdownBlock(

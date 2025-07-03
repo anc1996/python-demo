@@ -197,6 +197,7 @@
     {# 此块留空，以阻止在博客页面上加载 mCustomScrollbar.js #}
     {% endblock custom_scrollbar_assets_js %}
 
+    <script src="{% static 'blog/js/blog_page.js' %}" async></script>
     <script src="{% static 'blog/css/katex/katex.js' %}" async></script>
     <script src="{% static 'blog/js/katex/auto-render.min.js' %}" async></script>
     <script src="{% static 'blog/js/lightbox/lightbox.js' %}" async></script>
@@ -210,52 +211,4 @@
 
     <script src="{% static 'comments/js/comments.js' %}" defer></script> {# defer 确保DOM加载后再执行 #}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-
-            // (A) 初始化 Mermaid.js (用于图表)
-            try {
-                mermaid.initialize({ startOnLoad: true });
-            } catch (e) {
-                console.error("Mermaid.js 初始化失败: ", e);
-            }
-
-            // (B) 初始化 KaTeX (用于数学公式)
-            try {
-                renderMathInElement(document.body, {
-                    delimiters: [
-                        {left: "$$", right: "$$", display: true},
-                        {left: "\\(", right: "\\)", display: false},
-                        {left: "$", right: "$", display: false},
-                        {left: "\\[", right: "\\]", display: true}
-                    ],
-                    throwOnError: false
-                });
-            } catch (e) {
-                console.error("KaTeX 渲染失败: ", e);
-            }
-
-            // 🚀 (C) 【新增】为 Markdown 表格自动应用您网站的既有主题样式
-            try {
-                // 1. 精确找到所有在 Markdown 块内部、且自身没有 class 的朴素表格
-                const markdownTables = document.querySelectorAll(
-                    '.content-block-wrapper[data-block-type="markdown_block"] table:not([class])'
-                );
-
-                markdownTables.forEach(table => {
-                    // 2. 为这些表格穿上您网站已有的 Bootstrap 样式
-                    table.classList.add('table', 'table-bordered', 'table-hover');
-
-                    // 3. (可选但推荐) 为表格添加响应式包裹层，使其在手机上可以左右滑动
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'table-responsive';
-                    table.parentNode.insertBefore(wrapper, table);
-                    wrapper.appendChild(table);
-                });
-            } catch (e) {
-                console.error("自动美化 Markdown 表格失败: ", e);
-            }
-
-        });
-    </script>
 {% endblock %}

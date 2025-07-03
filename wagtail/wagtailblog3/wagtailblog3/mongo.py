@@ -56,15 +56,20 @@ class MongoManager:
 			self.blog_content.create_index("page_id", unique=True)
 			
 			# 创建全文搜索索引，使用分词后的字段
+			# 我们显式地为它命名，并设置默认语言为 'none'
 			self.blog_content.create_index([
 				("title_tokens", pymongo.TEXT),
 				("intro_tokens", pymongo.TEXT),
 				("body_text", pymongo.TEXT)
-			], weights={
-				"title_tokens": 10,  # 标题权重高
-				"intro_tokens": 5,  # 摘要权重中等
-				"body_text": 1  # 正文权重低
-			})
+			],
+			name="full_text_search_index", # <--- 显式命名
+			weights={
+				"title_tokens": 10,
+				"intro_tokens": 5,
+				"body_text": 1
+			},
+			default_language="none" # <--- 设置为'none'，因为我们自己用jieba分词
+			)
 			
 			logger.info("MongoDB索引创建成功")
 		except Exception as e:
@@ -196,13 +201,17 @@ class MongoManager:
 			# 根据BlogPage中定义的块类型提取文本
 			if block_type == 'rich_text':
 				# 富文本块
-				from html import unescape
 				from bs4 import BeautifulSoup
 				try:
 					soup = BeautifulSoup(str(block_value), 'html.parser') # 使用BeautifulSoup解析HTML
 					text_parts.append(soup.get_text(separator=' ', strip=True)) # 获取纯文本
 				except:
 					text_parts.append(str(block_value)) # 如果解析失败，直接转换为字符串
+			
+			elif block_type == 'code_block':
+				# 代码块，提取代码本身用于搜索
+				if isinstance(block_value, dict) and 'code' in block_value:
+					text_parts.append(str(block_value['code']))
 			
 			elif block_type == 'markdown_block':
 				# Markdown块
