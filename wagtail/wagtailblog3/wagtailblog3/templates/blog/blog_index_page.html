@@ -92,137 +92,136 @@
 
                     <div class="blog-list-items">
                         <div class="row clearfix"> {# 包裹文章卡片的行 #}
+                        {% for post in blog_pages %}
+                            <article class="post-list-item" style="padding-bottom: 25px; margin-bottom: 35px; border-bottom: 1px solid #eaeaea;">
+                                <div class="row g-4">
 
-                            {% for post in blog_pages %} {# blog_pages 是分页后的对象 #}
-                                {% if post.specific_class_name == 'BlogIndexPage' %}
-                                    <div class="blog-list-item blog-index-page-item col-xs-12" style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-                                        <h2>
-                                            <a href="{% pageurl post %}" class="directory-link" style="color: #333; text-decoration: none;">
-                                                <i class="fa fa-folder" style="margin-right: 8px;"></i>{{ post.title }}
+                                    {# 1. 左侧图片列 #}
+                                    <div class="col-md-4">
+                                        <div class="image">
+                                            <a href="{% pageurl post %}">
+                                                {% if post.specific.featured_image %}
+                                                    {% image post.specific.featured_image fill-350x230 as img %}
+                                                    <img src="{{ img.url }}" alt="{{ post.title }}" style="width: 100%; height: auto; border-radius: 5px;">
+                                                {% else %}
+                                                    <img src="{% static 'gretzia/images/resource/news-15.jpg' %}" alt="{{ post.title }}" style="width: 100%; height: auto; border-radius: 5px;">
+                                                {% endif %}
                                             </a>
-                                        </h2>
-                                        <div class="meta" style="font-size: 0.9em; color: #777; margin-bottom: 10px;">
-                                            {% if post.specific.date %}{{ post.specific.date|date:"F d, Y" }}{% endif %}
-                                            {% if post.get_children.count > 0 %}
-                                            <span class="child-count" style="margin-left: 15px;">
-                                                <i class="fa fa-files-o" style="margin-right: 5px;"></i>包含 {{ post.get_children.count }} 个项目
+                                        </div>
+                                    </div>
+
+                                    {# 2. 右侧内容列 #}
+                                    <div class="col-md-8 d-flex flex-column">
+
+                                        {# 文章标题 - 调整了与下方元信息的间距 #}
+                                        <h4 style="font-family: 'Playfair Display', serif; font-size: 22px; color: #ba6d3c; font-weight: 600; margin-top: 0; margin-bottom: 10px;">
+                                            <a href="{% pageurl post %}" style="color: inherit; text-decoration: none;">{{ post.title }}</a>
+                                        </h4>
+
+                                        {# 元信息栏 (已合并为一行，更紧凑) #}
+                                        <div class="post-meta-info" style="color: #6b6969; font-size: 13px; margin-bottom: 15px; line-height: 1.5;">
+                                            {# 作者 #}
+                                            {% with authors=post.specific.authors.all %}
+                                                {% if authors %}
+                                                    <span class="author me-2"> {# me-2 是 Bootstrap 的 margin-end 工具类 #}
+                                                        <i class="fa fa-user me-1"></i>
+                                                        {% for author in authors %}
+                                                            <a href="{% url 'blog:author_detail' pk=author.pk %}" style="color: inherit;">{{ author.name }}</a>{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    </span>
+                                                {% endif %}
+                                            {% endwith %}
+
+                                            {# 日期 #}
+                                            <span class="date me-2">
+                                                <i class="fa fa-calendar me-1"></i>{{ post.specific.date | date:"Y-m-d" }}
                                             </span>
-                                            {% endif %}
+
+                                            {# 标签列表 #}
+                                            {% with tags=post.specific.tags.all %}
+                                                {% if tags %}
+                                                    <span class="tags me-2">
+                                                        <i class="fa fa-tags me-1"></i>
+                                                        {% for tag in tags %}
+                                                            {% if blog_tag_index_page %}
+                                                                <a href="{% pageurl blog_tag_index_page %}?tag={{ tag.slug }}" style="color: inherit;">{{ tag.name }}</a>{% if not forloop.last %}, {% endif %}
+                                                            {% else %}
+                                                                <span>{{ tag.name }}</span>{% if not forloop.last %}, {% endif %}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </span>
+                                                {% endif %}
+                                            {% endwith %}
+
+                                            {# 访问统计 #}
+                                            {% include "blog/stats_block.html" with page=post %}
                                         </div>
-                                        {% if post.specific.intro %}
-                                            <div class="intro" style="margin-bottom: 10px;">{{ post.specific.intro|richtext }}</div>
-                                        {% endif %}
-                                        {% if post.specific.featured_image %}
-                                            <div style="margin-bottom:15px;">
-                                                <a href="{% pageurl post %}" class="featured-image-link">
-                                                    {% image post.specific.featured_image fill-300x200 class="thumbnail" style="border-radius: 4px;" %}
-                                                </a>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                {% else %}
-                                    <div class="news-block-two col-md-6 col-sm-6 col-xs-12"> {# 这个已经是 col-md-6 了 #}
-                                        <div class="inner-box">
-                                            <div class="image">
-                                                <a href="{% pageurl post %}">
-                                                    {% if post.specific.featured_image %}
-                                                        {% image post.specific.featured_image fill-370x250 as post_card_image %}
-                                                        <img src="{{ post_card_image.url }}" alt="{{ post_card_image.alt|default:post.title }}" />
-                                                    {% else %}
-                                                        <img src="{% static 'gretzia/images/resource/news-15.jpg' %}" alt="{{ post.title|default:'默认文章图片' }}" />
-                                                    {% endif %}
-                                                </a>
-                                            </div>
-                                            <div class="lower-content">
-                                                {% if post.specific.tags.all %}
-                                                    {% with first_tag=post.specific.tags.all.0 %}
-                                                        {% if first_tag %}
-                                                            <div class="title">
-                                                                {% if blog_tag_index_page %}
-                                                                    <a href="{% pageurl blog_tag_index_page %}?tag={{ first_tag.slug }}">{{ first_tag.name }}</a>
-                                                                {% else %}
-                                                                    <span>{{ first_tag.name }}</span>
-                                                                {% endif %}
-                                                            </div>
-                                                        {% endif %}
-                                                    {% endwith %}
-                                                {% endif %}
-                                                <h2><a href="{% pageurl post %}">{{ post.title }}</a></h2>
-                                                {% if post.specific.date %}
-                                                    <div class="post-date">{{ post.specific.date }}</div>
-                                                {% endif %}
-                                                {% if post.specific.intro %}
-                                                    <div class="text">{{ post.specific.intro|striptags|truncatewords:22 }}</div>
-                                                {% endif %}
-                                                <div class="btn-box text-center">
-                                                    <a href="{% pageurl post %}" class="theme-btn btn-style-two">Read More</a>
-                                                </div>
-                                            </div>
+
+                                        {# 文章简介 (已修改截断方式) #}
+                                        <div class="text" style="font-family: 'Lato', sans-serif; color: #4c4b4b; font-size: 15px; line-height: 1.7em; flex-grow: 1;">
+                                            <p>{{ post.specific.intro|striptags|truncatechars:100 }}</p>
+                                        </div>
+
+                                        {# "阅读更多" 按钮 #}
+                                        <div class="btn-box" style="margin-top: auto; padding-top:15px;"> {# 使用 margin-top: auto; 保证按钮在底部 #}
+                                            <a href="{% pageurl post %}" class="theme-btn btn-style-two">Read More</a>
                                         </div>
                                     </div>
-                                {% endif %}
-                            {% empty %}
-                                <div class="col-xs-12">
-                                    <p class="no-results">当前目录下没有符合条件的内容。</p>
                                 </div>
-                            {% endfor %}
+                            </article>
+                        {% endfor %}
                         </div> {# End row for blog items #}
                     </div>
 
-                    {% if blog_pages.paginator.num_pages > 1 %}
+                    {% if page_obj.paginator.num_pages > 1 %}
                     <div class="custom-pagination text-center"
                          style="margin-top: 40px; margin-bottom: 40px; padding-top:20px; border-top: 1px solid #eee; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px 15px;">
 
                         {# "上一页" 按钮 #}
-                        {% if blog_pages.has_previous %}
-                            <a href="?page={{ blog_pages.previous_page_number }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}"  class="next-post">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}"  class="theme-btn btn-style-two">
                                 <span class="fa fa-angle-left" style="margin-right: 5px;"></span> 上一页
                             </a>
                         {% else %}
-                            <button class="theme-btn" disabled style="cursor: not-allowed; opacity: 0.6;">
+                            <button class="theme-btn btn-style-two" disabled style="cursor: not-allowed; opacity: 0.6;">
                                 <span class="fa fa-angle-left" style="margin-right: 5px;"></span> 上一页
                             </button>
                         {% endif %}
 
                         {# "第 x 页，共 x 页" 信息 #}
-                        <span class="pagination-info-text" style="font-size: 16px; color: #555; white-space: nowrap; line-height: 40px;"> {# 调整 line-height 使其与按钮垂直对齐 #}
-                            第 {{ blog_pages.number }} 页，共 {{ blog_pages.paginator.num_pages }} 页
+                        <span class="pagination-info-text" style="font-size: 16px; color: #555; white-space: nowrap; line-height: 40px;">
+                            第 {{ page_obj.number }} 页，共 {{ page_obj.paginator.num_pages }} 页
                         </span>
 
                         {# "下一页" 按钮 #}
-                        {% if blog_pages.has_next %}
-                            <a href="?page={{ blog_pages.next_page_number }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="next-post">
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="theme-btn btn-style-two">
                                 下一页 <span class="fa fa-angle-right" style="margin-left: 5px;"></span>
                             </a>
                         {% else %}
-                            <button class="theme-btn" disabled style="cursor: not-allowed; opacity: 0.6;">
+                            <button class="theme-btn btn-style-two" disabled style="cursor: not-allowed; opacity: 0.6;">
                                 下一页 <span class="fa fa-angle-right" style="margin-left: 5px;"></span>
                             </button>
                         {% endif %}
 
                         {# "跳转到 x 页" 表单 #}
+                        {% if page_obj.paginator.num_pages > 2 %} {# 当页数大于2时显示跳转表单更有意义 #}
                         <form method="get" action="" class="pagination-jump-form" style="display: inline-flex; align-items: center; white-space: nowrap;">
                             {# 隐藏字段以保留当前的筛选参数 #}
-                            {% if search_query %}
-                                <input type="hidden" name="search" value="{{ search_query|urlencode }}">
-                            {% endif %}
-                            {% if start_date %}
-                                <input type="hidden" name="start_date" value="{{ start_date }}">
-                            {% endif %}
-                            {% if end_date %}
-                                <input type="hidden" name="end_date" value="{{ end_date }}">
-                            {% endif %}
+                            {% if search_query %}<input type="hidden" name="search" value="{{ search_query|urlencode }}">{% endif %}
+                            {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
+                            {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
 
-                            <div class="form-group" style="display: inline-flex; align-items: center; margin-left: 5px;"> {# 稍微调整与“下一页”按钮的间距 #}
+                            <div class="form-group" style="display: inline-flex; align-items: center; margin-left: 5px;">
                                 <label for="jumptopage" style="margin-right: 8px; font-weight: normal; color: #333; white-space: nowrap; line-height: 40px;">跳转到:</label>
-                                <input type="number" name="page" id="jumptopage" min="1" max="{{ blog_pages.paginator.num_pages }}"
+                                <input type="number" name="page" id="jumptopage" min="1" max="{{ page_obj.paginator.num_pages }}"
                                        placeholder="页"
-                                       style="width: 60px; height: 40px; padding: 0 8px; border: 1px solid #ddd; border-radius: 3px; text-align: center; line-height: normal;"  {# line-height: normal for input #}
+                                       style="width: 60px; height: 40px; padding: 0 8px; border: 1px solid #ddd; border-radius: 3px; text-align: center; line-height: normal;"
                                        required>
                             </div>
-                            {# 使用 btn-style-one 使其与“上一页/下一页”按钮风格一致，更易见 #}
-                            <button type="submit" class="theme-btn" style="height: 40px; line-height: 20px; padding: 10px 15px; margin-left: 5px;">跳转</button> {# 调整了 line-height 和 padding for button text #}
+                            <button type="submit" class="theme-btn btn-style-two" style="height: 40px; line-height: 20px; padding: 10px 15px; margin-left: 5px;">跳转</button>
                         </form>
+                        {% endif %}
                     </div>
                     {% endif %}
 

@@ -151,3 +151,12 @@ def generate_menu_items(context, parent_for_children, current_page_from_context)
 		'current_page_for_recursion': current_page_from_context,  #
 		'request': context.get('request'),  #
 	}
+
+@register.simple_tag
+def get_tag_index_page():
+    """
+    一个简单的模板标签，用于获取项目中第一个公开的 BlogTagIndexPage 实例。
+    """
+    # 返回第一个处于“live”状态的 BlogTagIndexPage 页面对象
+    # 如果不存在，则返回 None
+    return BlogTagIndexPage.objects.live().first()

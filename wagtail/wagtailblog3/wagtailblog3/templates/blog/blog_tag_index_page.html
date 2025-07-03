@@ -126,7 +126,7 @@
     {% elif mode == "tag_list" %}
         {# --- 模式 B: 标签列表 --- #}
         {# 保持原有代码不变 #}
-        <h2>All Tags</h2>
+        <h2>所有标签</h2>
 
         {# 标签名称搜索表单 #}
         <form method="get" action="{% pageurl page %}" class="mb-4">
@@ -169,7 +169,7 @@
                     {% endfor %}
 
                     {% if paged_items.has_next %}
-                        <li class="page-item"><a class="page-link" href="{% pageurl page %}?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}page={{ paged_items.next_page_number }}">Next</a></li>
+                        <li class="page-item"><a class="page-link" href="{% pageurl page %}?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}page={{ paged_items.next_page_number }}">下一页</a></li>
                     {% else %}
                         <li class="page-item disabled"><span class="page-link">下一页</span></li>
                     {% endif %}

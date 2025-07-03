@@ -82,7 +82,9 @@ class BlogTagIndexPage(Page):
     parent_page_types = ['wagtailcore.Page', 'home.HomePage', 'blog.BlogIndexPage'] # 根据你的实际情况调整
     subpage_types = ['blog.BlogIndexPage']  # 根据你的实际情况调整
 
-    # 通用分页设置 (可以根据需要为文章和标签设置不同的值)
+    # 每页显示的标签显示数
+    items_tag_page=50
+    # 每页显示的文章数
     items_per_page = 20
 
     def get_context(self, request, *args, **kwargs):
@@ -161,7 +163,7 @@ class BlogTagIndexPage(Page):
                     tags_with_counts.append({'tag': tag_item, 'count': count})
 
             # 4. 对带有计数的标签列表进行分页
-            paginator = Paginator(tags_with_counts, self.items_per_page)
+            paginator = Paginator(tags_with_counts, self.items_tag_page)
             try:
                 context['paged_items'] = paginator.page(page_number)
             except PageNotAnInteger:

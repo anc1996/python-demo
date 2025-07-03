@@ -57,27 +57,44 @@
                     <div class="page-intro-section">
 
                         {% for author in authors %}
-                        <div class="row clearfix">
-                            <div class="image-column col-lg-4 col-md-5 col-sm-12 col-xs-12">
-                                <div class="image">
-                                    <a href="{% url 'blog:author_detail' author.pk %}"> {# <--- 已修改 #}
-                                        {% if author.author_image %}
-                                            {% image author.author_image fill-370x250 as author_img %}
-                                            <img src="{{ author_img.url }}" alt="{{ author.name }}">
+                         {# 使用 Bootstrap 的行和列 #}
+                            <div class="row clearfix">
+                                {# 左侧图片列 #}
+                                <div class="image-column col-lg-3 col-md-4 col-sm-12">
+                                    <div class="image">
+                                        <a href="{% url 'blog:author_detail' pk=author.pk %}">
+                                            {% if author.author_image %}
+                                                {% image author.author_image fill-200x200 as author_img %}
+                                                <img src="{{ author_img.url }}" alt="{{ author.name }}" style="border-radius: 50%;">
+                                            {% else %}
+                                                {# 提供一个备用的占位图 #}
+                                                <img src="{% static 'gretzia/images/resource/author-thumb-1.jpg' %}" alt="{{ author.name }}" style="border-radius: 50%;">
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {# 右侧内容列，使用 Flexbox 进行垂直布局 #}
+                                <div class="column col-lg-9 col-md-8 col-sm-12 d-flex flex-column">
+
+                                    {# <h3> 标签自带外边距，我们用 mb-2 (margin-bottom) 来微调 #}
+                                    <h3 class="mb-2"><a href="{% url 'blog:author_detail' pk=author.pk %}">{{ author.name }}</a></h3>
+
+                                    {# 在简介文本下方增加外边距 mb-3，把它和下方的链接拉开距离 #}
+                                    <div class="text mb-3">
+                                        {# 使用 get_bio_preview_html 并增加字数限制，显示更丰富的预览 #}
+                                        {% if author.get_bio_preview_html %}
+                                             {{ author.get_bio_preview_html|safe }}
                                         {% else %}
-                                            <img src="{% static 'gretzia/images/resource/news-7.jpg' %}" alt="默认头像">
+                                            <p>{% translate "No bio available." %}</p>
                                         {% endif %}
-                                    </a>
+                                    </div>
+
+                                    {# 使用 mt-auto (margin-top: auto) 将这个链接推到容器底部，实现“底端对齐” #}
+                                    <a href="{% url 'blog:author_detail' pk=author.pk %}" class="read-more mt-auto">{% translate "View Profile" %} <span class="arrow fa fa-arrow-right"></span></a>
                                 </div>
+                                <p></p>
                             </div>
-                            <div class="column col-lg-8 col-md-7 col-sm-12 col-xs-12">
-                                <div class="inner-column">
-                                    <h3><a href="{% url 'blog:author_detail' author.pk %}">{{ author.name }}</a></h3> {# <--- 已修改 #}
-                                    <div class="text">{{ author.get_bio_preview_html|safe|default:"这位作者很神秘，什么都没留下..." }}</div>
-                                    <a href="{% url 'blog:author_detail' author.pk %}" class="read-more">查看详情 <span class="arrow fa fa-arrow-right"></span></a> {# <--- 已修改 #}
-                                </div>
-                            </div>
-                        </div>
                         {% endfor %}
 
                         {% if is_paginated %}
