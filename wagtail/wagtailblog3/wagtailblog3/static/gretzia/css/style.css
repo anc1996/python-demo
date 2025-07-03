@@ -137,7 +137,11 @@ p{
     text-transform: uppercase !important;
 }
 
-ul,li{
+/* --- 修改后 --- */
+.main-menu ul,
+.main-menu li,
+.mobile-menu ul, /* 同时兼顾移动端菜单 */
+.mobile-menu li {
 	list-style:none;
 	padding:0px;
 	margin:0px;	

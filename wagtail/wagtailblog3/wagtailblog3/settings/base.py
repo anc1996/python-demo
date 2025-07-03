@@ -265,6 +265,7 @@ STORAGES = {
 
 # Wagtail 自定义模型配置，admin对后台内容进行编辑
 WAGTAILDOCS_DOCUMENT_MODEL = 'blog.BlogDocument' # 自定义文档模型
+
 WAGTAILIMAGES_IMAGE_MODEL = 'blog.BlogImage' # 自定义图片模型
 
 # Django 默认将每个表单的最大字段数设置为 1000，但特别复杂的页面模型
