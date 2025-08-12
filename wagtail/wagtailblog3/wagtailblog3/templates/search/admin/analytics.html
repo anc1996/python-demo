@@ -41,9 +41,11 @@
                 <table class="listing full-width search-trends-table table-sortable">
                     <thead>
                         <tr>
-                        {#  data-sort-by 用于 JS 知道点击此列时应该按哪个字段排序 (对应后端 analytics.py 中的键)#}
-                        {#  data-current-sort-direction 用于JS 知道当前此列的排序状态 (asc, desc, '')#}
-                        {#  class 根据 current_order_by (来自视图上下文) 设置初始的排序箭头显示#}
+                            {#
+                                data-sort-by 用于 JS 知道点击此列时应该按哪个字段排序 (对应后端 analytics.py 中的键)
+                                data-current-sort-direction 用于JS 知道当前此列的排序状态 (asc, desc, '')
+                                class 根据 current_order_by (来自视图上下文) 设置初始的排序箭头显示
+                            #}
                             <th class="sortable-header {% if current_order_by == 'date' %}sorted-asc{% elif current_order_by == '-date' %}sorted-desc{% endif %}"
                                 data-sort-by="date"
                                 data-current-sort-direction="{% if current_order_by == 'date' %}asc{% elif current_order_by == '-date' %}desc{% endif %}">

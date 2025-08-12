@@ -4,28 +4,11 @@ $(function() {
 
     // (A) 初始化 Mermaid.js (这部分逻辑不变)
     try {
-        // 首先检查页面上是否存在 mermaid 这个全局对象，确认库已加载
         if (typeof mermaid !== 'undefined') {
-
-            // 初始化 Mermaid，可以设置主题等
-            // 'forest' 是一个视觉效果很好的深色主题
-            // 可选: 'default', 'dark', 'neutral'
-            mermaid.initialize({
-                startOnLoad: false, // 我们将手动触发渲染
-                theme: 'forest',
-                securityLevel: 'loose'
-            });
-
-            // 找到页面上所有 class="mermaid" 的元素并异步渲染它们
-            // mermaid.run() 是新版 mermaid (v9.4+) 的推荐用法
-            mermaid.run({
-                nodes: document.querySelectorAll('.mermaid')
-            });
-            console.log("Mermaid.js 已成功初始化并渲染图表。");
+            mermaid.initialize({ startOnLoad: true });
         }
     } catch (e) {
-        // 如果在初始化或渲染过程中出现任何错误，在控制台打印出来，方便排查
-        console.error("Mermaid.js 初始化或渲染时发生错误: ", e);
+        console.error("Mermaid.js 初始化失败: ", e);
     }
 
     // (B) 初始化 KaTeX (这部分逻辑不变)
