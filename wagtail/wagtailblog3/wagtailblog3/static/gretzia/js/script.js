@@ -124,22 +124,42 @@
 	
 	//Submenu Dropdown Toggle
 	if($('.main-header li.dropdown ul').length){
+
+		// ===================== 新的悬停逻辑 (New Hover Logic) =====================
+
+		// 为所有带下拉菜单的列表项 <li> 添加悬停事件
+		$('.main-header li.dropdown').on('mouseenter', function() {
+			// 当鼠标进入时，找到它的直接子级 'ul' 并让其滑出显示
+			// .stop(true, true) 是为了防止快速移入移出时动画效果堆积
+			$(this).children('ul').stop(true, true).slideDown(300);
+
+		}).on('mouseleave', function() {
+			// 当鼠标离开时，找到它的直接子级 'ul' 并让其滑动收起
+			$(this).children('ul').stop(true, true).slideUp(300);
+		});
+
+
+		// ===================== 旧的点击逻辑 (已被移除或注释) =====================
+		/* // 我们不再需要为父菜单项动态添加下拉按钮
 		$('.main-header li.dropdown').append('<div class="dropdown-btn"><span class="fa fa-angle-down"></span></div>');
-		
-		//Dropdown Button
+
+		// 我们不再需要为这个按钮绑定点击事件
 		$('.main-header li.dropdown .dropdown-btn').on('click', function() {
 			$(this).prev('ul').slideToggle(500);
 		});
-		
-		//Disable dropdown parent link
+
+		// 【关键】我们移除了阻止链接跳转的这部分代码！
+		// 现在点击父菜单项将可以正常跳转。
 		$('.navigation li.dropdown > a').on('click', function(e) {
-			e.preventDefault();
+			// e.preventDefault();  <-- This line is now removed!
 		});
-		
-		//Disable dropdown parent link
+
 		$('.main-header .navigation li.dropdown > a,.hidden-bar .side-menu li.dropdown > a').on('click', function(e) {
-			e.preventDefault();
+			// e.preventDefault();  <-- This line is now removed!
 		});
+		*/
+	   // ========================================================================
+
 
 		$('.main-menu .navigation > li .mega-menu-bar > .column > ul').addClass('first-ul');
 		$('.main-header .main-menu .navigation > li > ul').addClass('last-ul');
