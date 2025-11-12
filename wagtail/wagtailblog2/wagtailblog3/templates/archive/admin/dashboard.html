@@ -1,0 +1,201 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n wagtailadmin_tags static archive_tags %}
+
+{% block titletag %}博客归档管理{% endblock %}
+
+{% block content %}
+    <header class="w-header nice-padding"> {# Wagtail 6.x 使用 w-header #}
+        <div class="w-header__main">
+            <h1 class="w-header__title">
+                <i class="icon icon-folder-open-inverse w-header__icon" aria-hidden="true"></i>
+                博客归档管理
+            </h1>
+        </div>
+
+        <link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+        <link rel="stylesheet" href="{% static 'archive/css/admin_archive.css' %}">
+    </header>
+
+    <div class="nice-padding">
+        <div class="help-block help-info w-mb-6"> {# Wagtail 6.x 间距类 #}
+            <p>当前共有 <strong>{{ total_posts_count }}</strong> 篇博客文章</p>
+        </div>
+
+        {# 主内容区两栏布局 #}
+        {# Wagtail 6.x 可能使用 CSS Grid 或更具体的布局组件 #}
+        {# 我们尝试一个 flex 基础的布局 #}
+        <div class="dashboard-grid">
+            <div class="dashboard-sidebar">
+                <div class="w-panel w-panel--sticky"> {# Wagtail 6.x 面板类 #}
+                    <div class="w-panel__header">
+                        <h2 class="w-panel__title">选择时间段</h2>
+                    </div>
+                    <div class="w-panel__body">
+                        <form method="get" action="{% url 'archive_admin_dashboard' %}" id="date-filter-form">
+                            <ul class="fields">
+                                <li>
+                                    <div class="field field-required">
+                                        <label for="start-date" class="w-label">开始日期:</label>
+                                        <div class="field-content">
+                                            <input type="text"
+                                                   name="start_date"
+                                                   id="start-date"
+                                                   class="datepicker w-input"
+                                                   value="{{ selected_start_date|default:'' }}"
+                                                   placeholder="请选择开始日期"
+                                                   autocomplete="off">
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="field field-required">
+                                        <label for="end-date" class="w-label">结束日期:</label>
+                                        <div class="field-content">
+                                            <input type="text"
+                                                   name="end_date"
+                                                   id="end-date"
+                                                   class="datepicker w-input"
+                                                   value="{{ selected_end_date|default:'' }}"
+                                                   placeholder="请选择结束日期"
+                                                   autocomplete="off">
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="field">
+                                        <div class="field-content w-form-buttons">
+                                            <button type="submit" class="button w-button">查询文章</button>
+                                            {% if is_date_filter_active %}
+                                                <a href="{% url 'archive_admin_dashboard' %}" class="button button-secondary w-button w-button--secondary">清除选择</a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </form>
+                        <hr class="w-separator">
+                        <h2 class="w-panel__title">归档统计</h2>
+                        <div class="archive-stats-table">
+                            {% if archive_data_for_sidebar %}
+                                <table class="listing listing--bordered condensed w-table"> {# Wagtail 6.x 表格类 #}
+                                    <thead>
+                                        <tr>
+                                            <th class="first-col">年份</th>
+                                            {% for month_num in range_1_to_12 %}
+                                                <th class="u-text-center">{{ month_num }}月</th>
+                                            {% endfor %}
+                                            <th class="u-text-center">年总计</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for year, year_data in archive_data_for_sidebar.items %}
+                                            <tr>
+                                                <td class="first-col">
+                                                    <a href="{% url 'archive:year_archive' year %}">{{ year }}</a>
+                                                </td>
+                                                {% for month_num_int in range_1_to_12 %}
+                                                    {% with month_entry=year_data.months|get_item:month_num_int %}
+                                                        <td class="u-text-center">
+                                                            {% if month_entry and month_entry.count > 0 %}
+                                                                <a href="{% url 'archive:month_archive' year month_num_int %}">
+                                                                    {{ month_entry.count }}
+                                                                </a>
+                                                            {% elif month_entry %}
+                                                                0
+                                                            {% else %}
+                                                                <span class="text-meta">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% endwith %}
+                                                {% endfor %}
+                                                <td class="u-text-center">
+                                                    <a href="{% url 'archive:year_archive' year %}">
+                                                        <strong>{{ year_data.count }}</strong>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p class="w-help-text">暂无归档数据。</p> {# Wagtail 6.x 帮助文本类 #}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-main-content">
+                <div class="w-panel nice-padding">
+                    <div class="w-panel__header">
+                        {% if is_date_filter_active %}
+                            <h2 class="w-panel__title">
+                                {{ selected_start_date }} 至 {{ selected_end_date }} 内的文章
+                                {% if posts_to_display.paginator %} (共 {{ posts_to_display.paginator.count }} 篇) {% endif %}
+                            </h2>
+                        {% else %}
+                            <h2 class="w-panel__title">最近10篇发布</h2>
+                        {% endif %}
+                    </div>
+                    <div class="w-panel__body">
+                        {% include "archive/admin/_posts_table_admin.html" with posts_list=posts_to_display.object_list|default:posts_to_display is_date_filter_active=is_date_filter_active %}
+
+                        {% if is_paginated_list and posts_to_display.has_other_pages %}
+                            <div class="pagination">
+                                <ul class="w-pagination"> {# Wagtail 6.x 分页类 #}
+                                    {% if posts_to_display.has_previous %}
+                                        <li class="w-pagination__item w-pagination__item--prev">
+                                            <a href="?start_date={{ selected_start_date|default:'' }}&end_date={{ selected_end_date|default:'' }}&page={{ posts_to_display.previous_page_number }}"
+                                               class="w-pagination__link icon icon-arrow-left">{% trans "Previous" %}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="w-pagination__item w-pagination__item--prev w-pagination__item--disabled">
+                                            <span class="w-pagination__link icon icon-arrow-left">{% trans "Previous" %}</span>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in posts_to_display.paginator.page_range %}
+                                        {% if posts_to_display.number == num %}
+                                            <li class="w-pagination__item w-pagination__item--active">
+                                                <span class="w-pagination__link">{{ num }}</span>
+                                            </li>
+                                        {% else %}
+                                            <li class="w-pagination__item">
+                                                <a href="?start_date={{ selected_start_date|default:'' }}&end_date={{ selected_end_date|default:'' }}&page={{ num }}"
+                                                   class="w-pagination__link">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if posts_to_display.has_next %}
+                                        <li class="w-pagination__item w-pagination__item--next">
+                                            <a href="?start_date={{ selected_start_date|default:'' }}&end_date={{ selected_end_date|default:'' }}&page={{ posts_to_display.next_page_number }}"
+                                               class="w-pagination__link icon icon-arrow-right-after">{% trans "Next" %}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="w-pagination__item w-pagination__item--next w-pagination__item--disabled">
+                                            <span class="w-pagination__link icon icon-arrow-right-after">{% trans "Next" %}</span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script src="{% static 'gretzia/js/jquery.js' %}"></script>
+    <script src="{% static 'js/flatpickr.js' %}"></script>
+    <script src="{% static 'js/zh.js' %}"></script>
+    <script src="{% static 'js/frontend_datepicker.js' %}"></script>
+{% endblock %}
