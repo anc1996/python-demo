@@ -36,7 +36,7 @@ from wagtail.blocks.stream_block import StreamValue
 from wagtailmarkdown.blocks import MarkdownBlock
 from wagtailcodeblock.blocks import CodeBlock
 
-from blog.blocks import AudioBlock, VideoBlock, CustomTableBlock
+from blog.blocks import AudioBlock, VideoBlock, CustomTableBlock, MermaidBlock
 from wagtailblog3.mongo import MongoManager
 from wagtailblog3.mongodb import MongoDBStreamFieldAdapter
 
@@ -332,7 +332,21 @@ class BlogPage(Page):
 
 	
 	date = models.DateField("发布日期") # 发布日期
-	intro = models.CharField("简介", max_length=500) # 简介
+	
+	# 将 CharField 更改为 RichTextField，并指定允许的功能
+	intro = RichTextField(
+		"简介",
+		features=[
+			'bold',  # 加粗
+			'italic',  # 斜体
+			'strikethrough',  # 删除线
+			'superscript',  # 上标
+			'subscript',  # 下标
+			'link',  # 内部和外部链接
+			'code',  # 行内代码
+			'blockquote'  # 引用块
+		]
+	)  # 简介
 	
 	# 作者字段
 	authors = ParentalManyToManyField('blog.Author', blank=True)
@@ -360,7 +374,9 @@ class BlogPage(Page):
 			features=['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'bold', 'italic',
 			          'ol', 'ul', 'hr', 'link', 'document-link', 'image',
 			          'embed', 'code', 'superscript', 'subscript', 'strikethrough',
-			          'blockquote'],
+			          'blockquote',
+			          'underline'  # <--- 下划线
+			          ],
 			label="富文本"
 		)),
 		
@@ -370,8 +386,12 @@ class BlogPage(Page):
 		# Markdown块 - 使用wagtail-markdown (包含代码高亮和数学公式支持)
 		('markdown_block', MarkdownBlock(
 			icon='code',
-			label="Markdown"
+			label="Markdown (支持代码高亮和数学公式)",
+			help_text="支持标准Markdown、代码高亮、数学公式"
 		)),
+		
+		# StreamField 中注册我们的 MermaidBlock ---
+		('mermaid_chart', MermaidBlock()),
 		
 		# 嵌入块 - 用于嵌入外部内容
 		('embed_block', EmbedBlock(

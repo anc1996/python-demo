@@ -1,74 +1,52 @@
-// wagtailblog3/static/js/custom_scripts.js
+// wagtailblog3/static/blog/js/blog_page.js
 
 $(function() {
+    console.log("🚀 博客页面初始化...");
 
-    // (A) 初始化 Mermaid.js (这部分逻辑不变)
-    try {
-        // 首先检查页面上是否存在 mermaid 这个全局对象，确认库已加载
-        if (typeof mermaid !== 'undefined') {
 
-            // 初始化 Mermaid，可以设置主题等
-            // 'forest' 是一个视觉效果很好的深色主题
-            // 可选: 'default', 'dark', 'neutral'
-            mermaid.initialize({
-                startOnLoad: false, // 我们将手动触发渲染
-                theme: 'forest',
-                securityLevel: 'loose'
-            });
-
-            // 找到页面上所有 class="mermaid" 的元素并异步渲染它们
-            // mermaid.run() 是新版 mermaid (v9.4+) 的推荐用法
-            mermaid.run({
-                nodes: document.querySelectorAll('.mermaid')
-            });
-            console.log("Mermaid.js 已成功初始化并渲染图表。");
-        }
-    } catch (e) {
-        // 如果在初始化或渲染过程中出现任何错误，在控制台打印出来，方便排查
-        console.error("Mermaid.js 初始化或渲染时发生错误: ", e);
-    }
-
-    // (B) 初始化 KaTeX (这部分逻辑不变)
-    try {
-        if (typeof renderMathInElement !== 'undefined') {
-            renderMathInElement(document.body, {
-                delimiters: [
-                    {left: "$$", right: "$$", display: true},
-                    {left: "\\(", right: "\\)", display: false},
-                    {left: "$", right: "$", display: false},
-                    {left: "\\[", right: "\\]", display: true}
-                ],
-                throwOnError: false
-            });
-        }
-    } catch (e) {
-        console.error("KaTeX 渲染失败: ", e);
-    }
-
-    // (C) 美化 Markdown 表格 (这部分逻辑不变)
-    try {
-        $('.content-block-wrapper[data-block-type="markdown_block"] table:not([class])').each(function() {
-            $(this)
-                .addClass('table table-bordered table-hover')
-                .wrap('<div class="table-responsive"></div>');
-        });
-    } catch (e) {
-        console.error("自动美化 Markdown 表格失败: ", e);
-    }
-
-    // (D) 🚀【最终解决方案】延迟执行 Prism.js 高亮
-    // 检查页面上是否存在代码块，只有存在时才设置延迟
-    if ($('pre[class*="language-"]').length > 0) {
-        console.log("检测到Prism.js代码块，设置延迟高亮...");
-
-        // 延迟100毫秒执行，以确保所有动态加载的Prism脚本都已完成
-        setTimeout(function() {
-            if (typeof Prism !== 'undefined') {
-                console.log("延迟后，Prism.js可用。Firing highlightAll().");
-                Prism.highlightAll();
-            } else {
-                console.error("延迟后，Prism.js仍然不可用！");
+    // ===================================
+    // KaTeX 数学公式
+    // ===================================
+    function initKaTeX() {
+        try {
+            if (typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "\\[", right: "\\]", display: true},
+                        {left: "$", right: "$", display: false},
+                        {left: "\\(", right: "\\)", display: false}
+                    ],
+                    throwOnError: false
+                });
+                console.log("✅ KaTeX 渲染完成");
             }
-        }, 100); // 100毫秒的延迟对于绝大多数情况都已足够
+        } catch (e) {
+            console.error("❌ KaTeX 失败:", e);
+        }
     }
+
+    // ===================================
+    // 表格美化
+    // ===================================
+    function beautifyTables() {
+        try {
+            $('.content-block-wrapper[data-block-type="markdown_block"] table:not([class])').each(function() {
+                $(this)
+                    .addClass('table table-bordered table-hover')
+                    .wrap('<div class="table-responsive"></div>');
+            });
+            console.log("✅ 表格美化完成");
+        } catch (e) {
+            console.error("❌ 表格美化失败:", e);
+        }
+    }
+
+    // ===================================
+    // 按顺序执行
+    // ===================================
+    beautifyTables();
+    initKaTeX();
+
+    console.log("🎉 博客页面脚本加载完成");
 });

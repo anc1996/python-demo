@@ -1,73 +1,159 @@
 # wagtailblog3/celery.py
 import os
 from celery import Celery
-from django.conf import settings
 
 """
-命令：celery -A wagtailblog3 worker -l info --concurrency=4 --pool=threads
-# 停止当前的Celery进程，然后重新启动
-celery -A wagtailblog3 worker --loglevel=in4fo --queues=email,default
+Celery 配置说明：
+- 所有 Celery 配置统一在 settings/database.py 中的 get_celery_config() 函数管理
+- 本文件只负责创建 Celery 应用实例并自动加载配置
+- 不要在本文件中重复定义配置，保持单一配置源
+
+启动命令示例：
+    # 启动默认 worker（处理所有队列）
+    celery -A wagtailblog3 worker -l info
+
+    # 启动指定队列的 worker
+    celery -A wagtailblog3 worker -l info --queues=email,default
+
+    # 启动 worker 并指定并发数
+    celery -A wagtailblog3 worker -l info --concurrency=4 --pool=threads
+
+    # 启动 Celery Beat 定时任务调度器
+    celery -A wagtailblog3 beat -l info
+
+    # 同时启动 worker 和 beat
+    celery -A wagtailblog3 worker -l info -B
+
+监控命令：
+    # 查看活动任务
+    celery -A wagtailblog3 inspect active
+
+    # 查看已注册的任务
+    celery -A wagtailblog3 inspect registered
+
+    # 查看队列状态
+    celery -A wagtailblog3 inspect stats
 """
 
-# 设置Django默认设置模块
+# ==========================================================
+# 设置 Django 默认设置模块
+# ==========================================================
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'wagtailblog3.settings.dev')
 
-# 创建Celery应用实例
+# ==========================================================
+# 创建 Celery 应用实例
+# ==========================================================
 app = Celery('wagtailblog3')
 
-# 使用Django设置配置Celery
+# ==========================================================
+# 从 Django settings 加载 Celery 配置
+# ==========================================================
+# namespace='CELERY' 表示只加载以 CELERY_ 开头的配置项
+# 例如：CELERY_BROKER_URL、CELERY_TASK_ROUTES 等
+# 这些配置在 settings/database.py 的 get_celery_config() 中定义
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# Celery配置
-app.conf.update(
-	# Redis作为消息代理和结果后端
-	broker_url=f'redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/2',
-	result_backend=f'redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/3',
-	
-	# 任务序列化设置
-	task_serializer='json',
-	accept_content=['json'],
-	result_serializer='json',
-	timezone='Asia/Shanghai',
-	enable_utc=True,
-	
-	# 任务执行设置
-	task_always_eager=False,  # 生产环境设为False，开发时可设为True进行测试
-	task_eager_propagates=True,
-	
-	# 任务路由设置
-	task_routes={
-		'base.tasks.send_form_confirmation_email': {'queue': 'email'},
-		'base.tasks.send_admin_notification_email': {'queue': 'email'},
-	},
-	
-	# 工作进程设置
-	worker_prefetch_multiplier=1,
-	task_acks_late=True,
-	
-	# 任务重试设置
-	task_default_retry_delay=60,  # 默认重试延迟60秒
-	task_max_retries=3,  # 最大重试次数
-	
-	# 任务结果过期时间
-	result_expires=3600,  # 1小时后过期
-	
-	# 错误处理
-	task_reject_on_worker_lost=True,
-)
-
+# ==========================================================
 # 自动发现任务
+# ==========================================================
+# 自动发现所有已安装应用中的 tasks.py 文件
 app.autodiscover_tasks()
 
 
-# 调试信息
-@app.task(bind=True)
+# ==========================================================
+# 调试任务（用于测试 Celery 是否正常工作）
+# ==========================================================
+@app.task(bind=True, ignore_result=True)
 def debug_task(self):
+	"""
+	调试任务，用于测试 Celery 配置是否正确
+
+	使用方法：
+		from wagtailblog3.celery import debug_task
+		debug_task.delay()
+	"""
 	print(f'Request: {self.request!r}')
+	return f'Debug task executed successfully'
 
 
-# 健康检查任务
-@app.task
+@app.task(name='health_check', ignore_result=False)
 def health_check():
-	"""Celery健康检查任务"""
+	"""
+	Celery 健康检查任务
+
+	使用方法：
+		from wagtailblog3.celery import health_check
+		result = health_check.delay()
+		print(result.get())
+
+	返回值：
+		str: 健康检查状态信息
+	"""
 	return "Celery is working properly!"
+
+
+@app.task(name='test_redis_connection', ignore_result=False)
+def test_redis_connection():
+	"""
+	测试 Redis 连接是否正常
+
+	使用方法：
+		from wagtailblog3.celery import test_redis_connection
+		result = test_redis_connection.delay()
+		print(result.get())
+	"""
+	try:
+		from django.core.cache import cache
+		# 测试缓存读写
+		cache.set('celery_test_key', 'test_value', 10)
+		value = cache.get('celery_test_key')
+		if value == 'test_value':
+			return "Redis connection is working!"
+		else:
+			return "Redis connection test failed: value mismatch"
+	except Exception as e:
+		return f"Redis connection test failed: {str(e)}"
+
+
+# ==========================================================
+# Celery 应用启动时的信号
+# ==========================================================
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+	"""
+	配置周期性任务（可选）
+
+	注意：定时任务的主要配置在 settings/database.py 的
+	CELERY_BEAT_SCHEDULE 中定义
+
+	这里可以添加动态的定时任务或一些启动时的初始化逻辑
+	"""
+	# 示例：每 30 秒执行一次健康检查（取消注释以启用）
+	# sender.add_periodic_task(
+	#     30.0,  # 每 30 秒
+	#     health_check.s(),
+	#     name='periodic health check'
+	# )
+	pass
+
+
+# ==========================================================
+# Celery Worker 启动时的信号
+# ==========================================================
+from celery.signals import worker_ready
+
+
+@worker_ready.connect
+def on_worker_ready(sender, **kwargs):
+	"""
+	Worker 启动完成后的回调
+
+	可以在这里执行一些初始化操作，例如：
+	- 记录 Worker 启动日志
+	- 清理过期的任务结果
+	- 发送通知等
+	"""
+	print("=" * 60)
+	print("Celery Worker started successfully!")
+	print("Queues:", sender.app.conf.task_queues)
+	print("=" * 60)

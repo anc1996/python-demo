@@ -52,26 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 函数 3: 渲染 Mermaid 图表
-    function renderMermaid() {
-        if (typeof mermaid !== 'undefined') {
-            mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-            const mermaidGraphs = document.querySelectorAll('div.mermaid');
-            mermaidGraphs.forEach((graph, index) => {
-                mermaid.render(`mermaid-graph-${index}`, graph.textContent, (svgCode) => {
-                    graph.innerHTML = svgCode;
-                }, graph);
-            });
-            if (mermaidGraphs.length > 0) {
-                console.log(`📊 渲染了 ${mermaidGraphs.length} 个 Mermaid 图表`);
-            }
-        }
-    }
-
     // 执行所有增强功能
     addCopyButtons();
     renderMath();
-    renderMermaid();
 
     console.log("🎉 Markdown 增强完成!");
 });

@@ -1,10 +1,10 @@
 # blog/wagtail_hooks.py
+
+import logging
+
 from django.templatetags.static import static
 from wagtail import hooks
 from django.utils.html import format_html
-import logging
-
-from .models import PageViewCount
 from django.db.models import Sum
 from wagtail.models import Page
 from django.shortcuts import render, get_object_or_404
@@ -16,53 +16,72 @@ from wagtail.admin.ui.tables import Column, Table
 from django.views.generic.edit import UpdateView
 from django.utils.decorators import method_decorator
 from wagtail.admin.auth import require_admin_access
+from wagtail.admin.rich_text.editors.draftail import features as draftail_features
+from wagtail.admin.rich_text.converters.html_to_contentstate import InlineStyleElementHandler
+
+from .models import PageViewCount
+
 from .forms import PageViewCountForm
 
 # 设置日志记录器
 logger = logging.getLogger(__name__)
 
 
+# 在 Wagtailtail后台所有页面加载 Font Awesome 5 的 CSS。
 @hooks.register("insert_global_admin_css")
 def global_admin_css():
-    """
-    在 Wagtail 后台所有页面加载 Font Awesome 5 的 CSS。
-    EasyMDE 编辑器依赖这个图标库来显示工具栏图标（如加粗、斜体、任务列表等）。
-    """
-    # 这里我们使用一个可靠的 CDN 链接来加载 Font Awesome 5。
-    # 您也可以下载到本地并通过 static 标签加载，但 CDN 更简单快捷。
-    # 使用 all.min.css 版本确保所有图标都能被正确加载。
-    return format_html('<link rel="stylesheet" href="{}">', static("css/all.min.css"))
+	"""
+	在 Wagtail 后台所有页面加载 Font Awesome 5 的 CSS。
+	EasyMDE 编辑器依赖这个图标库来显示工具栏图标（如加粗、斜体、任务列表等）。
+	"""
+	# 这里我们使用一个可靠的 CDN 链接来加载 Font Awesome 5。
+	# 您也可以下载到本地并通过 static 标签加载，但 CDN 更简单快捷。
+	# 使用 all.min.css 版本确保所有图标都能被正确加载。
+	return format_html('<link rel="stylesheet" href="{}">', static("css/all.min.css"))
 
+
+# 为后台编辑器加载 Mermaid.js，以便在预览时可以渲染 Mermaid 图表。---这个还没有利用实现
 @hooks.register("insert_global_admin_js")
 def global_admin_js():
-    """
-    为后台编辑器加载 Mermaid.js，以便在预览时可以渲染 Mermaid 图表。
-    """
-    return format_html(
-        """
-        <script src="{}"></script>
-        <script>
-            // 初始化 Mermaid 以便在后台预览中使用
-            mermaid.initialize({{ startOnLoad: true, theme: 'neutral' }});
-        </script>
-        """,
-        static("blog/js/mermaid.min.js")
-    )
+	"""
+	为后台编辑器加载 Mermaid.js，以便在预览时可以渲染 Mermaid 图表。
+	"""
+	return format_html(
+		"""
+		<script src="{}"></script>
+		<script>
+			// 初始化 Mermaid 以便在后台预览中使用
+			mermaid.initialize({{ startOnLoad: true, theme: 'neutral' }});
+		</script>
+		""",
+		static("blog/js/mermaid.min.js")
+	)
 
 
+# (如果文件已有其他 hook，请保留它们)
+
+@hooks.register("insert_global_admin_js", order=100)
+def global_admin_js():
+	"""
+	在 Wagtail 管理后台的所有页面上加载自定义的 JS 文件，
+	用于配置 EasyMDE (MarkdownBlock) 编辑器的工具栏。
+	"""
+	return format_html('<script src="{}"></script>', static("blog/js/easymde_custom.js"))
+
+
+# 在编辑页面前从MongoDB加载内容
 @hooks.register('before_edit_page')
 def before_edit_page(request, page):
-	"""在编辑页面前从MongoDB加载内容"""
 	if hasattr(page, 'get_content_from_mongodb') and hasattr(page, 'body'):
 		try:
 			content = page.get_content_from_mongodb()
-
+			
 			if content and 'body' in content and isinstance(content['body'], list):
 				from wagtail.blocks.stream_block import StreamValue
 				from wagtailblog3.mongodb import MongoDBStreamFieldAdapter
-
+				
 				stream_block = page.body.stream_block
-
+				
 				try:
 					page.body = MongoDBStreamFieldAdapter.from_mongodb(content['body'], stream_block)
 				except Exception as e:
@@ -73,6 +92,7 @@ def before_edit_page(request, page):
 			logger.error(f"在编辑页面前加载MongoDB内容时出错: {e}, {traceback.format_exc()}")
 
 
+# 添加JavaScript支持到编辑器
 @hooks.register('insert_editor_js')
 def editor_js():
 	"""添加JavaScript支持到编辑器"""
@@ -82,6 +102,7 @@ def editor_js():
 	)
 
 
+# 编辑页面后清空body字段，避免存入MySQL
 @hooks.register('after_edit_page')
 def after_edit_page(request, page):
 	"""编辑页面后清空body字段，避免存入MySQL"""
@@ -99,7 +120,6 @@ def after_edit_page(request, page):
 # 页面统计报告
 @hooks.register('register_admin_urls')
 def register_page_views_report_url():
-	
 	@method_decorator(require_admin_access, name='dispatch')
 	class PageViewsReportView(ReportView):
 		template_name = 'wagtailadmin/reports/page_views_report.html'
@@ -225,6 +245,7 @@ def register_page_views_report_url():
 	]
 
 
+# 注册自定义报告菜单项
 @hooks.register('register_reports_menu_item')
 def register_page_views_report_menu_item():
 	return MenuItem(
@@ -233,3 +254,36 @@ def register_page_views_report_menu_item():
 		icon_name="site",
 		order=700
 	)
+
+# 注册 `underline` (下划线) 功能.
+@hooks.register('register_rich_text_features')
+def register_underline_feature(features):
+	"""
+	注册 `underline` (下划线) 功能.
+	它使用 `UNDERLINE` Draft.js 类型，并存储为 `<u>` 标签。
+	"""
+	feature_name = 'underline'
+	type_ = 'UNDERLINE'
+	tag = 'u'  # HTML 下划线标签
+	
+	# 1. 配置工具栏按钮
+	control = {
+		'type': type_,
+		'label': 'U',
+		'description': '下划线',
+		# 'style' 不是必需的，因为 Draftail 已有 UNDERLINE 的默认样式
+	}
+	
+	# 2. 注册 Draftail 插件
+	features.register_editor_plugin(
+		'draftail', feature_name, draftail_features.InlineStyleFeature(control)
+	)
+	
+	# 3. 配置数据库转换规则
+	db_conversion = {
+		'from_database_format': {tag: InlineStyleElementHandler(type_)},
+		'to_database_format': {'style_map': {type_: tag}},
+	}
+	
+	# 4. 注册转换规则
+	features.register_converter_rule('contentstate', feature_name, db_conversion)
