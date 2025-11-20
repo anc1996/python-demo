@@ -2,11 +2,12 @@
 
 from wagtail.documents.models import AbstractDocument
 from django.db import models
-from wagtailmedia.blocks import  AudioChooserBlock, VideoChooserBlock
+from wagtailmedia.blocks import AudioChooserBlock, VideoChooserBlock
 from wagtail.contrib.table_block.blocks import TableBlock as WagtailTableBlock
 from wagtail.documents.models import Document, AbstractDocument
 from django.template.loader import render_to_string
 from wagtail import blocks
+
 
 class MermaidBlock(blocks.StructBlock):
 	"""

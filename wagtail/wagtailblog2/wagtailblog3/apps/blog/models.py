@@ -1,24 +1,24 @@
 # blog/models.py
 
-import traceback,logging
+import traceback, logging
 
 from django.db.models.functions import Coalesce, Lower
 from django.utils import timezone
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
 from django import forms
-from django.db.models import Count, Sum, Subquery, OuterRef,F
+from django.db.models import Count, Sum, Subquery, OuterRef, F
 from markdown import markdown
 from django.conf import settings
 
 from django.utils.html import strip_tags  # 用于去除HTML标签
 from django.utils.safestring import mark_safe  # 用于标记HTML安全
 
-from datetime import datetime,date
+from datetime import datetime, date
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from modelcluster.contrib.taggit import ClusterTaggableManager
 
-from taggit.models import TaggedItemBase,Tag
+from taggit.models import TaggedItemBase, Tag
 
 from wagtail.embeds.blocks import EmbedBlock
 from wagtail.models import Page, Orderable
@@ -45,10 +45,9 @@ logger = logging.getLogger(__name__)
 
 # 自定义图片模型
 class BlogImage(AbstractImage):
-	
 	"""自定义博客图片模型"""
 	caption = models.CharField(max_length=255, blank=True)
-	admin_form_fields = Image.admin_form_fields + ('caption',) # 添加caption字段到后台表单
+	admin_form_fields = Image.admin_form_fields + ('caption',)  # 添加caption字段到后台表单
 	
 	@property
 	def default_alt_text(self):
@@ -71,107 +70,106 @@ class BlogRendition(AbstractRendition):
 		)
 
 
-
 # 博客标签模型
 class BlogTagIndexPage(Page):
-    """
-    页面用于展示按标签筛选的文章列表，或所有标签的列表。
-    支持对文章标题（在特定标签下）或标签名称进行搜索和分页。
-    """
-    subpage_types = []  # 通常标签索引页不应有子页面
-    parent_page_types = ['wagtailcore.Page', 'home.HomePage', 'blog.BlogIndexPage'] # 根据你的实际情况调整
-    subpage_types = ['blog.BlogIndexPage']  # 根据你的实际情况调整
-
-    # 每页显示的标签显示数
-    items_tag_page=50
-    # 每页显示的文章数
-    items_per_page = 20
-
-    def get_context(self, request, *args, **kwargs):
-        context = super().get_context(request, *args, **kwargs)
-
-        tag_slug_filter = request.GET.get('tag')    # ?tag=<slug>
-        search_query = request.GET.get('q', '').strip()  # ?q=<query>
-        page_number = request.GET.get('page')       # ?page=<number>
-        
-        start_date = request.GET.get('start_date', '')
-        end_date = request.GET.get('end_date', '')
-
-        context['search_query'] = search_query
-        context['start_date'] = start_date
-        context['end_date'] = end_date
-        context['current_tag'] = None
-        context['paged_items'] = None # 将用于文章分页或标签分页
-        context['mode'] = None # "tag_detail" 或 "tag_list"
-
-        if tag_slug_filter:
-            # --- 模式 A: 标签详情模式 (查看特定标签下的文章) ---
-            context['mode'] = "tag_detail"
-            try:
-                tag_object = Tag.objects.get(slug=tag_slug_filter)
-                context['current_tag'] = tag_object
-
-                # 获取该标签下的所有已发布、公开的文章
-                articles_queryset = BlogPage.objects.live().public().filter(tags=tag_object)
-
-                # 如果有文章标题搜索词 (q)，则进一步过滤
-                if search_query:
-                    articles_queryset = articles_queryset.filter(title__icontains=search_query)
-                    
-                if start_date:
-                    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
-                    articles_queryset = articles_queryset.filter(date__gte=start_date_obj)
-                
-                if end_date:
-                    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-                    articles_queryset = articles_queryset.filter(date__lte=end_date_obj)
+	"""
+	页面用于展示按标签筛选的文章列表，或所有标签的列表。
+	支持对文章标题（在特定标签下）或标签名称进行搜索和分页。
+	"""
+	subpage_types = []  # 通常标签索引页不应有子页面
+	parent_page_types = ['wagtailcore.Page', 'home.HomePage', 'blog.BlogIndexPage']  # 根据你的实际情况调整
+	subpage_types = ['blog.BlogIndexPage']  # 根据你的实际情况调整
+	
+	# 每页显示的标签显示数
+	items_tag_page = 50
+	# 每页显示的文章数
+	items_per_page = 20
+	
+	def get_context(self, request, *args, **kwargs):
+		context = super().get_context(request, *args, **kwargs)
+		
+		tag_slug_filter = request.GET.get('tag')  # ?tag=<slug>
+		search_query = request.GET.get('q', '').strip()  # ?q=<query>
+		page_number = request.GET.get('page')  # ?page=<number>
+		
+		start_date = request.GET.get('start_date', '')
+		end_date = request.GET.get('end_date', '')
+		
+		context['search_query'] = search_query
+		context['start_date'] = start_date
+		context['end_date'] = end_date
+		context['current_tag'] = None
+		context['paged_items'] = None  # 将用于文章分页或标签分页
+		context['mode'] = None  # "tag_detail" 或 "tag_list"
+		
+		if tag_slug_filter:
+			# --- 模式 A: 标签详情模式 (查看特定标签下的文章) ---
+			context['mode'] = "tag_detail"
+			try:
+				tag_object = Tag.objects.get(slug=tag_slug_filter)
+				context['current_tag'] = tag_object
 				
-                articles_queryset = articles_queryset.order_by('-date') # 或其他排序
-
-                # 对文章列表进行分页
-                paginator = Paginator(articles_queryset, self.items_per_page)
-                try:
-                    context['paged_items'] = paginator.page(page_number)
-                except PageNotAnInteger:
-                    context['paged_items'] = paginator.page(1)
-                except EmptyPage:
-                    context['paged_items'] = paginator.page(paginator.num_pages)
-
-            except Tag.DoesNotExist:
-                context['paged_items'] = []  # 或者设置为空列表以避免错误
-        else:
-            # --- 模式 B: 标签列表模式 ---
-            context['mode'] = "tag_list"
-
-            # 1. 获取所有使用过的标签的基础查询集
-            #    确保只获取那些至少被一篇 BlogPage 使用的标签 (live & public)
-            active_blog_pages_tags_ids = BlogPage.objects.live().public().values_list('tags', flat=True).distinct()
-            used_tags_queryset = Tag.objects.filter(pk__in=active_blog_pages_tags_ids)
-
-            # 2. 应用标签名称搜索查询 (如果存在)
-            if search_query:
-                used_tags_queryset = used_tags_queryset.filter(name__icontains=search_query)
-
-            used_tags_queryset = used_tags_queryset.order_by('name')
-
-            # 3. 为每个标签附加文章数量
-            tags_with_counts = []
-            for tag_item in used_tags_queryset:
-                # 确保计数也只计算 live 和 public 的文章
-                count = BlogPage.objects.live().public().filter(tags=tag_item).count()
-                if count > 0:  # 只显示实际有文章的标签
-                    tags_with_counts.append({'tag': tag_item, 'count': count})
-
-            # 4. 对带有计数的标签列表进行分页
-            paginator = Paginator(tags_with_counts, self.items_tag_page)
-            try:
-                context['paged_items'] = paginator.page(page_number)
-            except PageNotAnInteger:
-                context['paged_items'] = paginator.page(1)
-            except EmptyPage:
-                context['paged_items'] = paginator.page(paginator.num_pages)
-
-        return context
+				# 获取该标签下的所有已发布、公开的文章
+				articles_queryset = BlogPage.objects.live().public().filter(tags=tag_object)
+				
+				# 如果有文章标题搜索词 (q)，则进一步过滤
+				if search_query:
+					articles_queryset = articles_queryset.filter(title__icontains=search_query)
+				
+				if start_date:
+					start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+					articles_queryset = articles_queryset.filter(date__gte=start_date_obj)
+				
+				if end_date:
+					end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+					articles_queryset = articles_queryset.filter(date__lte=end_date_obj)
+				
+				articles_queryset = articles_queryset.order_by('-date')  # 或其他排序
+				
+				# 对文章列表进行分页
+				paginator = Paginator(articles_queryset, self.items_per_page)
+				try:
+					context['paged_items'] = paginator.page(page_number)
+				except PageNotAnInteger:
+					context['paged_items'] = paginator.page(1)
+				except EmptyPage:
+					context['paged_items'] = paginator.page(paginator.num_pages)
+			
+			except Tag.DoesNotExist:
+				context['paged_items'] = []  # 或者设置为空列表以避免错误
+		else:
+			# --- 模式 B: 标签列表模式 ---
+			context['mode'] = "tag_list"
+			
+			# 1. 获取所有使用过的标签的基础查询集
+			#    确保只获取那些至少被一篇 BlogPage 使用的标签 (live & public)
+			active_blog_pages_tags_ids = BlogPage.objects.live().public().values_list('tags', flat=True).distinct()
+			used_tags_queryset = Tag.objects.filter(pk__in=active_blog_pages_tags_ids)
+			
+			# 2. 应用标签名称搜索查询 (如果存在)
+			if search_query:
+				used_tags_queryset = used_tags_queryset.filter(name__icontains=search_query)
+			
+			used_tags_queryset = used_tags_queryset.order_by('name')
+			
+			# 3. 为每个标签附加文章数量
+			tags_with_counts = []
+			for tag_item in used_tags_queryset:
+				# 确保计数也只计算 live 和 public 的文章
+				count = BlogPage.objects.live().public().filter(tags=tag_item).count()
+				if count > 0:  # 只显示实际有文章的标签
+					tags_with_counts.append({'tag': tag_item, 'count': count})
+			
+			# 4. 对带有计数的标签列表进行分页
+			paginator = Paginator(tags_with_counts, self.items_tag_page)
+			try:
+				context['paged_items'] = paginator.page(page_number)
+			except PageNotAnInteger:
+				context['paged_items'] = paginator.page(1)
+			except EmptyPage:
+				context['paged_items'] = paginator.page(paginator.num_pages)
+		
+		return context
 
 
 # 标签模型
@@ -184,27 +182,27 @@ class BlogPageTag(TaggedItemBase):
 		'BlogPage',
 		related_name='tagged_items',
 		on_delete=models.CASCADE
-	) # 关联到BlogPage模型
+	)  # 关联到BlogPage模型
 
 
 # 博客分类
 @register_snippet
 class BlogCategory(models.Model):
-    """博客分类模型"""
-    name = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, max_length=80)
-
-    panels = [
-        FieldPanel('name'),
-        FieldPanel('slug'),
-    ]
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "博客分类"
-        verbose_name_plural = "博客分类"
+	"""博客分类模型"""
+	name = models.CharField(max_length=255)
+	slug = models.SlugField(unique=True, max_length=80)
+	
+	panels = [
+		FieldPanel('name'),
+		FieldPanel('slug'),
+	]
+	
+	def __str__(self):
+		return self.name
+	
+	class Meta:
+		verbose_name = "博客分类"
+		verbose_name_plural = "博客分类"
 
 
 # 博客索引页面
@@ -221,7 +219,6 @@ class BlogIndexPage(Page):
 		on_delete=models.SET_NULL,
 		related_name='+'
 	)  # 特色图片
-	
 	
 	content_panels = Page.content_panels + [
 		FieldPanel('date'),
@@ -325,13 +322,11 @@ class BlogIndexPage(Page):
 		verbose_name_plural = "博客索引页"
 
 
-		
 # 博客页面
 class BlogPage(Page):
 	"""博客页面，内容存储在 MongoDB"""
-
 	
-	date = models.DateField("发布日期") # 发布日期
+	date = models.DateField("发布日期")  # 发布日期
 	
 	# 将 CharField 更改为 RichTextField，并指定允许的功能
 	intro = RichTextField(
@@ -363,10 +358,10 @@ class BlogPage(Page):
 		blank=True,
 		on_delete=models.SET_NULL,
 		related_name='+'
-	) # 特色图片
-
+	)  # 特色图片
+	
 	mongo_content_id = models.CharField("MongoDB内容ID", max_length=50, blank=True, null=True)
-
+	
 	# StreamField定义，用于编辑界面，实际内容存储在MongoDB
 	body = StreamField([
 		# 富文本块 - 使用Wagtail内置编辑器
@@ -382,7 +377,7 @@ class BlogPage(Page):
 		
 		# 代码块 - 使用wagtail-codeblock
 		("code_block", CodeBlock(label='Code', default_language='python')),
-
+		
 		# Markdown块 - 使用wagtail-markdown (包含代码高亮和数学公式支持)
 		('markdown_block', MarkdownBlock(
 			icon='code',
@@ -409,15 +404,14 @@ class BlogPage(Page):
 			label="原始HTML",
 			help_text="适用于高级用户的HTML代码插入"
 		)),
-
+		
 		# 媒体文件
 		('document_block', DocumentChooserBlock(icon='doc-full', label="文档块")),
 		('image_block', ImageChooserBlock(icon='image', label="图片块")),
 		('audio_block', AudioBlock(icon='media', label="音频块")),
 		('video_block', VideoBlock(icon='media', label="视频块")),
 	], use_json_field=True, blank=True, null=True)
-
-
+	
 	# 索引字段
 	search_fields = Page.search_fields + [
 		index.SearchField('intro'),
@@ -425,7 +419,7 @@ class BlogPage(Page):
 		index.FilterField('tags'),
 		index.FilterField('categories'),
 	]
-
+	
 	# 后台编辑面板
 	content_panels = Page.content_panels + [
 		MultiFieldPanel([
@@ -508,7 +502,7 @@ class BlogPage(Page):
 			content = mongo_manager.get_blog_content(self.mongo_content_id)
 			if not content or 'body' not in content or not isinstance(content['body'], list):
 				return None
-
+			
 			for i, block in enumerate(content['body']):
 				if isinstance(block, dict):
 					if 'id' not in block or not block['id']:
@@ -582,7 +576,7 @@ class BlogPage(Page):
 		
 		# 4. 调用父类的serve方法，使用我们准备好的body内容去渲染模板
 		return super().serve(request)
-
+	
 	def get_prev_post(self):
 		"""获取同类别的上一篇文章"""
 		if not self.categories.exists():
@@ -597,7 +591,6 @@ class BlogPage(Page):
 			categories__id__in=category_ids,
 			first_published_at__lt=self.first_published_at
 		).distinct().order_by('-first_published_at').first()
-	
 	
 	def get_next_post(self):
 		"""获取同类别的下一篇文章"""
@@ -639,7 +632,6 @@ class BlogPage(Page):
 	# 在BlogPage类中添加这些方法
 	def get_view_count(self):
 		"""获取页面的访问量统计"""
-		
 		
 		today = date.today()
 		
@@ -743,22 +735,21 @@ class BlogPageGalleryImage(Orderable):
 	
 	# 关联您自定义的图片模型
 	image = models.ForeignKey(
-	    'blog.BlogImage', # <-- 使用您自定义的图片模型
-	    on_delete=models.CASCADE,
-	    related_name='+'
+		'blog.BlogImage',  # <-- 使用您自定义的图片模型
+		on_delete=models.CASCADE,
+		related_name='+'
 	)
 	caption = models.CharField(blank=True, max_length=250)
 	
 	panels = [
-	    FieldPanel('image'),
-	    FieldPanel('caption'),
+		FieldPanel('image'),
+		FieldPanel('caption'),
 	]
+
 
 # 页面访问记录模型
 @register_snippet
 class PageView(models.Model):
-	
-	
 	page = models.ForeignKey('wagtailcore.Page', on_delete=models.CASCADE, related_name='page_views')
 	session_key = models.CharField(max_length=100, blank=True, null=True)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
@@ -796,7 +787,6 @@ class PageViewCount(models.Model):
 # 反应类型模型
 @register_snippet
 class ReactionType(models.Model):
-	
 	name = models.CharField("反应名称", max_length=50)
 	icon = models.CharField("图标CSS类", max_length=50)
 	display_order = models.PositiveSmallIntegerField("显示顺序", default=0)
@@ -810,11 +800,9 @@ class ReactionType(models.Model):
 		return self.name
 
 
-	
 # 用户反应模型
 @register_snippet
 class Reaction(models.Model):
-	
 	page = models.ForeignKey('wagtailcore.Page', on_delete=models.CASCADE, related_name='reactions')
 	reaction_type = models.ForeignKey(ReactionType, on_delete=models.CASCADE, related_name='reactions')
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
@@ -855,7 +843,7 @@ class Author(models.Model):
 			          'ol', 'ul', 'hr', 'link', 'document-link', 'image',
 			          'embed', 'code', 'superscript', 'subscript', 'strikethrough',
 			          'blockquote'],
-			label="段落",icon="pilcrow"
+			label="段落", icon="pilcrow"
 		)),
 		('image', ImageChooserBlock(icon="image", label="图片")),  # <-- 添加图片选择块
 	],

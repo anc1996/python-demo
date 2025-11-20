@@ -1,202 +1,238 @@
 # **博客系统 - API接口文档**
 
-**版本: 1.0**
+**版本: 2.0**
 
 **日期: 2025-06-16**
 
----
+**修订人: System Architect**
 
 ## **1. 引言 (Introduction)**
 
 ### **1.1 概述**
-本API文档为开发者提供了与“Wagtail博客系统”进行程序化交互所需的所有信息。本系统API主要分为两部分：
-1.  **Wagtail核心API (v2)**: 由Wagtail框架提供的一套功能强大的、用于访问内容（如页面、图片、文档）的只读API。
-2.  **自定义API**: 为满足特定业务需求而开发的API，例如高级搜索功能。
+本系统采用混合 API 策略：
+1.  **REST API**: 用于通用数据检索（如搜索、Wagtail 内容）。
+2.  **AJAX API**: 用于前端交互（如点赞、评论），通常返回 JSON 状态码或 HTML 片段。
 
-### **1.2 基础URL (Base URL)**
-所有API的端点（endpoint）都相对于你的域名。本文档中将使用以下基础URL作为示例：
-`https://your_domain.com/api/v2/`
+### **1.2 基础 URL**
+* **API Root**: `https://your_domain.com/`
+* **Wagtail API**: `https://your_domain.com/api/v2/`
 
-### **1.3 API自动文档 (Swagger UI)**
-为了方便开发者进行交互式探索和测试，本系统通过`drf-yasg`集成了Swagger UI。强烈建议访问以下地址以获取实时、可交互的API文档：
-* **Swagger UI**: `https://your_domain.com/swagger/`
-* **ReDoc**: `https://your_domain.com/redoc/`
+### **1.3 认证方式**
+* **JWT (Json Web Token)**: 用于移动端或第三方集成。
+* **Session/CSRF**: 用于浏览器端 AJAX 请求（需在 Header 中携带 `X-CSRFToken`）。
 
----
+## **2. 搜索服务 API (Search Services)**
 
-## **2. 认证 (Authentication)**
+由 `apps.search` 模块提供，支持 Elasticsearch/MongoDB 混合后端。
 
-对于需要认证的接口，本API采用 **JWT (JSON Web Token)** 进行无状态身份验证。
+### **2.1 全文搜索**
+* **Endpoint**: `GET /api/search/`
+* **视图函数**: `apps.search.api.search_api`
+* **描述**: 执行高级全文搜索，支持日期过滤和排序。
 
-### **2.1 获取访问令牌 (Access Token)**
-你需要使用已注册用户的凭据向令牌端点发送一个POST请求，以获取访问令牌 (`access`) 和刷新令牌 (`refresh`)。
+| 参数名       | 类型   | 必选 | 默认值 | 描述                               |
+| :----------- | :----- | :--- | :----- | :--------------------------------- |
+| `q`          | string | 是   | -      | 搜索关键词                         |
+| `type`       | string | 否   | `all`  | 搜索范围: `all`, `blog`, `pages`   |
+| `page`       | int    | 否   | `1`    | 页码                               |
+| `per_page`   | int    | 否   | `10`   | 每页数量                           |
+| `start_date` | string | 否   | -      | 起始日期 (YYYY-MM-DD)              |
+| `end_date`   | string | 否   | -      | 结束日期 (YYYY-MM-DD)              |
+| `order_by`   | string | 否   | -      | 排序: `date`, `-date`, `relevance` |
 
-* **Endpoint**: `POST /api/token/`
-* **Request Body**: `application/json`
-    ```json
-    {
-        "username": "your_username",
-        "password": "your_password"
-    }
-    ```
-* **Success Response (200 OK)**:
-    ```json
-    {
-        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-        "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    }
-    ```
-
-### **2.2 使用访问令牌**
-在随后的所有需要认证的API请求中，你必须在HTTP请求头中包含 `Authorization` 字段。
-
-* **Header**: `Authorization: Bearer <your_access_token>`
-
-### **2.3 刷新访问令牌**
-访问令牌 (`access`) 的有效期较短。当它过期后，你可以使用刷新令牌 (`refresh`) 来获取一个新的访问令牌，而无需用户重新输入密码。
-
-* **Endpoint**: `POST /api/token/refresh/`
-* **Request Body**: `application/json`
-    ```json
-    {
-        "refresh": "<your_refresh_token>"
-    }
-    ```
-* **Success Response (200 OK)**:
-    ```json
-    {
-        "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    }
-    ```
-
----
-
-## **3. 自定义API端点**
-
-### **3.1 站内搜索 (Search)**
-此端点提供了由后端搜索引擎（MongoDB/Elasticsearch）驱动的高级全文搜索功能。
-
-* **Endpoint**: `GET /api/v2/search/`
-* **描述**: 根据查询词在博客文章中执行全文搜索。
-* **认证**: 无需认证。
-* **查询参数 (Query Parameters)**:
-    | 参数名 | 类型 | 必需 | 描述 |
-    | :--- | :--- | :--- | :--- |
-    | `q` | `string` | 是 | 要搜索的关键词。 |
-    | `page` | `integer`| 否 | 请求的页码，默认为`1`。 |
-* **Success Response (200 OK)**:
-    ```json
-    {
-        "count": 25, // 结果总数
-        "next": "https://your_domain.com/api/v2/search/?page=2&q=wagtail", // 下一页链接
-        "previous": null, // 上一页链接
-        "results": [ // 当前页的结果列表
-            {
-                "id": 15,
-                "meta": {
-                    "type": "blog.BlogPage",
-                    "detail_url": "https://your_domain.com/api/v2/pages/15/",
-                    "html_url": "https://your_domain.com/blog/my-first-post/",
-                    "slug": "my-first-post",
-                    "first_published_at": "2025-06-10T10:00:00Z"
-                },
-                "title": "我的第一篇Wagtail博客",
-                "date": "2025-06-10",
-                "authors": [
-                    {
-                        "id": 1,
-                        "name": "张三"
-                    }
-                ],
-                "highlight": "这是一篇关于如何使用 **Wagtail** 和Django技术栈来快速搭建..." // 搜索结果高亮片段 (如果有)
-            },
-            // ... more results
-        ]
-    }
-    ```
-* **示例 (cURL)**:
-    ```bash
-    curl -X GET "https://your_domain.com/api/v2/search/?q=wagtail&page=1"
-    ```
-
----
-
-## **4. Wagtail核心API端点**
-
-以下是Wagtail提供的标准内容API，它们功能强大，支持丰富的过滤和查询选项。
-
-### **4.1 页面列表 (Listing Pages)**
-* **Endpoint**: `GET /api/v2/pages/`
-* **描述**: 获取系统中所有发布状态的页面列表。
-* **认证**: 无需认证。
-* **常用查询参数**:
-    | 参数名 | 示例 | 描述 |
-    | :--- | :--- | :--- |
-    | `type` | `blog.BlogPage` | 按页面模型类型过滤。 |
-    | `fields`| `title,date,authors` | 指定响应中包含的字段，`*`表示所有。 |
-    | `limit` | `10` | 每页返回的结果数量，默认为20。 |
-    | `offset`| `20` | 起始偏移量，用于分页。 |
-    | `order` | `-date` | 按字段排序，`-`表示降序。 |
-    | `search`| `django` | 在Wagtail内置搜索后端中执行简单搜索。 |
-    | `child_of`| `5` | 获取ID为5的页面的所有直接子页面。 |
-    | `descendant_of` | `5` | 获取ID为5的页面的所有后代页面。 |
-* **示例 (cURL)**: 获取最新的5篇博客文章，只返回标题和发布日期。
-    ```bash
-    curl -X GET "https://your_domain.com/api/v2/pages/?type=blog.BlogPage&fields=title,date&order=-date&limit=5"
-    ```
-
-### **4.2 页面详情 (Page Detail)**
-* **Endpoint**: `GET /api/v2/pages/<id>/`
-* **描述**: 获取单个页面的详细信息。
-* **认证**: 无需认证。
-* **Success Response (200 OK)**:
-    响应体是一个JSON对象，包含了该页面的所有字段（包括`body` StreamField的JSON结构）和元数据。
-    ```json
-    {
-        "id": 15,
-        "meta": {
+* **响应示例 (200 OK)**:
+```json
+{
+    "query": "wagtail",
+    "total": 15,
+    "page": 1,
+    "per_page": 10,
+    "start_date": "",
+    "end_date": "",
+    "order_by": "",
+    "results": [
+        {
+            "id": 101,
+            "title": "Wagtail 教程",
+            "url": "/blog/wagtail-tutorial/",
             "type": "blog.BlogPage",
-            "detail_url": "https://your_domain.com/api/v2/pages/15/",
-            "html_url": "https://your_domain.com/blog/my-first-post/",
-            // ... more meta fields
-        },
-        "title": "我的第一篇Wagtail博客",
-        "date": "2025-06-10",
-        "body": [
-            {
-                "type": "rich_text",
-                "value": "<p>这是段落内容。</p>",
-                "id": "uuid-goes-here"
-            },
-            {
-                "type": "code",
-                "value": {
-                    "language": "python",
-                    "code": "print('Hello, World!')"
-                },
-                "id": "another-uuid-here"
+            "date": "2025-06-15",
+            "intro": "文章简介...",
+            "featured_image": {
+                "id": 5,
+                "title": "Cover",
+                "url": "/media/images/cover.jpg"
             }
-        ],
-        "authors": [
-            // ... author objects
-        ]
+        }
+    ]
+}
+```
+
+### **2.2 搜索建议**
+
+  * **Endpoint**: `GET /api/search/suggest/`
+  * **视图函数**: `apps.search.api.search_suggestions_api`
+  * **描述**: 根据用户输入提供热门搜索词补全。
+
+| 参数名 | 类型 | 必选 | 描述 |
+| :--- | :--- | :--- | :--- |
+| `q` | string | 是 | 关键词前缀 |
+
+  * **响应示例**:
+
+```json
+{
+    "suggestions": [
+        { "query": "django tutorial", "hits": 150 },
+        { "query": "django models", "hits": 89 }
+    ]
+}
+```
+
+## **3. 博客互动 API (Blog Interactions)**
+
+由 `apps.blog` 提供，主要用于处理文章的点赞、反应等轻量交互。
+
+### **3.1 切换文章反应 (Toggle Reaction)**
+
+  * **Endpoint**: `POST /blog/api/reactions/<int:page_id>/toggle/`
+  * **认证**: Session (支持匿名，基于 IP/SessionKey)
+  * **描述**: 用户点击点赞/鼓掌图标时调用。若已存在相同反应则取消，不同则更新。
+
+| Body 参数 | 类型 | 描述 |
+| :--- | :--- | :--- |
+| `reaction_type` | int | 反应类型 ID (如 1=Like, 2=Heart) |
+
+  * **响应示例**:
+
+
+
+```json
+{
+    "success": true,
+    "action": "added",  // 或 'removed', 'changed'
+    "counts": {
+        "1": 10,  // 反应类型ID: 数量
+        "2": 5
     }
-    ```
-* **示例 (cURL)**:
-    ```bash
-    curl -X GET "https://your_domain.com/api/v2/pages/15/"
-    ```
+}
+```
 
----
+### **3.2 获取反应计数**
 
-## **5. 通用响应与错误码**
+  * **Endpoint**: `GET /blog/api/reactions/<int:page_id>/counts/`
 
-* **`200 OK`**: 请求成功。
-* **`201 Created`**: 资源创建成功 (用于POST请求)。
-* **`204 No Content`**: 请求成功，但无内容返回 (用于DELETE请求)。
-* **`400 Bad Request`**: 请求无效，例如参数错误或请求体格式不正确。响应体中通常会包含错误详情。
-* **`401 Unauthorized`**: 未经授权。请求头中缺少有效的`Authorization`信息。
-* **`403 Forbidden`**: 已认证，但无权访问该资源。
-* **`404 Not Found`**: 请求的资源不存在。
-* **`500 Internal Server Error`**: 服务器内部发生错误。
+  * **描述**: 页面加载时获取最新的反应数据及当前用户的状态。
 
+  * **响应示例**
+
+```json
+{
+    "user_reaction": 1, // 当前用户选择的类型ID，无则null
+    "reactions": [
+        { "id": 1, "name": "点赞", "icon": "fa-thumbs-up", "count": 12 },
+        { "id": 2, "name": "爱心", "icon": "fa-heart", "count": 5 }
+    ]
+}
+```
+
+## **4. 评论系统 API (Comments)**
+
+由 `apps.comments` 提供，支持 AJAX 动态加载和提交。
+
+### **4.1 提交评论**
+
+  * **Endpoint**: `POST /comments/post/<int:page_id>/`
+  * **认证**: `LoginRequired` (需登录)
+  * **Headers**: `X-Requested-With: XMLHttpRequest`
+
+| Body 参数 | 类型 | 必选 | 描述 |
+| :--- | :--- | :--- | :--- |
+| `content` | string | 是 | 评论内容 |
+| `parent_id` | int | 否 | 父评论 ID (回复时使用) |
+| `replied_to_user_id` | int | 否 | 被回复用户 ID |
+
+  * **响应示例**:
+
+```json
+{
+    "status": "success",
+    "message": "评论已发布",
+    "html": "<div class='comment'>...</div>", // 渲染好的评论 HTML 片段
+    "comment_status": "approved"
+}
+```
+
+### **4.2 加载评论列表**
+
+  * **Endpoint**: `GET /comments/load/<int:page_id>/`
+  * **描述**: 分页加载根评论。
+
+| 参数 | 描述 |
+| :--- | :--- |
+| `page` | 页码 |
+| `sort` | `hot` (热门) 或 `new` (最新) |
+
+  * **响应**:
+
+```json
+{
+    "status": "success",
+    "html": "...", // 包含多条评论的 HTML
+    "has_next": true,
+    "total_comments": 100,
+    "is_authenticated": true
+}
+```
+
+### **4.3 评论点赞/踩**
+
+  * **Endpoint**: `POST /comments/react/`
+  * **认证**: `LoginRequired`
+
+| Body 参数 | 描述 |
+| :--- | :--- |
+| `comment_id` | 评论 ID |
+| `reaction_type` | `1` (赞) 或 `-1` (踩) |
+
+  * **响应**:
+
+```json
+{
+    "status": "success",
+    "action": "added",
+    "like_count": 10,
+    "dislike_count": 2
+}
+```
+
+### **4.4 删除/编辑评论**
+
+  * **删除**: `POST /comments/delete/` (`comment_id`)
+  * **编辑**: `POST /comments/edit/` (`comment_id`, `content`)
+
+## **5. 认证 API (Authentication)**
+
+基于 `djangorestframework_simplejwt`。
+
+### **5.1 获取 Token**
+
+  * **Endpoint**: `POST /api/token/`
+  * **Body**: `{"username": "...", "password": "..."}`
+  * **Response**: `{"refresh": "...", "access": "..."}`
+
+### **5.2 刷新 Token**
+
+  * **Endpoint**: `POST /api/token/refresh/`
+  * **Body**: `{"refresh": "..."}`
+
+## **6. 错误代码规范**
+
+所有自定义 API 遵循以下 HTTP 状态码规范：
+
+  * **200 OK**: 操作成功。
+  * **400 Bad Request**: 参数错误（如缺少必填项、验证失败）。
+  * **403 Forbidden**: 权限不足（如删除他人评论、未登录操作）。
+  * **404 Not Found**: 资源不存在（如评论 ID 无效）。
+  * **429 Too Many Requests**: 触发频率限制（如评论过快）。
+  * **500 Internal Server Error**: 服务器内部异常。

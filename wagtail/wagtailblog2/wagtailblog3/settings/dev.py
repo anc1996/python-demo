@@ -83,7 +83,7 @@ MONGO_DEBUG = True  # 在MongoDB适配器中使用此设置来控制详细日志
 # ===========================================================
 
 # 启用邮件系统详细日志记录
-EMAIL_DEBUG_ENABLED = True
+EMAIL_DEBUG_ENABLED = DEBUG
 
 if DEBUG and EMAIL_DEBUG_ENABLED:
 	# 合并邮件调试配置

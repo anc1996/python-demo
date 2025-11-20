@@ -29,36 +29,6 @@ REST_FRAMEWORK = {
 
 
 # ==========================================================
-# CORS 跨域配置 (依赖django-cors-headers包)
-# ==========================================================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",  # Vue.js 开发服务器
-    "http://0.0.0.0:8080",  # 本地IP访问
-]
-
-CORS_ALLOW_METHODS = [  # 允许的HTTP请求方法
-    'DELETE',  # 删除资源
-    'GET',     # 获取资源
-    'OPTIONS', # 预检请求
-    'PATCH',   # 部分更新资源
-    'POST',    # 创建资源
-    'PUT',     # 完全更新资源
-]
-
-CORS_ALLOW_HEADERS = [  # 允许的HTTP请求头
-    'accept',          # 指定客户端能够接收的内容类型
-    'accept-encoding', # 指定客户端能够理解的编码方式
-    'authorization',   # 包含身份验证信息
-    'content-type',    # 指定请求体的媒体类型
-    'dnt',            # Do Not Track请求头
-    'origin',         # 指示请求来自哪个站点
-    'user-agent',     # 客户端应用类型
-    'x-csrftoken',    # CSRF防护令牌
-    'x-requested-with', # 用于标识AJAX请求
-]
-
-
-# ==========================================================
 # Swagger API 文档配置
 # ==========================================================
 SWAGGER_SETTINGS = {

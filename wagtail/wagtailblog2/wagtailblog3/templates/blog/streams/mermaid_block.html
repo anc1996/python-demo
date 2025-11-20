@@ -1,241 +1,53 @@
 {% load mermaid %}
 
-<div class="mermaid-diagram-wrapper" style="
-    border: 2px solid #0066cc;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    margin: 20px 0;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    position: relative;
-">
+<div class="mermaid-diagram-wrapper">
     {# 标题栏和控制按钮 #}
-    <div class="mermaid-header" style="
-        background: #0066cc;
-        color: white;
-        padding: 12px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
-        user-select: none;
-    " onclick="this.parentElement.querySelector('.mermaid-content').classList.toggle('collapsed'); this.querySelector('.toggle-icon').textContent = this.parentElement.querySelector('.mermaid-content').classList.contains('collapsed') ? '▼' : '▲';">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="toggle-icon" style="font-size: 14px;">▲</span>
-            <span style="font-weight: bold; font-size: 16px;">📊 Mermaid 图表</span>
+    <div class="mermaid-header">
+        <div style="display: flex; align-items: center;">
+            <span class="toggle-icon">▲</span>
+            <span class="mermaid-title">📊 Mermaid 图表</span>
         </div>
-        <div style="font-size: 12px; opacity: 0.9;">点击折叠/展开</div>
+        <div class="mermaid-toggle-hint">点击折叠/展开</div>
     </div>
 
     {# 内容区域 #}
-    <div class="mermaid-content" style="
-        padding: 20px;
-        background: white;
-        transition: all 0.3s ease;
-        max-height: 5000px;
-        overflow: hidden;
-    ">
+    <div class="mermaid-content">
         {# 调试面板 #}
-        <details style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 4px solid #0066cc;">
-            <summary style="cursor: pointer; font-weight: bold; color: #0066cc; outline: none;">
-                🐛 查看原始代码
-            </summary>
-            <pre style="background: white; padding: 15px; overflow-x: auto; margin-top: 10px; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #e0e0e0; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px;">{{ value.code }}</pre>
-            <p style="margin-top: 10px; color: #666; font-size: 0.9em;">
-                💡 如果图表未显示，请检查上面的代码语法是否正确
-            </p>
+        <details>
+            <summary>🐛 查看原始代码</summary>
+            <pre>{{ value.code }}</pre>
+            <p>💡 如果图表未显示，请检查上面的代码语法是否正确</p>
         </details>
 
         {# 缩放控制按钮 #}
-        <div class="zoom-controls" style="
-            margin-bottom: 15px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            padding: 10px;
-            background: #f0f4f8;
-            border-radius: 4px;
-        ">
-            <span style="font-weight: bold; color: #333; font-size: 14px;">缩放控制：</span>
-            <button onclick="event.stopPropagation(); zoomMermaid(this, 'in')" style="
-                padding: 8px 16px;
-                background: #0066cc;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: bold;
-                transition: background 0.2s;
-            " onmouseover="this.style.background='#0052a3'" onmouseout="this.style.background='#0066cc'">
+        <div class="zoom-controls">
+            <span class="zoom-title">缩放控制：</span>
+            <button data-zoom="in">
                 🔍 放大
             </button>
-            <button onclick="event.stopPropagation(); zoomMermaid(this, 'out')" style="
-                padding: 8px 16px;
-                background: #0066cc;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: bold;
-                transition: background 0.2s;
-            " onmouseover="this.style.background='#0052a3'" onmouseout="this.style.background='#0066cc'">
+            <button data-zoom="out">
                 🔍 缩小
             </button>
-            <button onclick="event.stopPropagation(); zoomMermaid(this, 'reset')" style="
-                padding: 8px 16px;
-                background: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: bold;
-                transition: background 0.2s;
-            " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
+            <button data-zoom="reset">
                 ↺ 重置
             </button>
-            <span class="zoom-level" style="
-                margin-left: 10px;
-                padding: 6px 12px;
-                background: white;
-                border-radius: 4px;
-                font-weight: bold;
-                color: #0066cc;
-                font-size: 14px;
-            ">100%</span>
+
+            {# ================================================== #}
+            {# ★★★ 新增：全屏查看按钮 ★★★ #}
+            {# ================================================== #}
+            <button data-zoom="fullscreen" class="mermaid-fullscreen-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 5px;"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                全屏查看
+            </button>
+
+            <span class="zoom-level">100%</span>
         </div>
 
         {# Mermaid 图表容器 #}
-        <div class="mermaid-chart-container" style="
-            text-align: center;
-            overflow: auto;
-            padding: 20px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            min-height: 200px;
-        ">
-            <div class="mermaid-inner" style="
-                transform: scale(1);
-                transform-origin: center center;
-                transition: transform 0.3s ease;
-                display: inline-block;
-            ">
+        <div class="mermaid-chart-container">
+            <div class="mermaid-inner">
                 {% mermaid value.code %}
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* 折叠状态样式 */
-    .mermaid-content.collapsed {
-        max-height: 0 !important;
-        padding: 0 20px !important;
-        opacity: 0;
-    }
-
-    /* 防止点击控制按钮时触发折叠 */
-    .zoom-controls button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-</style>
-
-<script>
-    // 缩放控制函数 - 限定在当前图表容器内
-    function zoomMermaid(button, action) {
-        // 获取当前按钮所在的 wrapper
-        const wrapper = button.closest('.mermaid-diagram-wrapper');
-        const chartInner = wrapper.querySelector('.mermaid-inner');
-        const zoomLevelDisplay = wrapper.querySelector('.zoom-level');
-
-        // 获取当前缩放级别
-        const currentTransform = window.getComputedStyle(chartInner).transform;
-        let currentScale = 1;
-
-        if (currentTransform !== 'none') {
-            const matrix = currentTransform.match(/matrix\(([^)]+)\)/);
-            if (matrix) {
-                const values = matrix[1].split(',');
-                currentScale = parseFloat(values[0]);
-            }
-        }
-
-        // 计算新的缩放级别
-        let newScale = currentScale;
-        const zoomStep = 0.2;
-        const minScale = 0.2;
-        const maxScale = 3.0;
-
-        switch(action) {
-            case 'in':
-                newScale = Math.min(currentScale + zoomStep, maxScale);
-                break;
-            case 'out':
-                newScale = Math.max(currentScale - zoomStep, minScale);
-                break;
-            case 'reset':
-                newScale = 1;
-                break;
-        }
-
-        // 应用新的缩放
-        chartInner.style.transform = `scale(${newScale})`;
-
-        // 更新显示的缩放级别
-        zoomLevelDisplay.textContent = `${Math.round(newScale * 100)}%`;
-
-        // 如果放大超过容器，显示滚动提示
-        if (newScale > 1.5) {
-            const container = wrapper.querySelector('.mermaid-chart-container');
-            container.style.cursor = 'move';
-        }
-    }
-
-    // 可选：添加鼠标拖动功能（仅在放大时）
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.mermaid-chart-container').forEach(container => {
-            let isDragging = false;
-            let startX, startY, scrollLeft, scrollTop;
-
-            container.addEventListener('mousedown', function(e) {
-                const chartInner = this.querySelector('.mermaid-inner');
-                const scale = parseFloat(window.getComputedStyle(chartInner).transform.match(/matrix\(([^)]+)\)/)?.[1].split(',')[0] || 1);
-
-                if (scale > 1.2) {  // 仅在放大时启用拖动
-                    isDragging = true;
-                    startX = e.pageX - container.offsetLeft;
-                    startY = e.pageY - container.offsetTop;
-                    scrollLeft = container.scrollLeft;
-                    scrollTop = container.scrollTop;
-                    container.style.cursor = 'grabbing';
-                }
-            });
-
-            container.addEventListener('mouseleave', () => {
-                isDragging = false;
-                const chartInner = container.querySelector('.mermaid-inner');
-                const scale = parseFloat(window.getComputedStyle(chartInner).transform.match(/matrix\(([^)]+)\)/)?.[1].split(',')[0] || 1);
-                container.style.cursor = scale > 1.2 ? 'move' : 'default';
-            });
-
-            container.addEventListener('mouseup', () => {
-                isDragging = false;
-                const chartInner = container.querySelector('.mermaid-inner');
-                const scale = parseFloat(window.getComputedStyle(chartInner).transform.match(/matrix\(([^)]+)\)/)?.[1].split(',')[0] || 1);
-                container.style.cursor = scale > 1.2 ? 'move' : 'default';
-            });
-
-            container.addEventListener('mousemove', function(e) {
-                if (!isDragging) return;
-                e.preventDefault();
-                const x = e.pageX - container.offsetLeft;
-                const y = e.pageY - container.offsetTop;
-                const walkX = (x - startX) * 2;
-                const walkY = (y - startY) * 2;
-                container.scrollLeft = scrollLeft - walkX;
-                container.scrollTop = scrollTop - walkY;
-            });
-        });
-    });
-</script>

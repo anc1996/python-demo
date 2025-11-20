@@ -20,7 +20,7 @@ class CardBlock(StructBlock):
     # 定义卡片的标题字段，类型为 CharBlock
     heading = CharBlock()
     # 定义卡片的文本字段，类型为 RichTextBlock，支持粗体、斜体和链接
-    text = RichTextBlock(features=["bold", "italic", "link"])
+    text = RichTextBlock(features=["ai","bold", "italic", "link"])
     # 定义卡片的图片字段，类型为 ImageBlock，required=False 表示图片是可选的
     image = ImageBlock(required=False)
 
@@ -40,7 +40,7 @@ class FeaturedPostsBlock(StructBlock):
     # 定义特色文章部分的标题字段，类型为 CharBlock
     heading = CharBlock()
     # 定义特色文章部分的介绍文本字段，类型为 RichTextBlock，可选
-    text = RichTextBlock(features=["bold", "italic", "link"], required=False)
+    text = RichTextBlock(features=["ai","bold", "italic", "link"], required=False)
     # 定义文章列表字段，类型为 ListBlock
     # ListBlock 中的每个项都是一个 PageChooserBlock，用于选择一个类型为 "blog.BlogPage" 的页面
     posts = ListBlock(PageChooserBlock(page_type="blog.BlogPage"))
