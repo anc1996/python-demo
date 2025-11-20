@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "drf_yasg",  # API 文档生成
     "corsheaders",  # 如果需要跨域支持
     "wagtail_modeladmin", # Wagtail ModelAdmin,模块允许您将项目中的任何模型添加到 Wagtail 管理界面
+	"wagtail_ai", # wagtail-ai库，用于在Wagtail CMS中实现AI功能。
     
     "wagtail.contrib.forms",  # Wagtail 表单贡献模块
     "wagtail.contrib.redirects",  # Wagtail 重定向贡献模块
@@ -65,6 +66,60 @@ INSTALLED_APPS = [
     "django.contrib.sessions",  # Django 会话模块
     "django.contrib.messages",  # Django 消息模块
     "django.contrib.staticfiles",  # Django 静态文件模块
+]
+
+WAGTAILADMIN_RICH_TEXT_EDITORS = {
+	# 这是 Wagtail 默认的编辑器
+	"default": {
+		"WIDGET": "wagtail.admin.rich_text.DraftailRichTextArea",
+		"FEATURES": [
+			"h2", "h3", "h4", "h5", "h6", "bold", "italic", "underline",
+			"ol", "ul", "hr", "code", "blockquote", "link", "document-link",
+			"image", "embed", "strikethrough", "superscript", "subscript",
+			
+			# --- 在这里添加 "ai" ---
+			"ai",
+			# -------------------------
+			"table",
+		],
+	},
+	
+	# 这是你配置的 Markdown 编辑器
+	"markdown": {
+		"WIDGET": "wagtailmarkdown.widgets.WagtailMarkdownWidget",
+		# 同样可以给 Markdown 添加 AI 功能
+		"FEATURES": ["ai"],
+	},
+}
+
+# ==========================================================
+# CORS 跨域配置 (依赖django-cors-headers包)
+# ==========================================================
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",  # Vue.js 开发服务器
+    "http://0.0.0.0:8080",  # 本地IP访问
+	"http://0.0.0.0:8000",  # 本地IP访问
+]
+
+CORS_ALLOW_METHODS = [  # 允许的HTTP请求方法
+    'DELETE',  # 删除资源
+    'GET',     # 获取资源
+    'OPTIONS', # 预检请求
+    'PATCH',   # 部分更新资源
+    'POST',    # 创建资源
+    'PUT',     # 完全更新资源
+]
+
+CORS_ALLOW_HEADERS = [  # 允许的HTTP请求头
+    'accept',          # 指定客户端能够接收的内容类型
+    'accept-encoding', # 指定客户端能够理解的编码方式
+    'authorization',   # 包含身份验证信息
+    'content-type',    # 指定请求体的媒体类型
+    'dnt',            # Do Not Track请求头
+    'origin',         # 指示请求来自哪个站点
+    'user-agent',     # 客户端应用类型
+    'x-csrftoken',    # CSRF防护令牌
+    'x-requested-with', # 用于标识AJAX请求
 ]
 
 

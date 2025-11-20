@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ page.title }}</h1>
+    
+    {% if page.intro %}
+        <div class="intro">
+            {{ page.intro|richtext }}
+        </div>
+    {% endif %}
+    
+    <div class="blog-list">
+        {% for post in blog_pages %}
+        <article class="blog-post-summary">
+            <h2><a href="{% pageurl post %}">{{ post.title }}</a></h2>
+            <p class="meta">发布于: {{ post.date }}</p>
+            {% if post.intro %}
+                <div class="intro">
+                    {{ post.intro|richtext }}
+                </div>
+            {% endif %}
+            <a href="{% pageurl post %}" class="read-more">阅读全文 →</a>
+        </article>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

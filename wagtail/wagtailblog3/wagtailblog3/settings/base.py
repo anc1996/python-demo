@@ -34,20 +34,22 @@ INSTALLED_APPS = [
     # 第三方应用
     "storages",  # 添加 Django Storages
 	"django_mermaid",  # django-mermaid 包
-    "wagtailmarkdown",
-    "wagtailmedia",
+    "wagtailmarkdown", # wagtail-markdown包
+    "wagtailmedia", # wagtail-media 包
     'wagtailcodeblock', #  Wagtail CMS 源代码的语法高亮器块
     "rest_framework",  # Django REST Framework
     "rest_framework_simplejwt",  # JWT 认证
     "drf_yasg",  # API 文档生成
     "corsheaders",  # 如果需要跨域支持
     "wagtail_modeladmin", # Wagtail ModelAdmin,模块允许您将项目中的任何模型添加到 Wagtail 管理界面
+	'wagtail_ai',  # ← wagtail-ai库
     
     "wagtail.contrib.forms",  # Wagtail 表单贡献模块
     "wagtail.contrib.redirects",  # Wagtail 重定向贡献模块
     "wagtail.contrib.table_block",  # Wagtail 表格块模块
     "wagtail.contrib.search_promotions",  # 添加搜索推广功能
     "wagtail.contrib.settings",  #保存所有网页通用设置的模型
+	'wagtail.locales',# wagtail locales 本地化
     "wagtail.embeds",  # Wagtail 嵌入内容模块
     "wagtail.sites",  # Wagtail 站点管理模块
     "wagtail.users",  # Wagtail 用户管理模块
@@ -104,6 +106,7 @@ CORS_ALLOW_HEADERS = [  # 允许的HTTP请求头
 MIDDLEWARE = [
     'blog.middleware.PageViewMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",  # 处理会话数据，确保每个请求都有会话功能
+	'django.middleware.locale.LocaleMiddleware',
     "django.middleware.common.CommonMiddleware",  # 处理常见的HTTP功能，如URL重写、主机验证等
     "django.middleware.csrf.CsrfViewMiddleware",  # 提供CSRF保护，防止跨站请求伪造攻击
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # 将用户与请求关联，提供request.user对象
@@ -174,19 +177,37 @@ AUTH_PASSWORD_VALIDATORS = [  # 定义密码验证器列表，用于检查用户
     },
 ]
 
-# 国际化
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-# 语言代码，设置为中文简体
-LANGUAGE_CODE = "zh-hans"  # 英文为 "en-us"，更改为中文简体
 
-# 时区设置，修改为中国时区
-TIME_ZONE = "Asia/Shanghai"  # 默认为 "UTC"，更改为中国时区
+from dotenv import load_dotenv
 
-# 是否启用 Django 的翻译系统
-USE_I18N = True  # True 表示启用国际化功能
+# 加载环境变量
+load_dotenv()
 
-# 是否使用时区感知的日期时间
-USE_TZ = True  # True 表示数据库存储 UTC 时间，在展示时根据 TIME_ZONE 转换
+
+
+
+
+
+# 1. 基础 Django 配置
+LANGUAGE_CODE = "zh-hans"  # 默认语言设置为简体中文
+TIME_ZONE = "Asia/Shanghai"  # 时区设置为上海
+
+USE_I18N = True  # 必须为 True，启用翻译系统
+USE_TZ = True    # 启用时区感知
+
+# 2. ★★★ 新增：Wagtail 多语言配置 ★★★
+
+# 开启 Wagtail 的多语言内容支持（这会让后台出现 Locale 列）
+WAGTAIL_I18N_ENABLED = True
+
+# 定义站点支持的语言列表
+# 建议同时赋值给 Django 的 LANGUAGES 和 Wagtail 的 WAGTAIL_CONTENT_LANGUAGES
+# 格式：('语言代码', '显示名称')
+WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
+    ('zh-hans', '简体中文'),  # 默认语言（与 LANGUAGE_CODE 保持一致）
+    ('en', 'English'),      # 第二语言
+]
+
 
 # 静态文件 (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -261,6 +282,7 @@ COMMENT_RATE_LIMIT = {
     'MAX_COMMENTS': 3,      # 1分钟内最多3条评论
     'CACHE_ALIAS': 'comment_rate_limit_cache', # 指定用于频率限制的缓存别名
 }
+
 
 
 # ===============================================

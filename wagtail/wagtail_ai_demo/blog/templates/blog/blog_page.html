@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<article class="blog-post">
+    <header>
+        <h1>{{ page.title }}</h1>
+        <p class="meta">发布于: {{ page.date }}</p>
+    </header>
+    
+    {% if page.intro %}
+    <div class="intro">
+        {{ page.intro|richtext }}
+    </div>
+    {% endif %}
+    
+    <div class="body">
+        {% for block in page.body %}
+            {% if block.block_type == 'rich_text' or block.block_type == 'ai_rich_text' %}
+                <div class="block-{{ block.block_type }}">
+                    {{ block.value|richtext }}
+                </div>
+            {% elif block.block_type == 'markdown' or block.block_type == 'ai_markdown' %}
+                <div class="block-{{ block.block_type }}">
+                    {{ block.value|safe }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+    {% if page.gallery_images.all %}
+    <div class="gallery">
+        <h3>图片画廊</h3>
+        {% for item in page.gallery_images.all %}
+            <figure>
+                {% image item.image fill-800x600 %}
+                {% if item.caption %}
+                    <figcaption>{{ item.caption }}</figcaption>
+                {% endif %}
+            </figure>
+        {% endfor %}
+    </div>
+    {% endif %}
+</article>
+{% endblock %}

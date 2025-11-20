@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="{% static 'blog/css/audio_blocks.css' %}">
     <link rel="stylesheet" href="{% static 'blog/css/embed_blocks.css' %}">
     <link rel="stylesheet" href="{% static 'blog/css/table_blocks.css' %}">
-
+    <link rel="stylesheet" href="{% static 'blog/css/mermaid_block.css' %}">
     <!-- 评论模块样式 -->
     <link rel="stylesheet" href="{% static 'comments/css/comments.css' %}">
 
@@ -203,12 +203,12 @@
     <script src="{% static 'blog/js/lightbox/lightbox.js' %}" async></script>
     <script src="{% static 'blog/js/jquery-ui/jquery-ui.js' %}" async></script>
 
-    <script src="{% static 'blog/js/mermaid.min.js' %}" async></script>
-
+    <script src="{% static 'blog/js/mermaid_block.js' %}" async></script>
     <script src="{% static 'blog/js/image_blocks.js' %}" async></script>
     <script src="{% static 'blog/js/video_blocks.js' %}" async></script>
     <script src="{% static 'blog/js/editor-enhancements.js' %}" async></script>
 
+    {# 其他板块 #}
     <script src="{% static 'comments/js/comments.js' %}" defer></script> {# defer 确保DOM加载后再执行 #}
 
 {% endblock %}
