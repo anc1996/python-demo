@@ -148,7 +148,7 @@ $(function() {
     }
 
     // ===================================
-    // 4. TOC 容器内监听 (嵌套滚动版)
+    // 4. TOC 容器内监听 (嵌套滚动版) - 支持 H1
     // ===================================
     function initTOC() {
         const tocContainer = document.getElementById('toc-content');
@@ -162,7 +162,8 @@ $(function() {
         const contentContext = document.querySelector('.article-body-content');
         if (!contentContext || !tocContainer) return;
 
-        const headers = contentContext.querySelectorAll('h2, h3, h4');
+        // 🔥 修改 1：增加 h1 查询
+        const headers = contentContext.querySelectorAll('h1, h2, h3, h4');
         if (headers.length === 0) {
             tocContainer.innerHTML = '<p class="text-muted">暂无目录</p>';
             return;
@@ -171,7 +172,9 @@ $(function() {
         tocContainer.innerHTML = '';
         const tocList = document.createElement('ul');
         tocList.className = 'toc-list';
-        let stack = [{ level: 1, element: tocList }];
+
+        // 🔥 修改 2：栈初始层级改为 0，让 h1 成为第一级
+        let stack = [{ level: 0, element: tocList }];
 
         // --- 构建目录 ---
         headers.forEach((header, index) => {
@@ -179,6 +182,12 @@ $(function() {
             const currentLevel = parseInt(header.tagName.substring(1));
             const li = document.createElement('li');
             li.className = 'toc-item';
+
+            // 🔥 修改 3：为 h1 添加特殊类名
+            if (currentLevel === 1) {
+                li.classList.add('toc-item-h1');
+            }
+
             li.setAttribute('data-target', header.id);
 
             const entry = document.createElement('div');
@@ -218,15 +227,12 @@ $(function() {
 
                 if (isContainerMode) {
                     // --- 容器模式 ---
-                    // 计算公式：scrollTop = 当前滚过的高度 + (标题相对视口top - 容器相对视口top)
                     const headerRect = header.getBoundingClientRect();
                     const boxRect = articleScrollBox.getBoundingClientRect();
-
-                    // 计算标题在容器内部的相对位置
                     const relativeOffset = headerRect.top - boxRect.top;
 
                     articleScrollBox.scrollTo({
-                        top: articleScrollBox.scrollTop + relativeOffset - 20, // 20px 顶部留白
+                        top: articleScrollBox.scrollTop + relativeOffset - 20,
                         behavior: 'smooth'
                     });
                 } else {
@@ -267,7 +273,6 @@ $(function() {
         // ★★★ 滚动监听：监听 articleScrollBox ★★★
         let isClicking = false;
         let scrollTimeout;
-        // 决定监听谁
         const scrollTarget = isContainerMode ? articleScrollBox : window;
 
         const onScroll = function() {
@@ -282,19 +287,13 @@ $(function() {
                     const header = headers[i];
 
                     if (isContainerMode) {
-                        // --- 容器模式判定 ---
-                        // 直接比较 getBoundingClientRect 的差值
                         const diff = header.getBoundingClientRect().top - articleScrollBox.getBoundingClientRect().top;
-
-                        // 如果标题距离容器顶部小于 100px (即已经滚到了或者快到了)
                         if (diff <= offsetThreshold) {
                             currentActiveId = header.id;
                         } else {
-                            // 标题还在下面很远，后面的也不用看了
                             break;
                         }
                     } else {
-                        // --- Window 模式 ---
                         if (header.getBoundingClientRect().top <= 150) {
                             currentActiveId = header.id;
                         } else {
@@ -315,7 +314,7 @@ $(function() {
                         const link = activeItem.querySelector('.toc-link');
                         if(link) link.classList.add('active');
 
-                        // 自动展开/TOC自滚动逻辑保持不变...
+                        // 自动展开父级
                         let parent = activeItem.parentElement;
                         while(parent) {
                             if (parent.tagName === 'UL' && parent.parentElement.classList.contains('toc-item')) {
@@ -333,7 +332,6 @@ $(function() {
             }, 50);
         };
 
-        // 绑定事件
         scrollTarget.addEventListener('scroll', onScroll);
     }
 
@@ -399,6 +397,11 @@ $(function() {
                 container.classList.add(hideCls);
                 document.body.classList.add(bodyCls);
                 localStorage.setItem(key, 'true');
+            }
+
+            // 🆕🆕🆕 通知 ResizeManager 更新分隔条显示状态 🆕🆕🆕
+            if (window.resizeManager) {
+                window.resizeManager.updateHandleVisibility();
             }
 
             // 触发 resize 让图表重绘

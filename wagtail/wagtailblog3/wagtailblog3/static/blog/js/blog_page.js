@@ -148,29 +148,46 @@ $(function() {
     }
 
     // ===================================
-    // 4. TOC 目录与滚动监听 (完整保留逻辑)
+    // 4. TOC 容器内监听 (嵌套滚动版) - 支持 H1
     // ===================================
     function initTOC() {
-        const scrollContainer = document.getElementById('article-scroll-container');
         const tocContainer = document.getElementById('toc-content');
+        // ★ 获取文章独立滚动容器
+        const articleScrollBox = document.getElementById('article-inner-container');
 
-        if (!scrollContainer || !tocContainer) return;
+        // 仅在 PC 端且容器存在时启用容器监听
+        const isContainerMode = (window.innerWidth >= 992 && articleScrollBox);
 
-        const headers = scrollContainer.querySelectorAll('h1, h2, h3, h4');
+        // 内容上下文
+        const contentContext = document.querySelector('.article-body-content');
+        if (!contentContext || !tocContainer) return;
+
+        // 🔥 修改 1：增加 h1 查询
+        const headers = contentContext.querySelectorAll('h1, h2, h3, h4');
         if (headers.length === 0) {
-            $('.blog-sidebar-left').hide();
+            tocContainer.innerHTML = '<p class="text-muted">暂无目录</p>';
             return;
         }
 
+        tocContainer.innerHTML = '';
         const tocList = document.createElement('ul');
         tocList.className = 'toc-list';
+
+        // 🔥 修改 2：栈初始层级改为 0，让 h1 成为第一级
         let stack = [{ level: 0, element: tocList }];
 
+        // --- 构建目录 ---
         headers.forEach((header, index) => {
             if (!header.id) header.id = 'heading-' + index;
             const currentLevel = parseInt(header.tagName.substring(1));
             const li = document.createElement('li');
             li.className = 'toc-item';
+
+            // 🔥 修改 3：为 h1 添加特殊类名
+            if (currentLevel === 1) {
+                li.classList.add('toc-item-h1');
+            }
+
             li.setAttribute('data-target', header.id);
 
             const entry = document.createElement('div');
@@ -180,107 +197,132 @@ $(function() {
             const a = document.createElement('a');
             a.className = 'toc-link';
             a.textContent = header.innerText;
-            a.href = 'javascript:void(0);';
+            a.href = 'javascript:void(0);'; // 禁用锚点
 
             entry.appendChild(toggle);
             entry.appendChild(a);
             li.appendChild(entry);
 
-            toggle.addEventListener('click', function(e) {
+            // 折叠逻辑 (不变)
+            toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (li.querySelector('ul')) li.classList.toggle('collapsed');
+                if (li.querySelector('ul')) {
+                    li.classList.toggle('collapsed');
+                    const icon = toggle.querySelector('i');
+                    if(icon) {
+                        icon.classList.toggle('fa-caret-down');
+                        icon.classList.toggle('fa-caret-right');
+                    }
+                }
             });
 
-            a.addEventListener('click', function(e) {
+            // ★★★ 点击跳转：控制内部容器滚动 ★★★
+            a.addEventListener('click', (e) => {
                 e.preventDefault();
                 isClicking = true;
-                document.querySelectorAll('.toc-link').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.toc-item').forEach(el => el.classList.remove('active'));
-                this.classList.add('active');
-                li.classList.add('active');
 
-                if (window.innerWidth > 1100) {
-                    const targetTop = header.offsetTop - scrollContainer.offsetTop;
-                    scrollContainer.scrollTo({ top: targetTop - 20, behavior: 'smooth' });
+                document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+                li.classList.add('active');
+                a.classList.add('active');
+
+                if (isContainerMode) {
+                    // --- 容器模式 ---
+                    const headerRect = header.getBoundingClientRect();
+                    const boxRect = articleScrollBox.getBoundingClientRect();
+                    const relativeOffset = headerRect.top - boxRect.top;
+
+                    articleScrollBox.scrollTo({
+                        top: articleScrollBox.scrollTop + relativeOffset - 20,
+                        behavior: 'smooth'
+                    });
                 } else {
-                    const targetTop = header.getBoundingClientRect().top + window.scrollY - 80;
+                    // --- 移动端 Window 模式 ---
+                    const targetTop = header.getBoundingClientRect().top + window.scrollY - 100;
                     window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                    const btn = document.getElementById('btn-hide-left');
+                    if(btn && window.innerWidth < 992) btn.click();
                 }
-                setTimeout(() => { isClicking = false; }, 600);
+
+                setTimeout(() => { isClicking = false; }, 800);
             });
 
+            // 栈处理 (不变)
             let parent = stack[stack.length - 1];
             if (currentLevel > parent.level) {
                 const newUl = document.createElement('ul');
                 newUl.className = 'toc-sub-menu';
-                if (parent.element.lastElementChild && parent.element.lastElementChild.tagName === 'LI') {
-                    parent.element.lastElementChild.appendChild(newUl);
-                } else {
-                    parent.element.appendChild(newUl);
-                }
+                parent.element.lastElementChild ? parent.element.lastElementChild.appendChild(newUl) : parent.element.appendChild(newUl);
                 stack.push({ level: currentLevel, element: newUl });
             } else if (currentLevel < parent.level) {
-                while (stack.length > 1 && currentLevel <= stack[stack.length - 1].level) {
-                    stack.pop();
-                }
+                while (stack.length > 1 && currentLevel <= stack[stack.length - 1].level) stack.pop();
             }
             stack[stack.length - 1].element.appendChild(li);
         });
 
-        const allItems = tocList.querySelectorAll('li.toc-item');
-        allItems.forEach(item => {
+        // 图标处理
+        tocList.querySelectorAll('li.toc-item').forEach(item => {
             const toggle = item.querySelector('.toc-toggle');
             if (item.querySelector('ul')) {
-                item.classList.add('has-children');
                 toggle.innerHTML = '<i class="fa fa-caret-down"></i>';
             } else {
                 toggle.classList.add('placeholder');
             }
         });
-
         tocContainer.appendChild(tocList);
 
+        // ★★★ 滚动监听：监听 articleScrollBox ★★★
         let isClicking = false;
         let scrollTimeout;
+        const scrollTarget = isContainerMode ? articleScrollBox : window;
+
         const onScroll = function() {
             if (isClicking) return;
             if (scrollTimeout) clearTimeout(scrollTimeout);
+
             scrollTimeout = setTimeout(function() {
-                const isDesktop = window.innerWidth > 1100;
-                const scrollTop = isDesktop ? scrollContainer.scrollTop : window.scrollY;
-                const containerTop = isDesktop ? scrollContainer.offsetTop : 0;
                 let currentActiveId = null;
+                const offsetThreshold = 100;
 
                 for (let i = 0; i < headers.length; i++) {
                     const header = headers[i];
-                    let headerTop;
-                    if (isDesktop) {
-                        headerTop = header.offsetTop - containerTop;
+
+                    if (isContainerMode) {
+                        const diff = header.getBoundingClientRect().top - articleScrollBox.getBoundingClientRect().top;
+                        if (diff <= offsetThreshold) {
+                            currentActiveId = header.id;
+                        } else {
+                            break;
+                        }
                     } else {
-                        headerTop = header.getBoundingClientRect().top + window.scrollY;
-                    }
-                    if (headerTop <= scrollTop + 150) {
-                        currentActiveId = header.id;
-                    } else {
-                        break;
+                        if (header.getBoundingClientRect().top <= 150) {
+                            currentActiveId = header.id;
+                        } else {
+                            break;
+                        }
                     }
                 }
 
                 if (currentActiveId) {
-                    document.querySelectorAll('.toc-link').forEach(el => el.classList.remove('active'));
-                    document.querySelectorAll('.toc-item').forEach(el => el.classList.remove('active'));
-                    const activeLink = tocContainer.querySelector(`.toc-item[data-target="${currentActiveId}"] .toc-link`);
+                    const currentActive = tocContainer.querySelector('.toc-item.active');
+                    if (currentActive && currentActive.dataset.target === currentActiveId) return;
+
+                    document.querySelectorAll('.toc-link.active, .toc-item.active').forEach(el => el.classList.remove('active'));
+
                     const activeItem = tocContainer.querySelector(`.toc-item[data-target="${currentActiveId}"]`);
-                    if (activeLink && activeItem) {
-                        activeLink.classList.add('active');
+                    if (activeItem) {
                         activeItem.classList.add('active');
+                        const link = activeItem.querySelector('.toc-link');
+                        if(link) link.classList.add('active');
+
+                        // 自动展开父级
                         let parent = activeItem.parentElement;
-                        while (parent) {
-                            if (parent.classList.contains('toc-list')) break;
-                            if (parent.tagName === 'UL') {
-                                const parentLi = parent.parentElement;
-                                if (parentLi && parentLi.classList.contains('toc-item')) {
-                                    parentLi.classList.remove('collapsed');
+                        while(parent) {
+                            if (parent.tagName === 'UL' && parent.parentElement.classList.contains('toc-item')) {
+                                parent.parentElement.classList.remove('collapsed');
+                                const icon = parent.parentElement.querySelector('.toc-toggle i');
+                                if(icon) {
+                                    icon.classList.remove('fa-caret-right');
+                                    icon.classList.add('fa-caret-down');
                                 }
                             }
                             parent = parent.parentElement;
@@ -289,8 +331,8 @@ $(function() {
                 }
             }, 50);
         };
-        scrollContainer.addEventListener('scroll', onScroll);
-        window.addEventListener('scroll', onScroll);
+
+        scrollTarget.addEventListener('scroll', onScroll);
     }
 
     // ===================================
@@ -324,6 +366,98 @@ $(function() {
     }
 
     // ===================================
+    // [替换] Zen Mode 统一悬浮触发条
+    // 找到原来的 initZenMode 函数，整个替换
+    // ===================================
+    function initZenMode() {
+        var container = document.getElementById('blog-layout-container');
+        if (!container) return;
+
+        var triggerLeft = document.getElementById('zen-trigger-left');
+        var triggerRight = document.getElementById('zen-trigger-right');
+
+        var KEY_LEFT = 'blog_hide_left';
+        var KEY_RIGHT = 'blog_hide_right';
+
+        // 切换侧栏状态
+        function toggleSide(side) {
+            var hideCls = 'hide-sidebar-' + side;
+            var bodyCls = 'zen-' + side + '-hidden';
+            var key = (side === 'left') ? KEY_LEFT : KEY_RIGHT;
+
+            var isHidden = container.classList.contains(hideCls);
+
+            if (isHidden) {
+                // 展开
+                container.classList.remove(hideCls);
+                document.body.classList.remove(bodyCls);
+                localStorage.setItem(key, 'false');
+            } else {
+                // 收缩
+                container.classList.add(hideCls);
+                document.body.classList.add(bodyCls);
+                localStorage.setItem(key, 'true');
+            }
+
+            // 🆕🆕🆕 通知 ResizeManager 更新分隔条显示状态 🆕🆕🆕
+            if (window.resizeManager) {
+                window.resizeManager.updateHandleVisibility();
+            }
+
+            // 触发 resize 让图表重绘
+            setTimeout(function() {
+                window.dispatchEvent(new Event('resize'));
+            }, 400);
+        }
+
+        // 初始化读取本地存储
+        function initState() {
+            if (localStorage.getItem(KEY_LEFT) === 'true') {
+                container.classList.add('hide-sidebar-left');
+                document.body.classList.add('zen-left-hidden');
+            }
+            if (localStorage.getItem(KEY_RIGHT) === 'true') {
+                container.classList.add('hide-sidebar-right');
+                document.body.classList.add('zen-right-hidden');
+            }
+        }
+
+        // 首次访问提示动画
+        function addHintAnimation() {
+            var hintKey = 'blog_zen_hint_shown';
+            if (!localStorage.getItem(hintKey)) {
+                if (triggerLeft) triggerLeft.classList.add('hint-animation');
+                if (triggerRight) triggerRight.classList.add('hint-animation');
+
+                setTimeout(function() {
+                    if (triggerLeft) triggerLeft.classList.remove('hint-animation');
+                    if (triggerRight) triggerRight.classList.remove('hint-animation');
+                    localStorage.setItem(hintKey, 'true');
+                }, 5000);
+            }
+        }
+
+        // 执行初始化
+        initState();
+
+        // 绑定点击事件
+        if (triggerLeft) {
+            triggerLeft.onclick = function() {
+                toggleSide('left');
+            };
+        }
+        if (triggerRight) {
+            triggerRight.onclick = function() {
+                toggleSide('right');
+            };
+        }
+
+        addHintAnimation();
+        console.log('✅ Zen Mode 悬浮触发条初始化完成');
+    }
+
+
+    // ===================================
     // 执行所有初始化
     // ===================================
     beautifyTables();
@@ -336,6 +470,7 @@ $(function() {
     }, 100);
 
     initReactions(); // 启动反应逻辑
-
+    // 执行 Zen Mode 初始化
+    initZenMode();
     console.log("🎉 博客页面脚本加载完成");
 });

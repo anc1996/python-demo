@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="{% static 'blog/css/lightbox/lightbox.css' %}">
     <link rel="stylesheet" href="{% static 'blog/css/jquery-ui/jquery-ui.css' %}">
     <link rel="stylesheet" href="{% static 'blog/css/blog.css' %}">
+
+    <!-- 🆕 添加拖动布局CSS -->
+    <link rel="stylesheet" href="{% static 'blog/css/blog-resize.css' %}">
+
     <link rel="stylesheet" href="{% static 'blog/css/image_blocks.css' %}">
     <link rel="stylesheet" href="{% static 'blog/css/video_blocks.css' %}">
     <link rel="stylesheet" href="{% static 'blog/css/audio_blocks.css' %}">
@@ -67,8 +71,6 @@
         <div class="blog-layout-container" id="blog-layout-container">
 
             <aside class="blog-sidebar-left" id="sidebar-left">
-
-
                 <div class="toc-wrapper">
                     <div class="toc-header">
                         <i class="fa fa-list-ol"></i> 目录
@@ -77,6 +79,22 @@
                 </div>
             </aside>
 
+          <!-- 🆕 左侧分隔条 -->
+          <div class="resize-handle resize-handle-left"
+               id="resize-handle-left"
+               data-side="left"
+               title="拖动调整目录宽度 | 双击恢复默认">
+            <div class="resize-handle-line"></div>
+            <div class="resize-handle-indicator">
+              <i class="fa fa-ellipsis-v"></i>
+            </div>
+            <div class="resize-tooltip">
+              <span class="tooltip-width">272px</span>
+              <span class="tooltip-percent">17%</span>
+            </div>
+          </div>
+
+            <!-- 中间栏：文章 -->
             <main class="blog-center-column">
                 <div id="article-scroll-container" class="article-scroll-container">
                     <div class="article-body-content">
@@ -89,12 +107,26 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="mobile-interactions-placeholder"></div>
             </main>
 
-            <aside class="blog-sidebar-right" id="sidebar-right">
 
+            <!-- 🆕 右侧分隔条 -->
+              <div class="resize-handle resize-handle-right"
+                   id="resize-handle-right"
+                   data-side="right"
+                   title="拖动调整工具栏宽度 | 双击恢复默认">
+                <div class="resize-handle-line"></div>
+                <div class="resize-handle-indicator">
+                  <i class="fa fa-ellipsis-v"></i>
+                </div>
+                <div class="resize-tooltip">
+                  <span class="tooltip-width">320px</span>
+                  <span class="tooltip-percent">20%</span>
+                </div>
+              </div>
+
+            <aside class="blog-sidebar-right" id="sidebar-right">
                 <div class="sidebar-scroll-area">
                     <div class="sidebar-widget reaction-widget">
                         <div class="widget-title">文章反应</div>
@@ -146,6 +178,18 @@
                     {% endwith %}
                 </div>
             </aside>
+
+            <!-- 🆕 布局状态指示器（可选） -->
+            <div class="layout-status-indicator" id="layout-status">
+              <div class="status-item">
+                <span class="status-label">布局模式</span>
+                <span class="status-value" id="layout-mode">标准</span>
+              </div>
+              <button class="status-reset" id="reset-layout" title="重置布局">
+                <i class="fa fa-undo"></i>
+              </button>
+            </div>
+
         </div>
 
         <div id="zen-trigger-right" class="zen-trigger right" title="切换侧栏">
@@ -176,6 +220,10 @@
 {% block extra_js %}
     {{ block.super }}
     <script src="{% static 'blog/js/blog_page.js' %}" async></script>
+
+    <!-- 🆕 添加拖动布局JS -->
+    <script src="{% static 'blog/js/resize-manager.js' %}"></script>
+
     <script src="{% static 'blog/css/katex/katex.js' %}" async></script>
     <script src="{% static 'blog/js/katex/auto-render.min.js' %}" async></script>
     <script src="{% static 'blog/js/lightbox/lightbox.js' %}" async></script>
