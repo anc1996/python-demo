@@ -148,196 +148,182 @@ $(function() {
     }
 
     // ===================================
-    // 4. TOC 目录与滚动监听 (用户定制版 - 带折叠三角)
+    // 4. TOC 容器内监听 (嵌套滚动版)
     // ===================================
     function initTOC() {
-        // 1. 定义容器
-        // 注意：在当前 Sticky 布局下，文章内容在 .article-body-content 中，滚动的是 Window
-        const contentContainer = document.querySelector('.article-body-content');
         const tocContainer = document.getElementById('toc-content');
+        // ★ 获取文章独立滚动容器
+        const articleScrollBox = document.getElementById('article-inner-container');
 
-        if (!contentContainer || !tocContainer) return;
+        // 仅在 PC 端且容器存在时启用容器监听
+        const isContainerMode = (window.innerWidth >= 992 && articleScrollBox);
 
-        // 2. 获取标题 (仅限文章内容区域)
-        const headers = contentContainer.querySelectorAll('h2, h3, h4');
+        // 内容上下文
+        const contentContext = document.querySelector('.article-body-content');
+        if (!contentContext || !tocContainer) return;
+
+        const headers = contentContext.querySelectorAll('h2, h3, h4');
         if (headers.length === 0) {
-            tocContainer.innerHTML = '<p class="text-muted" style="padding:10px;">暂无目录</p>';
+            tocContainer.innerHTML = '<p class="text-muted">暂无目录</p>';
             return;
         }
 
-        // 清空容器
         tocContainer.innerHTML = '';
-
-        // 3. 构建目录树 (保留原本的 Stack 逻辑)
         const tocList = document.createElement('ul');
         tocList.className = 'toc-list';
-        let stack = [{ level: 1, element: tocList }]; // 栈底设为 level 1 (兼容 H2 起步)
+        let stack = [{ level: 1, element: tocList }];
 
+        // --- 构建目录 ---
         headers.forEach((header, index) => {
             if (!header.id) header.id = 'heading-' + index;
-
-            // 获取当前层级 (H2 -> 2, H3 -> 3)
             const currentLevel = parseInt(header.tagName.substring(1));
-
-            // 创建列表项
             const li = document.createElement('li');
             li.className = 'toc-item';
             li.setAttribute('data-target', header.id);
 
-            // 创建条目容器
             const entry = document.createElement('div');
             entry.className = 'toc-entry';
-
-            // 三角折叠按钮
             const toggle = document.createElement('span');
-            toggle.className = 'toc-toggle'; // CSS 将处理图标
-
-            // 链接文本
+            toggle.className = 'toc-toggle';
             const a = document.createElement('a');
             a.className = 'toc-link';
             a.textContent = header.innerText;
-            a.href = '#' + header.id; // 保持原生锚点行为
+            a.href = 'javascript:void(0);'; // 禁用锚点
 
             entry.appendChild(toggle);
             entry.appendChild(a);
             li.appendChild(entry);
 
-            // --- 绑定事件 ---
-
-            // 1. 折叠点击
-            toggle.addEventListener('click', function(e) {
+            // 折叠逻辑 (不变)
+            toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                e.preventDefault();
-                // 只有包含子菜单时才切换
                 if (li.querySelector('ul')) {
                     li.classList.toggle('collapsed');
-                    // 切换图标方向 (通过 CSS 类或直接操作 HTML)
                     const icon = toggle.querySelector('i');
-                    if (icon) {
+                    if(icon) {
                         icon.classList.toggle('fa-caret-down');
                         icon.classList.toggle('fa-caret-right');
                     }
                 }
             });
 
-            // 2. 跳转点击
-            a.addEventListener('click', function(e) {
+            // ★★★ 点击跳转：控制内部容器滚动 ★★★
+            a.addEventListener('click', (e) => {
                 e.preventDefault();
                 isClicking = true;
 
-                // 移除旧激活
-                document.querySelectorAll('.toc-link.active').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.toc-item.active').forEach(el => el.classList.remove('active'));
-
-                this.classList.add('active');
+                document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
                 li.classList.add('active');
+                a.classList.add('active');
 
-                // 计算滚动位置 (适配顶部导航栏高度 80px)
-                const targetTop = header.getBoundingClientRect().top + window.scrollY - 100;
+                if (isContainerMode) {
+                    // --- 容器模式 ---
+                    // 计算公式：scrollTop = 当前滚过的高度 + (标题相对视口top - 容器相对视口top)
+                    const headerRect = header.getBoundingClientRect();
+                    const boxRect = articleScrollBox.getBoundingClientRect();
 
-                window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                    // 计算标题在容器内部的相对位置
+                    const relativeOffset = headerRect.top - boxRect.top;
 
-                // 移动端点击后收起侧边栏
-                if (window.innerWidth < 992) {
+                    articleScrollBox.scrollTo({
+                        top: articleScrollBox.scrollTop + relativeOffset - 20, // 20px 顶部留白
+                        behavior: 'smooth'
+                    });
+                } else {
+                    // --- 移动端 Window 模式 ---
+                    const targetTop = header.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top: targetTop, behavior: 'smooth' });
                     const btn = document.getElementById('btn-hide-left');
-                    if(btn) btn.click();
+                    if(btn && window.innerWidth < 992) btn.click();
                 }
 
                 setTimeout(() => { isClicking = false; }, 800);
             });
 
-            // --- 栈逻辑处理层级嵌套 ---
+            // 栈处理 (不变)
             let parent = stack[stack.length - 1];
-
             if (currentLevel > parent.level) {
-                // 进入深层：创建新 UL
                 const newUl = document.createElement('ul');
                 newUl.className = 'toc-sub-menu';
-
-                // 挂载到父级 LI 下
-                if (parent.element.lastElementChild && parent.element.lastElementChild.tagName === 'LI') {
-                    parent.element.lastElementChild.appendChild(newUl);
-                } else {
-                    parent.element.appendChild(newUl);
-                }
+                parent.element.lastElementChild ? parent.element.lastElementChild.appendChild(newUl) : parent.element.appendChild(newUl);
                 stack.push({ level: currentLevel, element: newUl });
             } else if (currentLevel < parent.level) {
-                // 返回浅层：出栈直到找到对应层级
-                while (stack.length > 1 && currentLevel <= stack[stack.length - 1].level) {
-                    stack.pop();
-                }
+                while (stack.length > 1 && currentLevel <= stack[stack.length - 1].level) stack.pop();
             }
-            // 挂载当前项
             stack[stack.length - 1].element.appendChild(li);
         });
 
-        // 4. 后处理：添加折叠图标
-        const allItems = tocList.querySelectorAll('li.toc-item');
-        allItems.forEach(item => {
+        // 图标处理
+        tocList.querySelectorAll('li.toc-item').forEach(item => {
             const toggle = item.querySelector('.toc-toggle');
             if (item.querySelector('ul')) {
-                item.classList.add('has-children');
-                // 默认展开：向下箭头
                 toggle.innerHTML = '<i class="fa fa-caret-down"></i>';
-                toggle.style.cursor = 'pointer';
             } else {
-                toggle.classList.add('placeholder'); // 占位，保持缩进对齐
+                toggle.classList.add('placeholder');
             }
         });
-
         tocContainer.appendChild(tocList);
 
-        // 5. 滚动监听 (ScrollSpy)
+        // ★★★ 滚动监听：监听 articleScrollBox ★★★
         let isClicking = false;
         let scrollTimeout;
+        // 决定监听谁
+        const scrollTarget = isContainerMode ? articleScrollBox : window;
 
         const onScroll = function() {
             if (isClicking) return;
             if (scrollTimeout) clearTimeout(scrollTimeout);
 
             scrollTimeout = setTimeout(function() {
-                const scrollTop = window.scrollY;
                 let currentActiveId = null;
+                const offsetThreshold = 100;
 
-                // 寻找当前视口中最接近顶部的标题
                 for (let i = 0; i < headers.length; i++) {
                     const header = headers[i];
-                    // 阈值：标题进入视口上方 150px 范围内
-                    if ((header.getBoundingClientRect().top + window.scrollY) <= scrollTop + 150) {
-                        currentActiveId = header.id;
+
+                    if (isContainerMode) {
+                        // --- 容器模式判定 ---
+                        // 直接比较 getBoundingClientRect 的差值
+                        const diff = header.getBoundingClientRect().top - articleScrollBox.getBoundingClientRect().top;
+
+                        // 如果标题距离容器顶部小于 100px (即已经滚到了或者快到了)
+                        if (diff <= offsetThreshold) {
+                            currentActiveId = header.id;
+                        } else {
+                            // 标题还在下面很远，后面的也不用看了
+                            break;
+                        }
                     } else {
-                        break;
+                        // --- Window 模式 ---
+                        if (header.getBoundingClientRect().top <= 150) {
+                            currentActiveId = header.id;
+                        } else {
+                            break;
+                        }
                     }
                 }
 
                 if (currentActiveId) {
-                    // 移除旧状态
-                    const oldActiveLink = tocContainer.querySelector('.toc-link.active');
-                    const oldActiveItem = tocContainer.querySelector('.toc-item.active');
-                    if (oldActiveLink) oldActiveLink.classList.remove('active');
-                    if (oldActiveItem) oldActiveItem.classList.remove('active');
+                    const currentActive = tocContainer.querySelector('.toc-item.active');
+                    if (currentActive && currentActive.dataset.target === currentActiveId) return;
 
-                    // 激活新状态
+                    document.querySelectorAll('.toc-link.active, .toc-item.active').forEach(el => el.classList.remove('active'));
+
                     const activeItem = tocContainer.querySelector(`.toc-item[data-target="${currentActiveId}"]`);
                     if (activeItem) {
                         activeItem.classList.add('active');
-                        const activeLink = activeItem.querySelector('.toc-link');
-                        if (activeLink) activeLink.classList.add('active');
+                        const link = activeItem.querySelector('.toc-link');
+                        if(link) link.classList.add('active');
 
-                        // 自动展开父级目录
+                        // 自动展开/TOC自滚动逻辑保持不变...
                         let parent = activeItem.parentElement;
-                        while (parent) {
-                            if (parent.classList.contains('toc-list')) break;
-                            if (parent.tagName === 'UL') {
-                                const parentLi = parent.parentElement;
-                                if (parentLi && parentLi.classList.contains('toc-item')) {
-                                    parentLi.classList.remove('collapsed');
-                                    // 确保图标同步为展开状态
-                                    const icon = parentLi.querySelector('.toc-toggle i');
-                                    if(icon) {
-                                        icon.classList.remove('fa-caret-right');
-                                        icon.classList.add('fa-caret-down');
-                                    }
+                        while(parent) {
+                            if (parent.tagName === 'UL' && parent.parentElement.classList.contains('toc-item')) {
+                                parent.parentElement.classList.remove('collapsed');
+                                const icon = parent.parentElement.querySelector('.toc-toggle i');
+                                if(icon) {
+                                    icon.classList.remove('fa-caret-right');
+                                    icon.classList.add('fa-caret-down');
                                 }
                             }
                             parent = parent.parentElement;
@@ -347,7 +333,8 @@ $(function() {
             }, 50);
         };
 
-        window.addEventListener('scroll', onScroll);
+        // 绑定事件
+        scrollTarget.addEventListener('scroll', onScroll);
     }
 
     // ===================================
@@ -380,55 +367,90 @@ $(function() {
         }
     }
 
-    // ... 前面是你原有的代码 (initReactions 等) ...
-
     // ===================================
-    // [新增] Zen Mode 沉浸阅读初始化
+    // [替换] Zen Mode 统一悬浮触发条
+    // 找到原来的 initZenMode 函数，整个替换
     // ===================================
     function initZenMode() {
-        const container = document.getElementById('blog-layout-container');
+        var container = document.getElementById('blog-layout-container');
         if (!container) return;
 
-        // 获取元素
-        const btnHideLeft = document.getElementById('btn-hide-left');
-        const btnHideRight = document.getElementById('btn-hide-right');
-        const triggerLeft = document.getElementById('zen-trigger-left');
-        const triggerRight = document.getElementById('zen-trigger-right');
+        var triggerLeft = document.getElementById('zen-trigger-left');
+        var triggerRight = document.getElementById('zen-trigger-right');
 
-        // 状态 Key
-        const KEY_LEFT = 'blog_hide_left';
-        const KEY_RIGHT = 'blog_hide_right';
+        var KEY_LEFT = 'blog_hide_left';
+        var KEY_RIGHT = 'blog_hide_right';
 
-        // 核心切换逻辑
-        function toggleSide(side, hide) {
-            const cls = 'hide-sidebar-' + side; // 对应 CSS 类
-            const bodyCls = 'zen-' + side + '-hidden'; // 用于控制 Trigger 显示
+        // 切换侧栏状态
+        function toggleSide(side) {
+            var hideCls = 'hide-sidebar-' + side;
+            var bodyCls = 'zen-' + side + '-hidden';
+            var key = (side === 'left') ? KEY_LEFT : KEY_RIGHT;
 
-            if (hide) {
-                container.classList.add(cls);
-                document.body.classList.add(bodyCls);
-            } else {
-                container.classList.remove(cls);
+            var isHidden = container.classList.contains(hideCls);
+
+            if (isHidden) {
+                // 展开
+                container.classList.remove(hideCls);
                 document.body.classList.remove(bodyCls);
+                localStorage.setItem(key, 'false');
+            } else {
+                // 收缩
+                container.classList.add(hideCls);
+                document.body.classList.add(bodyCls);
+                localStorage.setItem(key, 'true');
             }
 
-            // 存入本地存储
-            localStorage.setItem(side === 'left' ? KEY_LEFT : KEY_RIGHT, hide);
-
-            // 触发 resize 事件，确保图表(Mermaid/Echarts)重新自适应宽度
-            setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+            // 触发 resize 让图表重绘
+            setTimeout(function() {
+                window.dispatchEvent(new Event('resize'));
+            }, 400);
         }
 
-        // 初始化读取状态
-        if (localStorage.getItem(KEY_LEFT) === 'true') toggleSide('left', true);
-        if (localStorage.getItem(KEY_RIGHT) === 'true') toggleSide('right', true);
+        // 初始化读取本地存储
+        function initState() {
+            if (localStorage.getItem(KEY_LEFT) === 'true') {
+                container.classList.add('hide-sidebar-left');
+                document.body.classList.add('zen-left-hidden');
+            }
+            if (localStorage.getItem(KEY_RIGHT) === 'true') {
+                container.classList.add('hide-sidebar-right');
+                document.body.classList.add('zen-right-hidden');
+            }
+        }
+
+        // 首次访问提示动画
+        function addHintAnimation() {
+            var hintKey = 'blog_zen_hint_shown';
+            if (!localStorage.getItem(hintKey)) {
+                if (triggerLeft) triggerLeft.classList.add('hint-animation');
+                if (triggerRight) triggerRight.classList.add('hint-animation');
+
+                setTimeout(function() {
+                    if (triggerLeft) triggerLeft.classList.remove('hint-animation');
+                    if (triggerRight) triggerRight.classList.remove('hint-animation');
+                    localStorage.setItem(hintKey, 'true');
+                }, 5000);
+            }
+        }
+
+        // 执行初始化
+        initState();
 
         // 绑定点击事件
-        if (btnHideLeft) btnHideLeft.onclick = () => toggleSide('left', true);
-        if (btnHideRight) btnHideRight.onclick = () => toggleSide('right', true);
+        if (triggerLeft) {
+            triggerLeft.onclick = function() {
+                toggleSide('left');
+            };
+        }
+        if (triggerRight) {
+            triggerRight.onclick = function() {
+                toggleSide('right');
+            };
+        }
 
-        if (triggerLeft) triggerLeft.onclick = () => toggleSide('left', false);
-        if (triggerRight) triggerRight.onclick = () => toggleSide('right', false);
+        addHintAnimation();
+        console.log('✅ Zen Mode 悬浮触发条初始化完成');
     }
 
 
