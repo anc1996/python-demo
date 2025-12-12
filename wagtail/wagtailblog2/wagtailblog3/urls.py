@@ -1,6 +1,7 @@
 # wagtailblog3/urls.py
 
 from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 from django.urls import include, path
 from django.contrib import admin
 
@@ -26,7 +27,7 @@ if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()  # 添加静态文件路由
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # 添加媒体文件路由
 
-urlpatterns = urlpatterns + [
+urlpatterns = urlpatterns + i18n_patterns(
     path('test-search/', test_search_backend, name='test_search_backend'),
     path('comments/', include('comments.urls', namespace='comments')),
     # 添加博客API URLs
@@ -38,4 +39,4 @@ urlpatterns = urlpatterns + [
     path("", include(wagtail_urls)),
     # 或者，如果您希望 Wagtail 页面从站点的子路径而不是站点根目录提供：
     #    path("pages/", include(wagtail_urls)),
-]
+)

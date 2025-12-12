@@ -32,6 +32,7 @@ from wagtail.images.blocks import ImageChooserBlock
 from wagtail.documents.blocks import DocumentChooserBlock
 from wagtail.snippets.models import register_snippet
 from wagtail.blocks.stream_block import StreamValue
+from wagtail_ai.panels import AITitleFieldPanel, AIDescriptionFieldPanel
 
 from wagtailmarkdown.blocks import MarkdownBlock
 from wagtailcodeblock.blocks import CodeBlock
@@ -332,6 +333,7 @@ class BlogPage(Page):
 	intro = RichTextField(
 		"简介",
 		features=[
+			'ai', # wagtail-ai的功能
 			'bold',  # 加粗
 			'italic',  # 斜体
 			'strikethrough',  # 删除线
@@ -370,7 +372,8 @@ class BlogPage(Page):
 			          'ol', 'ul', 'hr', 'link', 'document-link', 'image',
 			          'embed', 'code', 'superscript', 'subscript', 'strikethrough',
 			          'blockquote',
-			          'underline'  # <--- 下划线
+			          'underline',  # <--- 下划线
+			          'ai' # wagtail-ai的功能
 			          ],
 			label="富文本"
 		)),
@@ -421,19 +424,35 @@ class BlogPage(Page):
 	]
 	
 	# 后台编辑面板
-	content_panels = Page.content_panels + [
+	content_panels = [
+         # 1. 使用 AITitleFieldPanel 替换默认的 Page.content_panels 里的标题
+         AITitleFieldPanel('title'),
+	                 ] + [
 		MultiFieldPanel([
 			FieldPanel('date'),
 			FieldPanel('tags'),
 			FieldPanel("authors", widget=forms.CheckboxSelectMultiple),  # 添加作者字段到面板中
 			FieldPanel('categories', widget=forms.CheckboxSelectMultiple),
 		], heading="博客信息"),
-		FieldPanel('intro'),
+		AIDescriptionFieldPanel('intro'),
 		FieldPanel('featured_image'),
 		FieldPanel('body'),
 		InlinePanel('gallery_images', label="Gallery images"),
 	]
 	
+	promote_panels = [
+		MultiFieldPanel([
+			FieldPanel('slug'),
+			# 辅助生成 SEO 标题
+			AITitleFieldPanel('seo_title'),
+			# 辅助生成 SEO 描述
+			AIDescriptionFieldPanel('search_description'),
+		], heading="For Search Engines"),
+		
+		MultiFieldPanel([
+			FieldPanel('show_in_menus'),
+		], heading="Display options"),
+	]
 	# FieldPanel： FieldPanel 用于在 Wagtail 后台编辑界面中显示和编辑单个字段。这个字段通常是直接定义在当前模型上的 Django 模型字段。
 	# InlinePanel： 用于在 Wagtail 后台编辑界面中管理与当前模型实例有关联的一组子级模型实例。它通常用于管理通过 ParentalKey 建立的父子关系。
 	

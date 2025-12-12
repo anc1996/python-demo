@@ -42,7 +42,7 @@ def global_admin_css():
 
 # 为后台编辑器加载 Mermaid.js，以便在预览时可以渲染 Mermaid 图表。---这个还没有利用实现
 @hooks.register("insert_global_admin_js")
-def global_admin_js():
+def global_admin_js_mermaid():
 	"""
 	为后台编辑器加载 Mermaid.js，以便在预览时可以渲染 Mermaid 图表。
 	"""
@@ -61,7 +61,7 @@ def global_admin_js():
 # (如果文件已有其他 hook，请保留它们)
 
 @hooks.register("insert_global_admin_js", order=100)
-def global_admin_js():
+def global_admin_js_easymde():
 	"""
 	在 Wagtail 管理后台的所有页面上加载自定义的 JS 文件，
 	用于配置 EasyMDE (MarkdownBlock) 编辑器的工具栏。

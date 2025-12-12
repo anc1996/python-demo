@@ -22,74 +22,79 @@ def get_client_ip(request):
 
 @require_POST
 def toggle_reaction(request, page_id):
-	"""添加或移除用户对页面的反应"""
-	# 检查页面是否存在
+	"""
+	处理用户反应 (点赞/喜爱等) - 优化版
+	返回全量计数，便于前端直接覆盖更新
+	"""
 	page = get_object_or_404(Page, id=page_id)
 	
-	# 获取反应类型
-	reaction_type_id = request.POST.get('reaction_type')
-	if not reaction_type_id:
-		return JsonResponse({'error': '缺少反应类型'}, status=400)
+	# 1. 获取 reaction_type_id (兼容表单数据和JSON数据)
+	reaction_type_id = request.POST.get('reaction_type') or request.POST.get('reaction_id')
 	
-	from .models import ReactionType
+	if not reaction_type_id:
+		import json
+		try:
+			data = json.loads(request.body)
+			reaction_type_id = data.get('reaction_type') or data.get('reaction_id')
+		except:
+			pass
+	
+	if not reaction_type_id:
+		return JsonResponse({'error': '缺少反应类型ID'}, status=400)
+	
+	from .models import ReactionType, Reaction
 	reaction_type = get_object_or_404(ReactionType, id=reaction_type_id)
 	
-	# 获取用户或会话
+	# 2. 识别用户
 	user = request.user if request.user.is_authenticated else None
-	
-	# 对于匿名用户，使用会话ID
 	if not user and not request.session.session_key:
 		request.session.save()
 	session_key = request.session.session_key if not user else None
 	
-	# 获取IP地址
 	ip = get_client_ip(request)
 	
-	# 检查用户是否已经有反应
-	from .models import Reaction
+	# 3. 查找现有反应
 	if user:
 		existing = Reaction.objects.filter(page=page, user=user).first()
 	else:
-		existing = Reaction.objects.filter(
-			page=page,
-			session_key=session_key,
-			ip_address=ip
-		).first()
+		existing = Reaction.objects.filter(page=page, session_key=session_key).first()
 	
-	# 如果已有同样的反应，则删除
-	if existing and existing.reaction_type_id == int(reaction_type_id):
-		existing.delete()
-		action = 'removed'
-	else:
-		# 如果有不同的反应，更新它
-		if existing:
+	action = ''
+	
+	# 4. 执行增删改逻辑
+	if existing:
+		if existing.reaction_type_id == int(reaction_type_id):
+			# 点击了同一个 -> 取消
+			existing.delete()
+			action = 'removed'
+		else:
+			# 点击了不同的 -> 切换
 			existing.reaction_type = reaction_type
 			existing.save()
 			action = 'changed'
-		else:
-			# 创建新反应
-			Reaction.objects.create(
-				page=page,
-				reaction_type=reaction_type,
-				user=user,
-				session_key=session_key,
-				ip_address=ip
-			)
-			action = 'added'
+	else:
+		# 没有反应 -> 新增
+		Reaction.objects.create(
+			page=page,
+			reaction_type=reaction_type,
+			user=user,
+			session_key=session_key,
+			ip_address=ip
+		)
+		action = 'added'
 	
-	# 获取更新后的反应计数
-	reaction_counts = Reaction.objects.filter(page=page).values(
-		'reaction_type'
-	).annotate(
-		count=models.Count('id')
-	)
+	# 5. 【关键修改】获取全量计数，而不仅仅是当前的
+	reaction_counts_query = Reaction.objects.filter(page=page).values('reaction_type').annotate(
+		count=models.Count('id'))
 	
-	counts = {r['reaction_type']: r['count'] for r in reaction_counts}
+	# 转换为字典格式 {type_id: count}
+	counts = {r['reaction_type']: r['count'] for r in reaction_counts_query}
 	
 	return JsonResponse({
 		'success': True,
 		'action': action,
-		'counts': counts
+		'counts': counts,  # 返回包含所有按钮计数的字典
+		'current_reaction_id': int(reaction_type_id)
 	})
 
 
