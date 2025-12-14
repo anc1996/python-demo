@@ -1,4 +1,4 @@
-// comments.js - 完整版本，使用HTML模板
+// comments.js - 修复版本：子评论回复框位置修正
 
 const CommentSystem = (function() {
     'use strict';
@@ -23,9 +23,8 @@ const CommentSystem = (function() {
         showLoginPrompt() {
             const $commentsList = $('#comments-list');
             if ($commentsList.find('.login-prompt').length > 0) {
-                return; // 已存在
+                return;
             }
-
             const $loginPrompt = this.getTemplate('login-prompt-template');
             $commentsList.append($loginPrompt);
         },
@@ -36,9 +35,8 @@ const CommentSystem = (function() {
         showNoComments() {
             const $commentsList = $('#comments-list');
             if ($commentsList.find('.no-comments').length > 0) {
-                return; // 已存在
+                return;
             }
-
             const $noComments = this.getTemplate('no-comments-template');
             $commentsList.append($noComments);
         },
@@ -65,13 +63,12 @@ const CommentSystem = (function() {
         /**
          * 创建编辑表单
          */
-        createEditForm(commentId, currentContent,editUrl) {
+        createEditForm(commentId, currentContent, editUrl) {
             const $editForm = this.getTemplate('edit-form-template');
             $editForm.find('.edit-textarea').val(currentContent);
-            // ✨【修改】找到保存按钮，把 URL 存进去
             $editForm.find('.save-edit-btn')
                 .attr('data-comment-id', commentId)
-                .attr('data-url', editUrl); //
+                .attr('data-url', editUrl);
             $editForm.find('.cancel-edit-btn').attr('data-comment-id', commentId);
             return $editForm;
         },
@@ -85,10 +82,8 @@ const CommentSystem = (function() {
 
             if ($container) {
                 $container.append($error);
-                // 3秒后自动移除
                 setTimeout(() => $error.fadeOut(300, () => $error.remove()), 3000);
             } else {
-                // 全局错误提示
                 alert('❌ ' + message);
             }
         },
@@ -102,7 +97,6 @@ const CommentSystem = (function() {
 
             if ($container) {
                 $container.append($success);
-                // 2秒后自动移除
                 setTimeout(() => $success.fadeOut(300, () => $success.remove()), 2000);
             } else {
                 console.log('✅ ' + message);
@@ -201,250 +195,297 @@ const CommentSystem = (function() {
     };
 
     // ===== 表单管理器 =====
-const FormManager = {
-    activeReplyForm: null,
+    const FormManager = {
+        activeReplyForm: null,
 
-    /**
-     * 重置所有回复表单
-     */
-    resetReplyForms() {
-        $('.active-reply-form').remove();
-        $('.dynamic-reply-form-container').empty();
-        this.activeReplyForm = null;
-        console.log('🧹 所有回复表单已重置');
-    },
+        /**
+         * 重置所有回复表单
+         */
+        resetReplyForms() {
+            $('.active-reply-form').remove();
+            $('.dynamic-reply-form-container').empty();
+            this.activeReplyForm = null;
+            console.log('🧹 所有回复表单已重置');
+        },
 
-    /**
-     * 创建回复表单 - 修复版本
-     */
-    createReplyForm(commentId, username, userId, rootCommentId) {
-        console.log('💬 创建回复表单:', {
-            commentId,
-            username,
-            userId,
-            rootCommentId
-        });
-
-        // 先重置现有表单
-        this.resetReplyForms();
-
-        // 关键修复：找到正确的目标容器
-        let $targetContainer;
-
-        if (commentId === rootCommentId) {
-            // 这是一级评论的回复
-            console.log('📝 这是一级评论的回复');
-            $targetContainer = $(`#comment-${commentId}`)
-                .find('> .inner-box > .comment-content-wrapper > .dynamic-reply-form-container')
-                .first();
-        } else {
-            // 这是二级评论的回复，应该添加到一级评论（rootCommentId）下
-            console.log('📝 这是二级评论的回复，添加到一级评论下');
-            $targetContainer = $(`#comment-${rootCommentId}`)
-                .find('> .inner-box > .comment-content-wrapper > .dynamic-reply-form-container')
-                .first();
-        }
-
-        console.log('🎯 目标容器:', {
-            found: $targetContainer.length > 0,
-            container: $targetContainer[0]
-        });
-
-        if (!$targetContainer.length) {
-            console.error('❌ 未找到回复表单容器');
-            alert('无法创建回复表单，请刷新页面重试');
-            return;
-        }
-
-        // 克隆主表单
-        const $originalForm = $('#main-comment-form-wrapper').find('form');
-        if (!$originalForm.length) {
-            console.error('❌ 未找到原始表单');
-            return;
-        }
-
-        const $newForm = $originalForm.clone();
-
-        // 为克隆的表单生成唯一ID，避免冲突
-        const uniqueId = `reply-form-${Date.now()}`;
-        $newForm.attr('id', uniqueId);
-        $newForm.find('#comment-content').attr('id', `comment-content-${uniqueId}`);
-        $newForm.find('#comment-parent-id').attr('id', `comment-parent-id-${uniqueId}`);
-        $newForm.find('#replied-to-user-id').attr('id', `replied-to-user-id-${uniqueId}`);
-
-        // 创建包装容器
-        const $wrapper = $('<div>')
-            .addClass('active-reply-form')
-            .attr('data-reply-to-comment', commentId)
-            .attr('data-root-comment', rootCommentId)
-            .append($newForm);
-
-        // 设置表单字段
-        const pageId = $('#comments-list').attr('data-page-id');
-
-
-        $newForm.find(`#comment-parent-id-${uniqueId}`).val(rootCommentId); // 始终使用根评论ID
-        $newForm.find(`#replied-to-user-id-${uniqueId}`).val(userId);
-
-        // 预填充内容
-        const $textarea = $newForm.find(`#comment-content-${uniqueId}`);
-        $textarea.val(`@${username} `);
-
-        // 显示回复信息
-        const $replyInfo = $newForm.find('#reply-to-info');
-        $replyInfo.find('#reply-to-name').text(username);
-        $replyInfo.removeClass('template-hidden').show();
-
-        // 清空目标容器并添加新表单
-        $targetContainer.empty().append($wrapper);
-
-        // 聚焦输入框
-        $textarea.focus();
-
-        // 将光标移到末尾
-        const textLength = $textarea.val().length;
-        $textarea[0].setSelectionRange(textLength, textLength);
-
-        this.activeReplyForm = $wrapper;
-
-        console.log('✅ 回复表单创建成功');
-
-        // 滚动到表单
-        $('html, body').animate({
-            scrollTop: $wrapper.offset().top - 100
-        }, 500);
-
-        // 添加视觉提示：高亮目标评论
-        this.highlightTargetComment(commentId);
-    },
-
-    /**
-     * 高亮目标评论 - 新增功能
-     */
-    highlightTargetComment(commentId) {
-        // 移除之前的高亮
-        $('.comment').removeClass('comment-replying');
-
-        // 高亮当前要回复的评论
-        $(`#comment-${commentId}`).addClass('comment-replying');
-
-        // 3秒后移除高亮
-        setTimeout(() => {
-            $(`#comment-${commentId}`).removeClass('comment-replying');
-        }, 3000);
-    },
-
-    /**
-     * 提交表单
-     */
-    submitForm(form, isReply = false) {
-        const $form = $(form);
-        const $submitBtn = $form.find('button[type="submit"]'); // 更精确的选择器
-
-        console.log('📤 提交表单:', {
-            isReply,
-            formAction: form.action
-        });
-
-        // 禁用提交按钮
-        $submitBtn.prop('disabled', true).text('提交中...');
-
-        const formData = new FormData(form);
-
-        return AjaxManager.post(form.action, formData)
-            .done((data) => {
-                if (data.status === 'success') {
-                    this.handleSubmitSuccess(data, $form, isReply);
-                    TemplateManager.showSuccess(data.message || '评论发表成功');
-                } else {
-                    this.handleSubmitError(data, $form);
-                }
-            })
-            .fail((xhr) => {
-                AjaxManager.handleError(xhr, '评论发表失败');
-            })
-            .always(() => {
-                $submitBtn.prop('disabled', false).text('发表评论');
+        /**
+         * 创建回复表单 - 【核心修复】
+         * 修改：回复框始终出现在被点击评论的下方
+         */
+        createReplyForm(commentId, username, userId, rootCommentId) {
+            console.log('💬 创建回复表单:', {
+                commentId,
+                username,
+                userId,
+                rootCommentId
             });
-    },
 
-    /**
-     * 处理提交成功
-     */
-    handleSubmitSuccess(data, $form, isReply) {
-        const parentId = $form.find('input[id$="comment-parent-id"]').val(); // 更灵活的选择器
-
-        console.log('✅ 表单提交成功:', {
-            parentId,
-            isReply
-        });
-
-        if (parentId && isReply) {
-            // 处理回复成功 - 统一添加到一级评论的回复列表中
-            const $repliesContainer = $(`#replies-${parentId}`);
-
-            if ($repliesContainer.is(':visible') && $repliesContainer.html().trim() !== '') {
-                // 回复列表已展开，直接添加新回复
-                $repliesContainer.append(data.html);
-                console.log('➕ 新回复已添加到现有列表');
-            } else {
-                // 回复列表未展开，重新加载回复列表
-                CommentLoader.loadReplies(parentId);
-                console.log('🔄 重新加载回复列表');
-            }
-
-            // 重置回复表单
+            // 先重置现有表单
             this.resetReplyForms();
 
-            // 滚动到新添加的回复（延迟执行，等待DOM更新）
+            // 【核心修复】不管是一级还是二级评论，都找被点击评论自己的容器
+            const $targetContainer = $(`#comment-${commentId}`)
+                .find('> .inner-box > .comment-content-wrapper > .dynamic-reply-form-container')
+                .first();
+
+            console.log('🎯 目标容器:', {
+                commentId: commentId,
+                found: $targetContainer.length > 0,
+                container: $targetContainer[0]
+            });
+
+            if (!$targetContainer.length) {
+                console.error('❌ 未找到回复表单容器');
+                alert('无法创建回复表单，请刷新页面重试');
+                return;
+            }
+
+            // 克隆主表单
+            const $originalForm = $('#main-comment-form-wrapper').find('form');
+            if (!$originalForm.length) {
+                console.error('❌ 未找到原始表单');
+                return;
+            }
+
+            const $newForm = $originalForm.clone();
+
+            // 【简化】不再修改 input 的 id，只修改 form 的 id 避免冲突
+            const uniqueId = `reply-form-${Date.now()}`;
+            $newForm.attr('id', uniqueId);
+
+            // 【重要】只修改 textarea 的 id（避免 label for 冲突），保持 hidden input 的原始结构
+            $newForm.find('#comment-content').attr('id', `comment-content-${uniqueId}`);
+
+            // 创建包装容器
+            const $wrapper = $('<div>')
+                .addClass('active-reply-form')
+                .attr('data-reply-to-comment', commentId)
+                .attr('data-root-comment', rootCommentId)
+                .append($newForm);
+
+            // 【关键】设置表单字段 - 使用 name 属性选择器，更可靠
+            $newForm.find('input[name="parent_id"]').val(rootCommentId);
+            $newForm.find('input[name="replied_to_user_id"]').val(userId);
+
+            console.log('📝 表单字段设置:', {
+                parent_id: $newForm.find('input[name="parent_id"]').val(),
+                replied_to_user_id: $newForm.find('input[name="replied_to_user_id"]').val()
+            });
+
+            // 预填充内容
+            const $textarea = $newForm.find(`#comment-content-${uniqueId}`);
+            $textarea.val(`@${username} `);
+
+            // 显示回复信息
+            const $replyInfo = $newForm.find('#reply-to-info');
+            $replyInfo.find('#reply-to-name').text(username);
+            $replyInfo.removeClass('template-hidden').show();
+
+            // 清空目标容器并添加新表单
+            $targetContainer.empty().append($wrapper);
+
+            // 聚焦输入框
+            $textarea.focus();
+
+            // 将光标移到末尾
+            const textLength = $textarea.val().length;
+            $textarea[0].setSelectionRange(textLength, textLength);
+
+            this.activeReplyForm = $wrapper;
+
+            console.log('✅ 回复表单创建成功，位于评论', commentId, '下方');
+
+            // 滚动到表单
+            $('html, body').animate({
+                scrollTop: $wrapper.offset().top - 100
+            }, 500);
+
+            // 添加视觉提示：高亮目标评论
+            this.highlightTargetComment(commentId);
+        },
+
+        /**
+         * 高亮目标评论
+         */
+        highlightTargetComment(commentId) {
+            // 移除之前的高亮
+            $('.comment').removeClass('comment-replying');
+
+            // 高亮当前要回复的评论
+            $(`#comment-${commentId}`).addClass('comment-replying');
+
+            // 3秒后移除高亮
             setTimeout(() => {
-                const $newReplies = $repliesContainer.children().last();
-                if ($newReplies.length) {
-                    $('html, body').animate({
-                        scrollTop: $newReplies.offset().top - 100
-                    }, 500);
+                $(`#comment-${commentId}`).removeClass('comment-replying');
+            }, 3000);
+        },
+
+        /**
+         * 提交表单
+         */
+        submitForm(form, isReply = false) {
+            const $form = $(form);
+            const $submitBtn = $form.find('button[type="submit"]');
+
+            console.log('📤 提交表单:', {
+                isReply,
+                formAction: form.action
+            });
+
+            // 禁用提交按钮
+            $submitBtn.prop('disabled', true).text('提交中...');
+
+            const formData = new FormData(form);
+
+            return AjaxManager.post(form.action, formData)
+                .done((data) => {
+                    if (data.status === 'success') {
+                        this.handleSubmitSuccess(data, $form, isReply);
+                        TemplateManager.showSuccess(data.message || '评论发表成功');
+                    } else {
+                        this.handleSubmitError(data, $form);
+                    }
+                })
+                .fail((xhr) => {
+                    AjaxManager.handleError(xhr, '评论发表失败');
+                })
+                .always(() => {
+                    $submitBtn.prop('disabled', false).text('发表评论');
+                });
+        },
+
+        /**
+         * 处理提交成功 - 【修复版】
+         */
+        handleSubmitSuccess(data, $form, isReply) {
+            // 【修复】使用 name 属性来获取 parentId，而不是 id
+            // 因为克隆表单时 id 被修改了，但 name 保持不变
+            const parentId = $form.find('input[name="parent_id"]').val();
+
+            console.log('✅ 表单提交成功:', {
+                parentId,
+                isReply,
+                hasParentId: !!parentId
+            });
+
+            // 【关键判断】有 parentId 说明是回复，无论 isReply 参数如何
+            if (parentId) {
+                // 处理回复成功 - 添加到一级评论的回复列表中
+                const $repliesContainer = $(`#replies-${parentId}`);
+                const $showRepliesBtn = $(`.show-replies-btn[data-comment-id="${parentId}"]`);
+
+                console.log('📍 回复容器状态:', {
+                    containerId: `replies-${parentId}`,
+                    containerExists: $repliesContainer.length > 0,
+                    isVisible: $repliesContainer.is(':visible'),
+                    hasContent: $repliesContainer.html().trim() !== ''
+                });
+
+                // 重置回复表单（先重置，避免影响后续操作）
+                this.resetReplyForms();
+
+                if ($repliesContainer.length === 0) {
+                    // 容器不存在，说明是第一条回复，需要刷新整个评论区
+                    console.log('⚠️ 回复容器不存在，刷新页面');
+                    location.reload();
+                    return;
                 }
-            }, 300);
 
-        } else {
-            // 处理主评论成功
-            const $commentsList = $('#comments-list');
-            $commentsList.prepend(data.html);
-            $form[0].reset();
-            $form.find('.comment-error-message').remove();
+                if ($repliesContainer.is(':visible') && $repliesContainer.html().trim() !== '') {
+                    // 回复列表已展开且有内容，直接追加新回复
+                    const $newHtml = $(data.html);
 
-            console.log('➕ 新主评论已添加');
+                    // 【修复】确保新回复有 nested-comment 类名
+                    $newHtml.addClass('nested-comment');
 
-            // 滚动到新评论
-            setTimeout(() => {
-                const $newComment = $commentsList.children().first();
-                $('html, body').animate({
-                    scrollTop: $newComment.offset().top - 100
-                }, 500);
-            }, 100);
-        }
-    },
+                    $repliesContainer.append($newHtml);
+                    console.log('➕ 新回复已追加到现有列表末尾');
 
-    /**
-     * 处理提交错误
-     */
-    handleSubmitError(data, $form) {
-        console.error('❌ 表单提交失败:', data);
-        TemplateManager.showError(data.message || '提交失败');
+                    // 更新回复数量按钮文字
+                    if ($showRepliesBtn.length) {
+                        const currentCount = $repliesContainer.children('.comment').length;
+                        $showRepliesBtn.text(`收起 ${currentCount} 条回复`);
+                    }
 
-        // 显示表单错误
-        if (data.errors) {
-            $form.find('.comment-error-message').remove();
-            for (const fieldName in data.errors) {
-                const errorMessages = data.errors[fieldName];
-                const $input = $form.find(`[name="${fieldName}"]`);
-                if ($input.length) {
-                    $input.after(`<div class="comment-error-message">${errorMessages.join('<br>')}</div>`);
+                    // 滚动到新添加的回复
+                    setTimeout(() => {
+                        const $newReply = $repliesContainer.children('.comment').last();
+                        if ($newReply.length) {
+                            // 给新回复添加高亮动画
+                            $newReply.addClass('just-added');
+                            $('html, body').animate({
+                                scrollTop: $newReply.offset().top - 100
+                            }, 500);
+                        }
+                    }, 100);
+
+                } else {
+                    // 回复列表未展开或为空，需要加载回复列表
+                    console.log('🔄 回复列表未展开，加载回复列表');
+
+                    // 先展开回复区域
+                    CommentLoader.loadReplies(parentId).done(() => {
+                        // 加载完成后滚动到新回复
+                        setTimeout(() => {
+                            const $newReply = $repliesContainer.children('.comment').last();
+                            if ($newReply.length) {
+                                $newReply.addClass('just-added');
+                                $('html, body').animate({
+                                    scrollTop: $newReply.offset().top - 100
+                                }, 500);
+                            }
+                        }, 300);
+                    });
+                }
+
+            } else {
+                // 处理主评论成功（parentId 为空）
+                const $commentsList = $('#comments-list');
+
+                // 移除"暂无评论"提示
+                $commentsList.find('.no-comments').remove();
+
+                // 在列表顶部添加新评论
+                $commentsList.prepend(data.html);
+
+                // 重置表单
+                $form[0].reset();
+                $form.find('.comment-error-message').remove();
+
+                console.log('➕ 新主评论已添加到顶部');
+
+                // 滚动到新评论并高亮
+                setTimeout(() => {
+                    const $newComment = $commentsList.children('.comment').first();
+                    if ($newComment.length) {
+                        $newComment.addClass('just-added');
+                        $('html, body').animate({
+                            scrollTop: $newComment.offset().top - 100
+                        }, 500);
+                    }
+                }, 100);
+            }
+        },
+
+        /**
+         * 处理提交错误
+         */
+        handleSubmitError(data, $form) {
+            console.error('❌ 表单提交失败:', data);
+            TemplateManager.showError(data.message || '提交失败');
+
+            if (data.errors) {
+                $form.find('.comment-error-message').remove();
+                for (const fieldName in data.errors) {
+                    const errorMessages = data.errors[fieldName];
+                    const $input = $form.find(`[name="${fieldName}"]`);
+                    if ($input.length) {
+                        $input.after(`<div class="comment-error-message">${errorMessages.join('<br>')}</div>`);
+                    }
                 }
             }
         }
-    }
-};
+    };
 
     // ===== 评论加载器 =====
     const CommentLoader = {
@@ -453,7 +494,6 @@ const FormManager = {
             const $loadMoreBtn = $('#load-more-comments');
             const pageId = $commentsList.attr('data-page-id');
 
-            // 显示加载状态
             $loadMoreBtn.hide();
             const $loading = TemplateManager.showLoadingIndicator();
 
@@ -463,19 +503,14 @@ const FormManager = {
             })
             .done((data) => {
                 if (data.status === 'success') {
-                    // 第一页清空列表
                     if (pageNumber === 1) {
                         $commentsList.empty();
                         this.restoreMainForm();
                     }
 
-                    // 添加评论HTML
                     $commentsList.append(data.html);
-
-                    // 处理空状态
                     this.handleEmptyState(data, pageNumber);
 
-                    // 更新加载更多按钮
                     if (data.has_next) {
                         $loadMoreBtn.data('page', pageNumber + 1).show();
                     } else {
@@ -525,10 +560,12 @@ const FormManager = {
             const $repliesContainer = $(`#replies-${commentId}`);
             const $btn = $(`.show-replies-btn[data-comment-id="${commentId}"]`);
 
+            // 如果已有内容且不在加载中，直接展开
             if ($repliesContainer.html().trim() !== '' &&
                 !$repliesContainer.find('.replies-loading-indicator').length) {
                 $repliesContainer.slideDown(200);
-                return;
+                // 返回一个已完成的 Promise，保持接口一致
+                return $.Deferred().resolve().promise();
             }
 
             const $loading = TemplateManager.showRepliesLoading($repliesContainer);
@@ -541,6 +578,7 @@ const FormManager = {
                         if ($btn.length) {
                             $btn.text(`收起 ${data.reply_count} 条回复`);
                         }
+                        console.log('✅ 回复列表加载完成，共', data.reply_count, '条');
                     } else {
                         TemplateManager.showError(data.message || '加载回复失败');
                     }
@@ -556,12 +594,8 @@ const FormManager = {
 
     // ===== 交互管理器 =====
     const InteractionManager = {
-        /**
-         * 处理点赞/踩
-         */
-        handleVote(commentId, reactionType,url) {
+        handleVote(commentId, reactionType, url) {
             return AuthManager.requireAuth(() => {
-
                 const targetUrl = url || '/comments/react/';
 
                 AjaxManager.post(targetUrl, {
@@ -582,47 +616,34 @@ const FormManager = {
             });
         },
 
-        /**
-         * 更新投票显示
-         */
         updateVoteDisplay(commentId, data) {
             const $comment = $(`#comment-${commentId}`);
             $comment.find('.like-count').text(data.like_count);
             $comment.find('.dislike-count').text(data.dislike_count);
 
-            // 更新按钮状态
             $comment.find('.vote-link').removeClass('active');
             if (data.action === 'added') {
                 $comment.find(`[data-reaction="${data.reaction_type}"]`).addClass('active');
             }
         },
 
-        /**
-         * 编辑评论
-         */
-        editComment(commentId,url) {
+        editComment(commentId, url) {
             return AuthManager.requireAuth(() => {
                 const $commentText = $(`#comment-text-${commentId}`);
                 const $comment = $commentText.closest('.comment');
 
-                // 获取纯文本内容
                 let currentContent = $commentText.clone()
                     .children('.replied-to-user').remove().end()
                     .text().trim();
 
-                // 隐藏操作按钮，显示编辑表单
                 $comment.find('.comment-actions-list').hide();
 
-                // ✨【修改】将 url 传给 createEditForm
                 const $editForm = TemplateManager.createEditForm(commentId, currentContent, url);
                 $commentText.html($editForm);
             });
         },
 
-        /**
-         * 保存编辑
-         */
-        saveEdit(commentId, newContent,url) {
+        saveEdit(commentId, newContent, url) {
             if (!newContent.trim()) {
                 TemplateManager.showError('评论内容不能为空！');
                 return;
@@ -631,7 +652,6 @@ const FormManager = {
             const $saveBtn = $(`.save-edit-btn[data-comment-id="${commentId}"]`);
             $saveBtn.prop('disabled', true).text('保存中...');
 
-            // ✨【新增】优先使用传入的 url，如果没有则回退（兼容旧代码）
             const targetUrl = url || '/comments/edit/';
 
             return AjaxManager.post(targetUrl, {
@@ -643,7 +663,6 @@ const FormManager = {
                     const $commentText = $(`#comment-text-${commentId}`);
                     const $comment = $commentText.closest('.comment');
 
-                    // 重新渲染内容
                     const repliedToUserSpan = $commentText.find('.replied-to-user').prop('outerHTML') || '';
                     $commentText.html(repliedToUserSpan + data.content);
                     $comment.find('.comment-actions-list').show();
@@ -661,10 +680,7 @@ const FormManager = {
             });
         },
 
-        /**
-         * 删除评论
-         */
-        deleteComment(commentId,url) {
+        deleteComment(commentId, url) {
             return AuthManager.requireAuth(() => {
                 const $comment = $(`#comment-${commentId}`);
                 const isRootComment = $comment.hasClass('comment') && !$comment.hasClass('nested-comment');
@@ -679,7 +695,6 @@ const FormManager = {
 
                 if (!confirm(confirmMessage)) return;
 
-                // ✨【新增】优先使用传入的 url
                 const targetUrl = url || '/comments/delete/';
 
                 AjaxManager.post(targetUrl, {
@@ -699,19 +714,14 @@ const FormManager = {
             });
         },
 
-        /**
-         * 处理删除成功
-         */
         handleDeleteSuccess(commentId, data, isRootComment) {
             const $comment = $(`#comment-${commentId}`);
 
             if (isRootComment && data.deleted_replies) {
-                // 删除整个评论项
                 $comment.fadeOut(300, function() {
                     $(this).remove();
                 });
             } else {
-                // 标记为已删除
                 const $commentText = $comment.find(`#comment-text-${commentId}`);
                 $commentText.html('<em>此评论已被删除</em>');
                 $comment.find('.comment-actions-list a, .comment-actions-list button').hide();
@@ -719,7 +729,6 @@ const FormManager = {
                 $comment.find('.dynamic-reply-form-container').empty();
             }
 
-            // 重置相关的回复表单
             if (FormManager.activeReplyForm) {
                 FormManager.resetReplyForms();
             }
@@ -733,7 +742,7 @@ const FormManager = {
             $(document).on('click', '.login-btn, .theme-btn[class*="login"]', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('登录按钮被点击'); // 调试用
+                console.log('登录按钮被点击');
                 AuthManager.redirectToLogin();
             });
 
@@ -790,8 +799,8 @@ const FormManager = {
 
             // 回复功能
             $(document).on('click', '.reply-btn', function(e) {
-                e.preventDefault(); // 阻止默认行为
-                e.stopPropagation(); // 阻止事件冒泡
+                e.preventDefault();
+                e.stopPropagation();
 
                 const $btn = $(this);
                 const commentId = $btn.attr('data-comment-id');
@@ -825,7 +834,6 @@ const FormManager = {
                 const $btn = $(this);
                 const commentId = $btn.attr('data-comment-id');
                 const reactionType = $btn.attr('data-reaction');
-
                 const url = $btn.attr('data-url');
 
                 InteractionManager.handleVote(commentId, reactionType, url);
@@ -834,10 +842,8 @@ const FormManager = {
             // 编辑功能
             $(document).on('click', '.edit-btn', function() {
                 const commentId = $(this).data('comment-id');
-                // ✨【新增】从按钮获取 URL
                 const url = $(this).attr('data-url');
-
-                InteractionManager.editComment(commentId,url);
+                InteractionManager.editComment(commentId, url);
             });
 
             $(document).on('click', '.save-edit-btn', function() {
@@ -845,24 +851,18 @@ const FormManager = {
                 const commentId = $btn.data('comment-id');
                 const url = $btn.attr('data-url');
                 const newContent = $btn.closest('.edit-comment-form').find('.edit-textarea').val();
-                InteractionManager.saveEdit(commentId, newContent,url);
+                InteractionManager.saveEdit(commentId, newContent, url);
             });
 
             $(document).on('click', '.cancel-edit-btn', function() {
-                // 简化处理：直接刷新页面
                 location.reload();
             });
 
             // 删除功能
             $(document).on('click', '.delete-btn', function() {
                 const commentId = $(this).attr('data-comment-id');
-                // ✨【新增】获取模板中生成的正确 URL
                 const url = $(this).attr('data-url');
-
-                // ✨【修改】将 url 传给 deleteComment
                 InteractionManager.deleteComment(commentId, url);
-
-
             });
         }
     };
@@ -889,8 +889,6 @@ const FormManager = {
 
     return {
         init: Controller.init.bind(Controller),
-
-        // 暴露一些有用的方法供外部调用
         loadComments: CommentLoader.loadComments.bind(CommentLoader),
         isAuthenticated: AuthManager.isAuthenticated.bind(AuthManager)
     };
