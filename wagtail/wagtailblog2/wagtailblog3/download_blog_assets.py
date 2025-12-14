@@ -16,7 +16,6 @@ import shutil
 import urllib.request
 import urllib.error
 from pathlib import Path
-import json
 import time
 
 class BlogHighlightUpdater:

@@ -148,7 +148,7 @@ $(function() {
     }
 
     // ===================================
-    // 4. TOC 容器内监听 (嵌套滚动版) - 支持 H1
+    // 4. TOC 容器内监听 (嵌套滚动版) - 支持 H1 - 修复版
     // ===================================
     function initTOC() {
         const tocContainer = document.getElementById('toc-content');
@@ -162,7 +162,7 @@ $(function() {
         const contentContext = document.querySelector('.article-body-content');
         if (!contentContext || !tocContainer) return;
 
-        // 🔥 修改 1：增加 h1 查询
+        // 🔥 查询 h1, h2, h3, h4
         const headers = contentContext.querySelectorAll('h1, h2, h3, h4');
         if (headers.length === 0) {
             tocContainer.innerHTML = '<p class="text-muted">暂无目录</p>';
@@ -173,7 +173,7 @@ $(function() {
         const tocList = document.createElement('ul');
         tocList.className = 'toc-list';
 
-        // 🔥 修改 2：栈初始层级改为 0，让 h1 成为第一级
+        // 🔥 栈初始层级改为 0，让 h1 成为第一级
         let stack = [{ level: 0, element: tocList }];
 
         // --- 构建目录 ---
@@ -183,7 +183,7 @@ $(function() {
             const li = document.createElement('li');
             li.className = 'toc-item';
 
-            // 🔥 修改 3：为 h1 添加特殊类名
+            // 🔥 为 h1 添加特殊类名
             if (currentLevel === 1) {
                 li.classList.add('toc-item-h1');
             }
@@ -246,17 +246,72 @@ $(function() {
                 setTimeout(() => { isClicking = false; }, 800);
             });
 
-            // 栈处理 (不变)
+            // ===== 🔥🔥🔥 核心修复：改进栈处理逻辑 🔥🔥🔥 =====
             let parent = stack[stack.length - 1];
+
             if (currentLevel > parent.level) {
-                const newUl = document.createElement('ul');
-                newUl.className = 'toc-sub-menu';
-                parent.element.lastElementChild ? parent.element.lastElementChild.appendChild(newUl) : parent.element.appendChild(newUl);
-                stack.push({ level: currentLevel, element: newUl });
-            } else if (currentLevel < parent.level) {
-                while (stack.length > 1 && currentLevel <= stack[stack.length - 1].level) stack.pop();
+                // 情况1：需要创建更深层级的子菜单
+
+                // 🔥 特殊处理：如果父级是根容器 (level: 0) 且当前是 h1 (level: 1)
+                // 直接添加到 tocList，不创建多余的 toc-sub-menu
+                if (parent.level === 0 && currentLevel === 1) {
+                    tocList.appendChild(li);
+                    // 更新栈：h1 的子元素应该添加到 tocList
+                    stack.push({ level: currentLevel, element: tocList });
+                } else {
+                    // 正常情况：h2->h3, h3->h4 等需要创建子菜单
+                    const newUl = document.createElement('ul');
+                    newUl.className = 'toc-sub-menu';
+
+                    // 将子菜单添加到上一个兄弟元素（即父级标题的 li）
+                    const lastSibling = parent.element.lastElementChild;
+                    if (lastSibling && lastSibling.tagName === 'LI') {
+                        lastSibling.appendChild(newUl);
+                    } else {
+                        // 如果没有兄弟元素，添加到父容器
+                        parent.element.appendChild(newUl);
+                    }
+
+                    newUl.appendChild(li);
+                    stack.push({ level: currentLevel, element: newUl });
+                }
+            } else if (currentLevel === parent.level) {
+                // 情况2：同级元素，直接添加到父容器
+                parent.element.appendChild(li);
+
+            } else {
+                // 情况3：currentLevel < parent.level，需要回退栈找到合适的父级
+                while (stack.length > 1 && currentLevel <= stack[stack.length - 1].level) {
+                    stack.pop();
+                }
+
+                // 重新获取父级
+                parent = stack[stack.length - 1];
+
+                if (currentLevel > parent.level) {
+                    // 回退后发现仍需创建子菜单
+                    if (parent.level === 0 && currentLevel === 1) {
+                        tocList.appendChild(li);
+                        stack.push({ level: currentLevel, element: tocList });
+                    } else {
+                        const newUl = document.createElement('ul');
+                        newUl.className = 'toc-sub-menu';
+
+                        const lastSibling = parent.element.lastElementChild;
+                        if (lastSibling && lastSibling.tagName === 'LI') {
+                            lastSibling.appendChild(newUl);
+                        } else {
+                            parent.element.appendChild(newUl);
+                        }
+
+                        newUl.appendChild(li);
+                        stack.push({ level: currentLevel, element: newUl });
+                    }
+                } else {
+                    // 直接添加到父容器
+                    parent.element.appendChild(li);
+                }
             }
-            stack[stack.length - 1].element.appendChild(li);
         });
 
         // 图标处理
@@ -333,6 +388,8 @@ $(function() {
         };
 
         scrollTarget.addEventListener('scroll', onScroll);
+
+        console.log('✅ TOC初始化完成，已修复h1对齐问题');
     }
 
     // ===================================

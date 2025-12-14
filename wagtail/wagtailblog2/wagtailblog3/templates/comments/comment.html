@@ -40,20 +40,24 @@
                     data-root-comment-id="{% if comment.parent %}{{ comment.parent.id }}{% else %}{{ comment.id }}{% endif %}"
                     >回复</a>
 
-                <a href="javascript:void(0);" class="vote-link like-btn" data-comment-id="{{ comment.id }}" data-reaction="1">
+                <a href="javascript:void(0);" class="vote-link like-btn" data-comment-id="{{ comment.id }}" data-reaction="1" data-url="{% url 'comments:react_to_comment' %}">
                     <i class="icon-like">👍</i> <span class="like-count">{{ comment.like_count }}</span>
                 </a>
-                <a href="javascript:void(0);" class="vote-link dislike-btn" data-comment-id="{{ comment.id }}" data-reaction="-1">
+                <a href="javascript:void(0);" class="vote-link dislike-btn" data-comment-id="{{ comment.id }}" data-reaction="-1"data-url="{% url 'comments:react_to_comment' %}">
                     <i class="icon-dislike">👎</i> <span class="dislike-count">{{ comment.dislike_count }}</span>
                 </a>
 
                 {% if user.is_authenticated and user.id == comment.author_user.id and comment.is_editable %}
-                    <a href="javascript:void(0);" class="action-link edit-btn" data-comment-id="{{ comment.id }}">编辑</a>
+                    <a href="javascript:void(0);"
+                       class="action-link edit-btn"
+                       data-comment-id="{{ comment.id }}"
+                       data-url="{% url 'comments:edit_comment' %}"> 编辑
+                    </a>
                 {% endif %}
 
                 {% if user.is_authenticated %}
                     {% if user.id == comment.author_user.id or user.is_staff %}
-                        <a href="javascript:void(0);" class="action-link delete-btn" data-comment-id="{{ comment.id }}">删除</a>
+                        <a href="javascript:void(0);" class="action-link delete-btn" data-comment-id="{{ comment.id }}" data-url="{% url 'comments:delete_comment' %}">删除</a>
                     {% endif %}
                 {% endif %}
             </div>

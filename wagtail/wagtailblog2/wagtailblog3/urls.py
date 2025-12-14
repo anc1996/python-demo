@@ -2,12 +2,13 @@
 
 from django.conf import settings
 from django.conf.urls.i18n import i18n_patterns
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.contrib import admin
 
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
+from wagtail.images.views.serve import ServeView
 
 from blog.views import test_search_backend
 
@@ -35,6 +36,9 @@ urlpatterns = urlpatterns + i18n_patterns(
     # 添加归档API URLs
     path('archive/', include('archive.urls')),
     # 对于上面更具体规则没有捕获的任何内容，交由 Wagtail 的页面服务机制处理
+    
+    re_path(r'^images/([^/]*)/(\d*)/([^/]*)/[^/]*$', ServeView.as_view(action='redirect'), name='wagtailimages_serve'),
+    
     # 这应该是列表中的最后一个模式：
     path("", include(wagtail_urls)),
     # 或者，如果您希望 Wagtail 页面从站点的子路径而不是站点根目录提供：

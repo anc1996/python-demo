@@ -65,10 +65,13 @@ const CommentSystem = (function() {
         /**
          * 创建编辑表单
          */
-        createEditForm(commentId, currentContent) {
+        createEditForm(commentId, currentContent,editUrl) {
             const $editForm = this.getTemplate('edit-form-template');
             $editForm.find('.edit-textarea').val(currentContent);
-            $editForm.find('.save-edit-btn').attr('data-comment-id', commentId);
+            // ✨【修改】找到保存按钮，把 URL 存进去
+            $editForm.find('.save-edit-btn')
+                .attr('data-comment-id', commentId)
+                .attr('data-url', editUrl); //
             $editForm.find('.cancel-edit-btn').attr('data-comment-id', commentId);
             return $editForm;
         },
@@ -278,7 +281,8 @@ const FormManager = {
 
         // 设置表单字段
         const pageId = $('#comments-list').attr('data-page-id');
-        $newForm.attr('action', `/comments/post/${pageId}/`);
+
+
         $newForm.find(`#comment-parent-id-${uniqueId}`).val(rootCommentId); // 始终使用根评论ID
         $newForm.find(`#replied-to-user-id-${uniqueId}`).val(userId);
 
@@ -555,9 +559,12 @@ const FormManager = {
         /**
          * 处理点赞/踩
          */
-        handleVote(commentId, reactionType) {
+        handleVote(commentId, reactionType,url) {
             return AuthManager.requireAuth(() => {
-                AjaxManager.post('/comments/react/', {
+
+                const targetUrl = url || '/comments/react/';
+
+                AjaxManager.post(targetUrl, {
                     comment_id: commentId,
                     reaction_type: reactionType
                 })
@@ -593,7 +600,7 @@ const FormManager = {
         /**
          * 编辑评论
          */
-        editComment(commentId) {
+        editComment(commentId,url) {
             return AuthManager.requireAuth(() => {
                 const $commentText = $(`#comment-text-${commentId}`);
                 const $comment = $commentText.closest('.comment');
@@ -606,7 +613,8 @@ const FormManager = {
                 // 隐藏操作按钮，显示编辑表单
                 $comment.find('.comment-actions-list').hide();
 
-                const $editForm = TemplateManager.createEditForm(commentId, currentContent);
+                // ✨【修改】将 url 传给 createEditForm
+                const $editForm = TemplateManager.createEditForm(commentId, currentContent, url);
                 $commentText.html($editForm);
             });
         },
@@ -614,7 +622,7 @@ const FormManager = {
         /**
          * 保存编辑
          */
-        saveEdit(commentId, newContent) {
+        saveEdit(commentId, newContent,url) {
             if (!newContent.trim()) {
                 TemplateManager.showError('评论内容不能为空！');
                 return;
@@ -623,7 +631,10 @@ const FormManager = {
             const $saveBtn = $(`.save-edit-btn[data-comment-id="${commentId}"]`);
             $saveBtn.prop('disabled', true).text('保存中...');
 
-            return AjaxManager.post('/comments/edit/', {
+            // ✨【新增】优先使用传入的 url，如果没有则回退（兼容旧代码）
+            const targetUrl = url || '/comments/edit/';
+
+            return AjaxManager.post(targetUrl, {
                 comment_id: commentId,
                 content: newContent
             })
@@ -653,7 +664,7 @@ const FormManager = {
         /**
          * 删除评论
          */
-        deleteComment(commentId) {
+        deleteComment(commentId,url) {
             return AuthManager.requireAuth(() => {
                 const $comment = $(`#comment-${commentId}`);
                 const isRootComment = $comment.hasClass('comment') && !$comment.hasClass('nested-comment');
@@ -668,7 +679,10 @@ const FormManager = {
 
                 if (!confirm(confirmMessage)) return;
 
-                AjaxManager.post('/comments/delete/', {
+                // ✨【新增】优先使用传入的 url
+                const targetUrl = url || '/comments/delete/';
+
+                AjaxManager.post(targetUrl, {
                     comment_id: commentId
                 })
                 .done((data) => {
@@ -811,20 +825,27 @@ const FormManager = {
                 const $btn = $(this);
                 const commentId = $btn.attr('data-comment-id');
                 const reactionType = $btn.attr('data-reaction');
-                InteractionManager.handleVote(commentId, reactionType);
+
+                const url = $btn.attr('data-url');
+
+                InteractionManager.handleVote(commentId, reactionType, url);
             });
 
             // 编辑功能
             $(document).on('click', '.edit-btn', function() {
                 const commentId = $(this).data('comment-id');
-                InteractionManager.editComment(commentId);
+                // ✨【新增】从按钮获取 URL
+                const url = $(this).attr('data-url');
+
+                InteractionManager.editComment(commentId,url);
             });
 
             $(document).on('click', '.save-edit-btn', function() {
                 const $btn = $(this);
                 const commentId = $btn.data('comment-id');
+                const url = $btn.attr('data-url');
                 const newContent = $btn.closest('.edit-comment-form').find('.edit-textarea').val();
-                InteractionManager.saveEdit(commentId, newContent);
+                InteractionManager.saveEdit(commentId, newContent,url);
             });
 
             $(document).on('click', '.cancel-edit-btn', function() {
@@ -835,7 +856,13 @@ const FormManager = {
             // 删除功能
             $(document).on('click', '.delete-btn', function() {
                 const commentId = $(this).attr('data-comment-id');
-                InteractionManager.deleteComment(commentId);
+                // ✨【新增】获取模板中生成的正确 URL
+                const url = $(this).attr('data-url');
+
+                // ✨【修改】将 url 传给 deleteComment
+                InteractionManager.deleteComment(commentId, url);
+
+
             });
         }
     };
