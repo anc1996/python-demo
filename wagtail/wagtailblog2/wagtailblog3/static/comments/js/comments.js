@@ -1,68 +1,216 @@
-// comments.js - 修复版本：子评论回复框位置修正
+/**
+ * 评论系统 v2.0
+ * 改进点：
+ * 1. 添加配置对象，消除硬编码
+ * 2. 精确的 DOM 选择器
+ * 3. 防抖/节流处理
+ * 4. 更好的错误处理
+ * 5. 可调试模式
+ */
 
 const CommentSystem = (function() {
     'use strict';
 
+    // ===== 配置对象 =====
+    const Config = {
+        // 调试模式（生产环境设为 false）
+        debug: true,
+
+        // URL 配置
+        urls: {
+            login: '/admin/login/',
+            loadComments: '/comments/load/',
+            loadReplies: '/comments/load-replies/',
+            postComment: '/comments/post/',
+            editComment: '/comments/edit/',
+            deleteComment: '/comments/delete/',
+            reactComment: '/comments/react/'
+        },
+
+        // 时间配置（毫秒）
+        timing: {
+            messageAutoHide: 3000,
+            successAutoHide: 2000,
+            highlightDuration: 3000,
+            scrollAnimationDuration: 500,
+            slideAnimationDuration: 200,
+            debounceDelay: 300
+        },
+
+        // UI 文本（便于国际化）
+        text: {
+            submitting: '提交中...',
+            submit: '发表评论',
+            saving: '保存中...',
+            save: '保存',
+            loading: '加载中...',
+            loginRequired: '请先登录才能进行此操作！',
+            deleteConfirm: '确定要删除这条评论吗？\n此操作不可撤销。',
+            deleteWithReplies: '删除这条一级评论将同时删除其下的所有 {count} 条回复，确定要继续吗？',
+            emptyContent: '评论内容不能为空！',
+            operationFailed: '操作失败，请重试',
+            loadFailed: '加载评论失败',
+            editFailed: '编辑失败',
+            deleteFailed: '删除失败',
+            commentSuccess: '评论发表成功',
+            editSuccess: '评论已更新',
+            deleteSuccess: '评论已删除',
+            operationSuccess: '操作成功',
+            viewReplies: '查看全部 {count} 条回复',
+            hideReplies: '收起 {count} 条回复',
+            deleted: '此评论已被删除'
+        },
+
+        // 选择器配置
+        selectors: {
+            commentBox: '#comments-section',
+            commentsList: '#comments-list',
+            loadMoreBtn: '#load-more-comments',
+            mainFormWrapper: '#main-comment-form-wrapper',
+            mainFormPlacement: '#initial-comment-form-placement',
+            sortBtn: '.sort-btn',
+            comment: '.comment',
+            nestedComment: '.nested-comment',
+            // 精确选择器模板
+            commentById: '#comment-{id}',
+            repliesById: '#replies-{id}',
+            commentTextById: '#comment-text-{id}',
+            showRepliesBtn: '.show-replies-btn[data-comment-id="{id}"]'
+        }
+    };
+
+    // ===== 工具函数 =====
+    const Utils = {
+        /**
+         * 调试日志
+         */
+        log(...args) {
+            if (Config.debug) {
+                console.log('[CommentSystem]', ...args);
+            }
+        },
+
+        /**
+         * 错误日志
+         */
+        error(...args) {
+            console.error('[CommentSystem Error]', ...args);
+        },
+
+        /**
+         * 替换模板字符串
+         */
+        template(str, data) {
+            return str.replace(/\{(\w+)\}/g, (match, key) => {
+                return data[key] !== undefined ? data[key] : match;
+            });
+        },
+
+        /**
+         * 防抖函数
+         */
+        debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func.apply(this, args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        },
+
+        /**
+         * 节流函数
+         */
+        throttle(func, limit) {
+            let inThrottle;
+            return function(...args) {
+                if (!inThrottle) {
+                    func.apply(this, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        },
+
+        /**
+         * 获取评论的直接操作区域（不包括子评论）
+         * 【核心修复】精确选择器
+         */
+        getCommentActions($comment) {
+            return $comment.find('> .inner-box > .comment-content-wrapper > .comment-actions-list');
+        },
+
+        /**
+         * 获取评论的回复表单容器
+         */
+        getReplyFormContainer($comment) {
+            return $comment.find('> .inner-box > .comment-content-wrapper > .dynamic-reply-form-container').first();
+        },
+
+        /**
+         * 获取评论的文本区域
+         */
+        getCommentText($comment) {
+            const commentId = $comment.data('comment-id');
+            return $comment.find(`#comment-text-${commentId}`);
+        },
+
+        /**
+         * 平滑滚动到元素
+         */
+        scrollTo($element, offset = 100) {
+            if ($element.length) {
+                $('html, body').animate({
+                    scrollTop: $element.offset().top - offset
+                }, Config.timing.scrollAnimationDuration);
+            }
+        }
+    };
+
     // ===== 模板管理器 =====
     const TemplateManager = {
-        /**
-         * 获取模板并克隆
-         */
+        cache: {},
+
         getTemplate(templateId) {
-            const template = $(`#${templateId}`);
-            if (!template.length) {
-                console.warn(`模板 ${templateId} 不存在`);
-                return $();
+            if (!this.cache[templateId]) {
+                const $template = $(`#${templateId}`);
+                if (!$template.length) {
+                    Utils.error(`模板 ${templateId} 不存在`);
+                    return $();
+                }
+                this.cache[templateId] = $template.children().first();
             }
-            return template.children().first().clone().removeClass('template-hidden');
+            return this.cache[templateId].clone().removeClass('template-hidden');
         },
 
-        /**
-         * 显示登录提示
-         */
         showLoginPrompt() {
-            const $commentsList = $('#comments-list');
-            if ($commentsList.find('.login-prompt').length > 0) {
-                return;
-            }
-            const $loginPrompt = this.getTemplate('login-prompt-template');
-            $commentsList.append($loginPrompt);
+            const $commentsList = $(Config.selectors.commentsList);
+            if ($commentsList.find('.login-prompt').length > 0) return;
+            $commentsList.append(this.getTemplate('login-prompt-template'));
         },
 
-        /**
-         * 显示暂无评论
-         */
         showNoComments() {
-            const $commentsList = $('#comments-list');
-            if ($commentsList.find('.no-comments').length > 0) {
-                return;
-            }
-            const $noComments = this.getTemplate('no-comments-template');
-            $commentsList.append($noComments);
+            const $commentsList = $(Config.selectors.commentsList);
+            if ($commentsList.find('.no-comments').length > 0) return;
+            $commentsList.append(this.getTemplate('no-comments-template'));
         },
 
-        /**
-         * 显示加载指示器
-         */
-        showLoadingIndicator() {
-            const $commentsList = $('#comments-list');
+        showLoadingIndicator($container) {
+            $container = $container || $(Config.selectors.commentsList);
             const $loading = this.getTemplate('loading-indicator-template');
-            $commentsList.append($loading);
+            $container.append($loading);
             return $loading;
         },
 
-        /**
-         * 显示回复加载指示器
-         */
         showRepliesLoading($container) {
             const $loading = this.getTemplate('replies-loading-template');
             $container.append($loading);
             return $loading;
         },
 
-        /**
-         * 创建编辑表单
-         */
         createEditForm(commentId, currentContent, editUrl) {
             const $editForm = this.getTemplate('edit-form-template');
             $editForm.find('.edit-textarea').val(currentContent);
@@ -73,87 +221,96 @@ const CommentSystem = (function() {
             return $editForm;
         },
 
-        /**
-         * 显示错误消息
-         */
-        showError(message, $container = null) {
-            const $error = this.getTemplate('error-message-template');
-            $error.find('.error-text').text(message);
+        showMessage(type, message, $container) {
+            const templateId = type === 'error' ? 'error-message-template' : 'success-message-template';
+            const $msg = this.getTemplate(templateId);
+            const textClass = type === 'error' ? '.error-text' : '.success-text';
+            $msg.find(textClass).text(message);
 
-            if ($container) {
-                $container.append($error);
-                setTimeout(() => $error.fadeOut(300, () => $error.remove()), 3000);
+            if ($container && $container.length) {
+                $container.append($msg);
+                const hideDelay = type === 'error'
+                    ? Config.timing.messageAutoHide
+                    : Config.timing.successAutoHide;
+                setTimeout(() => $msg.fadeOut(300, () => $msg.remove()), hideDelay);
             } else {
-                alert('❌ ' + message);
+                // 无容器时使用 alert（可替换为 toast 组件）
+                alert((type === 'error' ? '❌ ' : '✅ ') + message);
             }
         },
 
-        /**
-         * 显示成功消息
-         */
-        showSuccess(message, $container = null) {
-            const $success = this.getTemplate('success-message-template');
-            $success.find('.success-text').text(message);
+        showError(message, $container) {
+            this.showMessage('error', message, $container);
+        },
 
-            if ($container) {
-                $container.append($success);
-                setTimeout(() => $success.fadeOut(300, () => $success.remove()), 2000);
-            } else {
-                console.log('✅ ' + message);
-            }
+        showSuccess(message, $container) {
+            this.showMessage('success', message, $container);
         }
     };
 
     // ===== 认证管理器 =====
     const AuthManager = {
-        isAuthenticated() {
-            return $('#main-comment-form-wrapper').length > 0 &&
-                   $('#main-comment-form-wrapper').find('form').length > 0;
+        _isAuthenticated: null,
+
+        init() {
+            // 从服务端注入的数据获取认证状态
+            try {
+                const userData = JSON.parse($('#user-data').text() || '{}');
+                this._isAuthenticated = userData.authenticated === true;
+            } catch (e) {
+                // 降级方案：检查 DOM
+                this._isAuthenticated = $(Config.selectors.mainFormWrapper).find('form').length > 0;
+            }
+            Utils.log('认证状态:', this._isAuthenticated);
         },
 
-        showLoginPrompt() {
-            TemplateManager.showLoginPrompt();
+        isAuthenticated() {
+            if (this._isAuthenticated === null) {
+                this.init();
+            }
+            return this._isAuthenticated;
+        },
+
+        getLoginUrl() {
+            const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
+            return `${Config.urls.login}?next=${currentUrl}`;
         },
 
         redirectToLogin() {
-            console.log('重定向到登录页面');
-            const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
-            const loginUrl = `/admin/login/?next=${currentUrl}`;
-            console.log('登录URL:', loginUrl);
-            window.location.href = loginUrl;
+            Utils.log('重定向到登录页面');
+            window.location.href = this.getLoginUrl();
         },
 
         requireAuth(callback) {
             if (this.isAuthenticated()) {
                 callback();
                 return true;
-            } else {
-                alert('请先登录才能进行此操作！');
-                this.redirectToLogin();
-                return false;
             }
+            alert(Config.text.loginRequired);
+            this.redirectToLogin();
+            return false;
         }
     };
 
-    // ===== AJAX管理器 =====
+    // ===== AJAX 管理器 =====
     const AjaxManager = {
-        getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
+        getCsrfToken() {
+            let token = null;
+            if (document.cookie) {
                 const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith('csrftoken=')) {
+                        token = decodeURIComponent(cookie.substring(10));
                         break;
                     }
                 }
             }
-            return cookieValue;
+            return token;
         },
 
-        handleError(xhr, defaultMessage = '操作失败，请重试') {
-            let message = defaultMessage;
+        handleError(xhr, defaultMessage) {
+            let message = defaultMessage || Config.text.operationFailed;
 
             if (xhr.status === 403) {
                 message = '权限不足，请重新登录';
@@ -165,11 +322,12 @@ const CommentSystem = (function() {
             }
 
             TemplateManager.showError(message);
+            return message;
         },
 
         post(url, data = {}) {
             if (typeof data === 'object' && !(data instanceof FormData)) {
-                data.csrfmiddlewaretoken = this.getCookie('csrftoken');
+                data.csrfmiddlewaretoken = this.getCsrfToken();
             }
 
             return $.ajax({
@@ -177,10 +335,7 @@ const CommentSystem = (function() {
                 method: 'POST',
                 data,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                ...(data instanceof FormData ? {
-                    processData: false,
-                    contentType: false
-                } : {})
+                ...(data instanceof FormData ? { processData: false, contentType: false } : {})
             });
         },
 
@@ -197,143 +352,91 @@ const CommentSystem = (function() {
     // ===== 表单管理器 =====
     const FormManager = {
         activeReplyForm: null,
+        isSubmitting: false,  // 防止重复提交
 
-        /**
-         * 重置所有回复表单
-         */
         resetReplyForms() {
             $('.active-reply-form').remove();
             $('.dynamic-reply-form-container').empty();
+            $('.comment').removeClass('comment-replying');
             this.activeReplyForm = null;
-            console.log('🧹 所有回复表单已重置');
+            Utils.log('所有回复表单已重置');
         },
 
-        /**
-         * 创建回复表单 - 【核心修复】
-         * 修改：回复框始终出现在被点击评论的下方
-         */
         createReplyForm(commentId, username, userId, rootCommentId) {
-            console.log('💬 创建回复表单:', {
-                commentId,
-                username,
-                userId,
-                rootCommentId
-            });
+            Utils.log('创建回复表单:', { commentId, username, userId, rootCommentId });
 
-            // 先重置现有表单
             this.resetReplyForms();
 
-            // 【核心修复】不管是一级还是二级评论，都找被点击评论自己的容器
-            const $targetContainer = $(`#comment-${commentId}`)
-                .find('> .inner-box > .comment-content-wrapper > .dynamic-reply-form-container')
-                .first();
-
-            console.log('🎯 目标容器:', {
-                commentId: commentId,
-                found: $targetContainer.length > 0,
-                container: $targetContainer[0]
-            });
+            const $comment = $(`#comment-${commentId}`);
+            const $targetContainer = Utils.getReplyFormContainer($comment);
 
             if (!$targetContainer.length) {
-                console.error('❌ 未找到回复表单容器');
+                Utils.error('未找到回复表单容器');
                 alert('无法创建回复表单，请刷新页面重试');
                 return;
             }
 
-            // 克隆主表单
-            const $originalForm = $('#main-comment-form-wrapper').find('form');
+            const $originalForm = $(Config.selectors.mainFormWrapper).find('form');
             if (!$originalForm.length) {
-                console.error('❌ 未找到原始表单');
+                Utils.error('未找到原始表单');
                 return;
             }
 
             const $newForm = $originalForm.clone();
-
-            // 【简化】不再修改 input 的 id，只修改 form 的 id 避免冲突
             const uniqueId = `reply-form-${Date.now()}`;
+
             $newForm.attr('id', uniqueId);
-
-            // 【重要】只修改 textarea 的 id（避免 label for 冲突），保持 hidden input 的原始结构
             $newForm.find('#comment-content').attr('id', `comment-content-${uniqueId}`);
+            $newForm.find('input[name="parent_id"]').val(rootCommentId);
+            $newForm.find('input[name="replied_to_user_id"]').val(userId);
 
-            // 创建包装容器
             const $wrapper = $('<div>')
                 .addClass('active-reply-form')
                 .attr('data-reply-to-comment', commentId)
                 .attr('data-root-comment', rootCommentId)
                 .append($newForm);
 
-            // 【关键】设置表单字段 - 使用 name 属性选择器，更可靠
-            $newForm.find('input[name="parent_id"]').val(rootCommentId);
-            $newForm.find('input[name="replied_to_user_id"]').val(userId);
-
-            console.log('📝 表单字段设置:', {
-                parent_id: $newForm.find('input[name="parent_id"]').val(),
-                replied_to_user_id: $newForm.find('input[name="replied_to_user_id"]').val()
-            });
-
-            // 预填充内容
             const $textarea = $newForm.find(`#comment-content-${uniqueId}`);
             $textarea.val(`@${username} `);
 
-            // 显示回复信息
             const $replyInfo = $newForm.find('#reply-to-info');
             $replyInfo.find('#reply-to-name').text(username);
             $replyInfo.removeClass('template-hidden').show();
 
-            // 清空目标容器并添加新表单
             $targetContainer.empty().append($wrapper);
-
-            // 聚焦输入框
             $textarea.focus();
 
-            // 将光标移到末尾
             const textLength = $textarea.val().length;
             $textarea[0].setSelectionRange(textLength, textLength);
 
             this.activeReplyForm = $wrapper;
-
-            console.log('✅ 回复表单创建成功，位于评论', commentId, '下方');
-
-            // 滚动到表单
-            $('html, body').animate({
-                scrollTop: $wrapper.offset().top - 100
-            }, 500);
-
-            // 添加视觉提示：高亮目标评论
             this.highlightTargetComment(commentId);
+            Utils.scrollTo($wrapper);
+
+            Utils.log('回复表单创建成功');
         },
 
-        /**
-         * 高亮目标评论
-         */
         highlightTargetComment(commentId) {
-            // 移除之前的高亮
             $('.comment').removeClass('comment-replying');
-
-            // 高亮当前要回复的评论
             $(`#comment-${commentId}`).addClass('comment-replying');
-
-            // 3秒后移除高亮
             setTimeout(() => {
                 $(`#comment-${commentId}`).removeClass('comment-replying');
-            }, 3000);
+            }, Config.timing.highlightDuration);
         },
 
-        /**
-         * 提交表单
-         */
         submitForm(form, isReply = false) {
+            if (this.isSubmitting) {
+                Utils.log('正在提交中，忽略重复请求');
+                return $.Deferred().reject().promise();
+            }
+
             const $form = $(form);
             const $submitBtn = $form.find('button[type="submit"]');
 
-            console.log('📤 提交表单:', {
-                isReply,
-                formAction: form.action
-            });
+            this.isSubmitting = true;
+            $submitBtn.prop('disabled', true).text(Config.text.submitting);
 
-            // 禁用提交按钮
-            $submitBtn.prop('disabled', true).text('提交中...');
+            Utils.log('提交表单:', { isReply, action: form.action });
 
             const formData = new FormData(form);
 
@@ -341,143 +444,92 @@ const CommentSystem = (function() {
                 .done((data) => {
                     if (data.status === 'success') {
                         this.handleSubmitSuccess(data, $form, isReply);
-                        TemplateManager.showSuccess(data.message || '评论发表成功');
+                        TemplateManager.showSuccess(data.message || Config.text.commentSuccess);
                     } else {
                         this.handleSubmitError(data, $form);
                     }
                 })
                 .fail((xhr) => {
-                    AjaxManager.handleError(xhr, '评论发表失败');
+                    AjaxManager.handleError(xhr, Config.text.operationFailed);
                 })
                 .always(() => {
-                    $submitBtn.prop('disabled', false).text('发表评论');
+                    this.isSubmitting = false;
+                    $submitBtn.prop('disabled', false).text(Config.text.submit);
                 });
         },
 
-        /**
-         * 处理提交成功 - 【修复版】
-         */
         handleSubmitSuccess(data, $form, isReply) {
-            // 【修复】使用 name 属性来获取 parentId，而不是 id
-            // 因为克隆表单时 id 被修改了，但 name 保持不变
             const parentId = $form.find('input[name="parent_id"]').val();
+            Utils.log('表单提交成功:', { parentId, isReply });
 
-            console.log('✅ 表单提交成功:', {
-                parentId,
-                isReply,
-                hasParentId: !!parentId
-            });
-
-            // 【关键判断】有 parentId 说明是回复，无论 isReply 参数如何
             if (parentId) {
-                // 处理回复成功 - 添加到一级评论的回复列表中
-                const $repliesContainer = $(`#replies-${parentId}`);
-                const $showRepliesBtn = $(`.show-replies-btn[data-comment-id="${parentId}"]`);
-
-                console.log('📍 回复容器状态:', {
-                    containerId: `replies-${parentId}`,
-                    containerExists: $repliesContainer.length > 0,
-                    isVisible: $repliesContainer.is(':visible'),
-                    hasContent: $repliesContainer.html().trim() !== ''
-                });
-
-                // 重置回复表单（先重置，避免影响后续操作）
-                this.resetReplyForms();
-
-                if ($repliesContainer.length === 0) {
-                    // 容器不存在，说明是第一条回复，需要刷新整个评论区
-                    console.log('⚠️ 回复容器不存在，刷新页面');
-                    location.reload();
-                    return;
-                }
-
-                if ($repliesContainer.is(':visible') && $repliesContainer.html().trim() !== '') {
-                    // 回复列表已展开且有内容，直接追加新回复
-                    const $newHtml = $(data.html);
-
-                    // 【修复】确保新回复有 nested-comment 类名
-                    $newHtml.addClass('nested-comment');
-
-                    $repliesContainer.append($newHtml);
-                    console.log('➕ 新回复已追加到现有列表末尾');
-
-                    // 更新回复数量按钮文字
-                    if ($showRepliesBtn.length) {
-                        const currentCount = $repliesContainer.children('.comment').length;
-                        $showRepliesBtn.text(`收起 ${currentCount} 条回复`);
-                    }
-
-                    // 滚动到新添加的回复
-                    setTimeout(() => {
-                        const $newReply = $repliesContainer.children('.comment').last();
-                        if ($newReply.length) {
-                            // 给新回复添加高亮动画
-                            $newReply.addClass('just-added');
-                            $('html, body').animate({
-                                scrollTop: $newReply.offset().top - 100
-                            }, 500);
-                        }
-                    }, 100);
-
-                } else {
-                    // 回复列表未展开或为空，需要加载回复列表
-                    console.log('🔄 回复列表未展开，加载回复列表');
-
-                    // 先展开回复区域
-                    CommentLoader.loadReplies(parentId).done(() => {
-                        // 加载完成后滚动到新回复
-                        setTimeout(() => {
-                            const $newReply = $repliesContainer.children('.comment').last();
-                            if ($newReply.length) {
-                                $newReply.addClass('just-added');
-                                $('html, body').animate({
-                                    scrollTop: $newReply.offset().top - 100
-                                }, 500);
-                            }
-                        }, 300);
-                    });
-                }
-
+                this.handleReplySuccess(data, parentId);
             } else {
-                // 处理主评论成功（parentId 为空）
-                const $commentsList = $('#comments-list');
-
-                // 移除"暂无评论"提示
-                $commentsList.find('.no-comments').remove();
-
-                // 在列表顶部添加新评论
-                $commentsList.prepend(data.html);
-
-                // 重置表单
-                $form[0].reset();
-                $form.find('.comment-error-message').remove();
-
-                console.log('➕ 新主评论已添加到顶部');
-
-                // 滚动到新评论并高亮
-                setTimeout(() => {
-                    const $newComment = $commentsList.children('.comment').first();
-                    if ($newComment.length) {
-                        $newComment.addClass('just-added');
-                        $('html, body').animate({
-                            scrollTop: $newComment.offset().top - 100
-                        }, 500);
-                    }
-                }, 100);
+                this.handleMainCommentSuccess(data, $form);
             }
         },
 
-        /**
-         * 处理提交错误
-         */
+        handleReplySuccess(data, parentId) {
+            const $repliesContainer = $(`#replies-${parentId}`);
+            const $showRepliesBtn = $(`.show-replies-btn[data-comment-id="${parentId}"]`);
+
+            this.resetReplyForms();
+
+            if (!$repliesContainer.length) {
+                Utils.log('回复容器不存在，刷新页面');
+                location.reload();
+                return;
+            }
+
+            if ($repliesContainer.is(':visible') && $repliesContainer.html().trim() !== '') {
+                const $newHtml = $(data.html).addClass('nested-comment');
+                $repliesContainer.append($newHtml);
+                Utils.log('新回复已追加');
+
+                if ($showRepliesBtn.length) {
+                    const count = $repliesContainer.children('.comment').length;
+                    $showRepliesBtn.text(Utils.template(Config.text.hideReplies, { count }));
+                }
+
+                setTimeout(() => {
+                    const $newReply = $repliesContainer.children('.comment').last();
+                    $newReply.addClass('just-added');
+                    Utils.scrollTo($newReply);
+                }, 100);
+            } else {
+                CommentLoader.loadReplies(parentId).done(() => {
+                    setTimeout(() => {
+                        const $newReply = $repliesContainer.children('.comment').last();
+                        $newReply.addClass('just-added');
+                        Utils.scrollTo($newReply);
+                    }, 300);
+                });
+            }
+        },
+
+        handleMainCommentSuccess(data, $form) {
+            const $commentsList = $(Config.selectors.commentsList);
+            $commentsList.find('.no-comments').remove();
+            $commentsList.prepend(data.html);
+            $form[0].reset();
+            $form.find('.comment-error-message').remove();
+
+            Utils.log('新主评论已添加');
+
+            setTimeout(() => {
+                const $newComment = $commentsList.children('.comment').first();
+                $newComment.addClass('just-added');
+                Utils.scrollTo($newComment);
+            }, 100);
+        },
+
         handleSubmitError(data, $form) {
-            console.error('❌ 表单提交失败:', data);
-            TemplateManager.showError(data.message || '提交失败');
+            Utils.error('表单提交失败:', data);
+            TemplateManager.showError(data.message || Config.text.operationFailed);
 
             if (data.errors) {
                 $form.find('.comment-error-message').remove();
-                for (const fieldName in data.errors) {
-                    const errorMessages = data.errors[fieldName];
+                for (const [fieldName, errorMessages] of Object.entries(data.errors)) {
                     const $input = $form.find(`[name="${fieldName}"]`);
                     if ($input.length) {
                         $input.after(`<div class="comment-error-message">${errorMessages.join('<br>')}</div>`);
@@ -490,14 +542,14 @@ const CommentSystem = (function() {
     // ===== 评论加载器 =====
     const CommentLoader = {
         loadComments(pageNumber = 1, sortBy = 'hot') {
-            const $commentsList = $('#comments-list');
-            const $loadMoreBtn = $('#load-more-comments');
+            const $commentsList = $(Config.selectors.commentsList);
+            const $loadMoreBtn = $(Config.selectors.loadMoreBtn);
             const pageId = $commentsList.attr('data-page-id');
 
             $loadMoreBtn.hide();
             const $loading = TemplateManager.showLoadingIndicator();
 
-            return AjaxManager.get(`/comments/load/${pageId}/`, {
+            return AjaxManager.get(`${Config.urls.loadComments}${pageId}/`, {
                 page: pageNumber,
                 sort: sortBy
             })
@@ -513,15 +565,13 @@ const CommentSystem = (function() {
 
                     if (data.has_next) {
                         $loadMoreBtn.data('page', pageNumber + 1).show();
-                    } else {
-                        $loadMoreBtn.hide();
                     }
                 } else {
-                    TemplateManager.showError(data.message || '加载评论失败');
+                    TemplateManager.showError(data.message || Config.text.loadFailed);
                 }
             })
             .fail((xhr) => {
-                AjaxManager.handleError(xhr, '加载评论失败');
+                AjaxManager.handleError(xhr, Config.text.loadFailed);
             })
             .always(() => {
                 $loading.remove();
@@ -530,29 +580,28 @@ const CommentSystem = (function() {
 
         handleEmptyState(data, pageNumber) {
             if (data.total_comments === 0 && pageNumber === 1) {
-                const isAuthenticated = data.is_authenticated !== undefined ?
-                    data.is_authenticated : AuthManager.isAuthenticated();
-
-                if (!isAuthenticated) {
-                    TemplateManager.showLoginPrompt();
-                } else {
+                if (data.is_authenticated ?? AuthManager.isAuthenticated()) {
                     TemplateManager.showNoComments();
+                } else {
+                    TemplateManager.showLoginPrompt();
                 }
             }
         },
 
         restoreMainForm() {
-            const $container = $('#main-comment-form-wrapper');
-            const $placement = $('#initial-comment-form-placement');
+            const $container = $(Config.selectors.mainFormWrapper);
+            const $placement = $(Config.selectors.mainFormPlacement);
 
             if ($container.length && $placement.length) {
                 $placement.append($container.show());
                 const $form = $container.find('form');
-                $form[0].reset();
-                $form.find('#comment-parent-id').val('');
-                $form.find('#replied-to-user-id').val('');
-                $form.find('#reply-to-info').addClass('template-hidden').hide();
-                $form.find('.comment-error-message').remove();
+                if ($form.length) {
+                    $form[0].reset();
+                    $form.find('#comment-parent-id').val('');
+                    $form.find('#replied-to-user-id').val('');
+                    $form.find('#reply-to-info').addClass('template-hidden').hide();
+                    $form.find('.comment-error-message').remove();
+                }
             }
         },
 
@@ -560,31 +609,28 @@ const CommentSystem = (function() {
             const $repliesContainer = $(`#replies-${commentId}`);
             const $btn = $(`.show-replies-btn[data-comment-id="${commentId}"]`);
 
-            // 如果已有内容且不在加载中，直接展开
             if ($repliesContainer.html().trim() !== '' &&
                 !$repliesContainer.find('.replies-loading-indicator').length) {
-                $repliesContainer.slideDown(200);
-                // 返回一个已完成的 Promise，保持接口一致
+                $repliesContainer.slideDown(Config.timing.slideAnimationDuration);
                 return $.Deferred().resolve().promise();
             }
 
             const $loading = TemplateManager.showRepliesLoading($repliesContainer);
 
-            return AjaxManager.get(`/comments/load-replies/${commentId}/`)
+            return AjaxManager.get(`${Config.urls.loadReplies}${commentId}/`)
                 .done((data) => {
                     if (data.status === 'success') {
-                        $repliesContainer.html(data.html).slideDown(200);
-
+                        $repliesContainer.html(data.html).slideDown(Config.timing.slideAnimationDuration);
                         if ($btn.length) {
-                            $btn.text(`收起 ${data.reply_count} 条回复`);
+                            $btn.text(Utils.template(Config.text.hideReplies, { count: data.reply_count }));
                         }
-                        console.log('✅ 回复列表加载完成，共', data.reply_count, '条');
+                        Utils.log('回复列表加载完成，共', data.reply_count, '条');
                     } else {
-                        TemplateManager.showError(data.message || '加载回复失败');
+                        TemplateManager.showError(data.message || Config.text.loadFailed);
                     }
                 })
                 .fail((xhr) => {
-                    AjaxManager.handleError(xhr, '加载回复失败');
+                    AjaxManager.handleError(xhr, Config.text.loadFailed);
                 })
                 .always(() => {
                     $loading.remove();
@@ -594,9 +640,10 @@ const CommentSystem = (function() {
 
     // ===== 交互管理器 =====
     const InteractionManager = {
-        handleVote(commentId, reactionType, url) {
-            return AuthManager.requireAuth(() => {
-                const targetUrl = url || '/comments/react/';
+        // 使用节流防止快速点击
+        handleVote: Utils.throttle(function(commentId, reactionType, url) {
+            AuthManager.requireAuth(() => {
+                const targetUrl = url || Config.urls.reactComment;
 
                 AjaxManager.post(targetUrl, {
                     comment_id: commentId,
@@ -604,113 +651,135 @@ const CommentSystem = (function() {
                 })
                 .done((data) => {
                     if (data.status === 'success') {
-                        this.updateVoteDisplay(commentId, data);
-                        TemplateManager.showSuccess('操作成功');
+                        InteractionManager.updateVoteDisplay(commentId, data);
                     } else {
-                        TemplateManager.showError(data.message || '操作失败');
+                        TemplateManager.showError(data.message || Config.text.operationFailed);
                     }
                 })
                 .fail((xhr) => {
-                    AjaxManager.handleError(xhr, '操作失败');
+                    AjaxManager.handleError(xhr, Config.text.operationFailed);
                 });
             });
-        },
+        }, Config.timing.debounceDelay),
 
+        /**
+         * 【核心修复】精确更新投票显示
+         */
         updateVoteDisplay(commentId, data) {
             const $comment = $(`#comment-${commentId}`);
-            $comment.find('.like-count').text(data.like_count);
-            $comment.find('.dislike-count').text(data.dislike_count);
+            // 使用精确选择器，只更新当前评论的计数
+            const $actions = Utils.getCommentActions($comment);
 
-            $comment.find('.vote-link').removeClass('active');
+            $actions.find('.like-count').text(data.like_count);
+            $actions.find('.dislike-count').text(data.dislike_count);
+            $actions.find('.vote-link').removeClass('active');
+
             if (data.action === 'added') {
-                $comment.find(`[data-reaction="${data.reaction_type}"]`).addClass('active');
+                $actions.find(`[data-reaction="${data.reaction_type}"]`).addClass('active');
             }
+
+            Utils.log('投票更新:', commentId, data);
         },
 
         editComment(commentId, url) {
-            return AuthManager.requireAuth(() => {
-                const $commentText = $(`#comment-text-${commentId}`);
-                const $comment = $commentText.closest('.comment');
+            AuthManager.requireAuth(() => {
+                const $comment = $(`#comment-${commentId}`);
+                const $commentText = Utils.getCommentText($comment);
+                const $actions = Utils.getCommentActions($comment);
 
+                // 获取纯文本内容
                 let currentContent = $commentText.clone()
                     .children('.replied-to-user').remove().end()
                     .text().trim();
 
-                $comment.find('.comment-actions-list').hide();
+                // 【修复】只隐藏当前评论的操作按钮
+                $actions.hide();
 
                 const $editForm = TemplateManager.createEditForm(commentId, currentContent, url);
                 $commentText.html($editForm);
             });
         },
 
+        /**
+         * 【修复】取消编辑，不再刷新页面
+         */
+        cancelEdit(commentId) {
+            const $comment = $(`#comment-${commentId}`);
+            const $commentText = Utils.getCommentText($comment);
+            const $actions = Utils.getCommentActions($comment);
+            const $editForm = $commentText.find('.edit-comment-form');
+
+            if ($editForm.length) {
+                // 恢复原始内容 - 需要从服务端获取或缓存
+                // 简单方案：重新加载该评论区域
+                CommentLoader.loadComments(1, $('.sort-btn.active').attr('data-sort') || 'hot');
+            }
+            $actions.show();
+        },
+
         saveEdit(commentId, newContent, url) {
             if (!newContent.trim()) {
-                TemplateManager.showError('评论内容不能为空！');
-                return;
+                TemplateManager.showError(Config.text.emptyContent);
+                return $.Deferred().reject().promise();
             }
 
             const $saveBtn = $(`.save-edit-btn[data-comment-id="${commentId}"]`);
-            $saveBtn.prop('disabled', true).text('保存中...');
+            $saveBtn.prop('disabled', true).text(Config.text.saving);
 
-            const targetUrl = url || '/comments/edit/';
-
-            return AjaxManager.post(targetUrl, {
+            return AjaxManager.post(url || Config.urls.editComment, {
                 comment_id: commentId,
                 content: newContent
             })
             .done((data) => {
                 if (data.status === 'success') {
-                    const $commentText = $(`#comment-text-${commentId}`);
-                    const $comment = $commentText.closest('.comment');
+                    const $comment = $(`#comment-${commentId}`);
+                    const $commentText = Utils.getCommentText($comment);
+                    const $actions = Utils.getCommentActions($comment);
 
-                    const repliedToUserSpan = $commentText.find('.replied-to-user').prop('outerHTML') || '';
-                    $commentText.html(repliedToUserSpan + data.content);
-                    $comment.find('.comment-actions-list').show();
+                    const repliedToHtml = $commentText.find('.replied-to-user').prop('outerHTML') || '';
+                    $commentText.html(repliedToHtml + data.content);
+                    $actions.show();
 
-                    TemplateManager.showSuccess('评论已更新', $comment);
+                    TemplateManager.showSuccess(Config.text.editSuccess, $comment);
                 } else {
-                    TemplateManager.showError(data.message || '编辑失败');
+                    TemplateManager.showError(data.message || Config.text.editFailed);
                 }
             })
             .fail((xhr) => {
-                AjaxManager.handleError(xhr, '编辑失败');
+                AjaxManager.handleError(xhr, Config.text.editFailed);
             })
             .always(() => {
-                $saveBtn.prop('disabled', false).text('保存');
+                $saveBtn.prop('disabled', false).text(Config.text.save);
             });
         },
 
         deleteComment(commentId, url) {
-            return AuthManager.requireAuth(() => {
+            AuthManager.requireAuth(() => {
                 const $comment = $(`#comment-${commentId}`);
                 const isRootComment = $comment.hasClass('comment') && !$comment.hasClass('nested-comment');
 
-                let confirmMessage = '确定要删除这条评论吗？\n此操作不可撤销。';
+                let confirmMessage = Config.text.deleteConfirm;
                 if (isRootComment) {
-                    const replyCount = $comment.find('.show-replies-btn').text().match(/\d+/);
-                    if (replyCount && parseInt(replyCount[0]) > 0) {
-                        confirmMessage = `删除这条一级评论将同时删除其下的所有 ${replyCount[0]} 条回复，确定要继续吗？`;
+                    const replyMatch = $comment.find('.show-replies-btn').text().match(/\d+/);
+                    if (replyMatch && parseInt(replyMatch[0]) > 0) {
+                        confirmMessage = Utils.template(Config.text.deleteWithReplies, { count: replyMatch[0] });
                     }
                 }
 
                 if (!confirm(confirmMessage)) return;
 
-                const targetUrl = url || '/comments/delete/';
-
-                AjaxManager.post(targetUrl, {
-                    comment_id: commentId
-                })
-                .done((data) => {
-                    if (data.status === 'success') {
-                        this.handleDeleteSuccess(commentId, data, isRootComment);
-                        TemplateManager.showSuccess('评论已删除');
-                    } else {
-                        TemplateManager.showError(data.message || '删除失败');
-                    }
-                })
-                .fail((xhr) => {
-                    AjaxManager.handleError(xhr, '删除失败');
-                });
+                AjaxManager.post(url || Config.urls.deleteComment, { comment_id: commentId })
+                    .done((data) => {
+                        if (data.status === 'success') {
+                            this.handleDeleteSuccess(commentId, data, isRootComment);
+                            TemplateManager.showSuccess(Config.text.deleteSuccess);
+                        } else {
+                            TemplateManager.showError(data.message || Config.text.deleteFailed);
+                        }
+                    })
+                    .fail((xhr) => {
+                        AjaxManager.handleError(xhr, Config.text.deleteFailed);
+                    });
             });
         },
 
@@ -718,15 +787,15 @@ const CommentSystem = (function() {
             const $comment = $(`#comment-${commentId}`);
 
             if (isRootComment && data.deleted_replies) {
-                $comment.fadeOut(300, function() {
-                    $(this).remove();
-                });
+                $comment.fadeOut(300, function() { $(this).remove(); });
             } else {
-                const $commentText = $comment.find(`#comment-text-${commentId}`);
-                $commentText.html('<em>此评论已被删除</em>');
-                $comment.find('.comment-actions-list a, .comment-actions-list button').hide();
+                const $commentText = Utils.getCommentText($comment);
+                const $actions = Utils.getCommentActions($comment);
+
+                $commentText.html(`<em>${Config.text.deleted}</em>`);
+                $actions.find('a, button').hide();
                 $comment.find('.show-replies-btn').hide();
-                $comment.find('.dynamic-reply-form-container').empty();
+                Utils.getReplyFormContainer($comment).empty();
             }
 
             if (FormManager.activeReplyForm) {
@@ -738,35 +807,38 @@ const CommentSystem = (function() {
     // ===== 事件管理器 =====
     const EventManager = {
         bindEvents() {
+            // 【优化】将事件委托到 #comments-section 而不是 document
+            const $container = $(Config.selectors.commentBox);
+
+            if (!$container.length) {
+                Utils.error('评论容器不存在');
+                return;
+            }
+
             // 登录按钮
-            $(document).on('click', '.login-btn, .theme-btn[class*="login"]', function(e) {
+            $container.on('click', '.login-btn', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log('登录按钮被点击');
                 AuthManager.redirectToLogin();
             });
 
             // 排序按钮
-            $(document).on('click', '.sort-btn', function() {
+            $container.on('click', '.sort-btn', function() {
                 const $btn = $(this);
                 $('.sort-btn').removeClass('active');
                 $btn.addClass('active');
-
-                const sortBy = $btn.attr('data-sort');
-                $('#load-more-comments').data('page', 1);
-                CommentLoader.loadComments(1, sortBy);
+                $(Config.selectors.loadMoreBtn).data('page', 1);
+                CommentLoader.loadComments(1, $btn.attr('data-sort'));
             });
 
             // 加载更多
-            $(document).on('click', '#load-more-comments', function() {
-                const $btn = $(this);
-                const nextPage = $btn.data('page');
-                const sortBy = $('.sort-btn.active').attr('data-sort');
+            $container.on('click', '#load-more-comments', function() {
+                const nextPage = $(this).data('page');
+                const sortBy = $('.sort-btn.active').attr('data-sort') || 'hot';
                 CommentLoader.loadComments(nextPage, sortBy);
             });
 
             // 展开/折叠回复
-            $(document).on('click', '.show-replies-btn', function() {
+            $container.on('click', '.show-replies-btn', function() {
                 const $btn = $(this);
                 const commentId = $btn.attr('data-comment-id');
                 const $repliesContainer = $(`#replies-${commentId}`);
@@ -774,123 +846,117 @@ const CommentSystem = (function() {
                 if ($repliesContainer.is(':hidden')) {
                     CommentLoader.loadReplies(commentId);
                 } else {
-                    $repliesContainer.slideUp(200, function() {
-                        $repliesContainer.empty();
+                    $repliesContainer.slideUp(Config.timing.slideAnimationDuration, function() {
+                        $(this).empty();
                     });
                     const match = $btn.text().match(/\d+/);
                     if (match) {
-                        $btn.text(`查看全部 ${match[0]} 条回复`);
+                        $btn.text(Utils.template(Config.text.viewReplies, { count: match[0] }));
                     }
                 }
             });
 
-            // 表单提交
-            $(document).on('submit', '#initial-comment-form-placement form', function(e) {
+            // 主表单提交
+            $container.on('submit', '#initial-comment-form-placement form', function(e) {
                 e.preventDefault();
-                console.log('📤 主评论表单提交');
                 FormManager.submitForm(this, false);
             });
 
-            $(document).on('submit', '.active-reply-form form', function(e) {
+            // 回复表单提交
+            $container.on('submit', '.active-reply-form form', function(e) {
                 e.preventDefault();
-                console.log('📤 回复表单提交');
                 FormManager.submitForm(this, true);
             });
 
-            // 回复功能
-            $(document).on('click', '.reply-btn', function(e) {
+            // 回复按钮
+            $container.on('click', '.reply-btn', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-
                 const $btn = $(this);
-                const commentId = $btn.attr('data-comment-id');
-                const username = $btn.attr('data-username');
-                const userId = $btn.attr('data-user-id');
-                const rootCommentId = $btn.attr('data-root-comment-id');
-
-                console.log('🖱️ 回复按钮点击:', {
-                    commentId,
-                    username,
-                    userId,
-                    rootCommentId
-                });
-
                 AuthManager.requireAuth(() => {
-                    FormManager.createReplyForm(commentId, username, userId, rootCommentId);
+                    FormManager.createReplyForm(
+                        $btn.attr('data-comment-id'),
+                        $btn.attr('data-username'),
+                        $btn.attr('data-user-id'),
+                        $btn.attr('data-root-comment-id')
+                    );
                 });
             });
 
             // 取消回复
-            $(document).on('click', '#cancel-reply', function(e) {
+            $container.on('click', '#cancel-reply', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log('❌ 取消回复');
                 FormManager.resetReplyForms();
             });
 
             // 点赞/踩
-            $(document).on('click', '.vote-link', function(e) {
+            $container.on('click', '.vote-link', function(e) {
                 e.preventDefault();
                 const $btn = $(this);
-                const commentId = $btn.attr('data-comment-id');
-                const reactionType = $btn.attr('data-reaction');
-                const url = $btn.attr('data-url');
-
-                InteractionManager.handleVote(commentId, reactionType, url);
+                InteractionManager.handleVote(
+                    $btn.attr('data-comment-id'),
+                    $btn.attr('data-reaction'),
+                    $btn.attr('data-url')
+                );
             });
 
-            // 编辑功能
-            $(document).on('click', '.edit-btn', function() {
-                const commentId = $(this).data('comment-id');
-                const url = $(this).attr('data-url');
-                InteractionManager.editComment(commentId, url);
-            });
-
-            $(document).on('click', '.save-edit-btn', function() {
+            // 编辑
+            $container.on('click', '.edit-btn', function() {
                 const $btn = $(this);
-                const commentId = $btn.data('comment-id');
-                const url = $btn.attr('data-url');
+                InteractionManager.editComment($btn.data('comment-id'), $btn.attr('data-url'));
+            });
+
+            // 保存编辑
+            $container.on('click', '.save-edit-btn', function() {
+                const $btn = $(this);
                 const newContent = $btn.closest('.edit-comment-form').find('.edit-textarea').val();
-                InteractionManager.saveEdit(commentId, newContent, url);
+                InteractionManager.saveEdit($btn.data('comment-id'), newContent, $btn.attr('data-url'));
             });
 
-            $(document).on('click', '.cancel-edit-btn', function() {
-                location.reload();
+            // 【修复】取消编辑 - 不再刷新页面
+            $container.on('click', '.cancel-edit-btn', function() {
+                InteractionManager.cancelEdit($(this).data('comment-id'));
             });
 
-            // 删除功能
-            $(document).on('click', '.delete-btn', function() {
-                const commentId = $(this).attr('data-comment-id');
-                const url = $(this).attr('data-url');
-                InteractionManager.deleteComment(commentId, url);
+            // 删除
+            $container.on('click', '.delete-btn', function() {
+                const $btn = $(this);
+                InteractionManager.deleteComment($btn.attr('data-comment-id'), $btn.attr('data-url'));
             });
+
+            Utils.log('事件绑定完成');
         }
     };
 
     // ===== 主控制器 =====
     const Controller = {
         init() {
-            console.log('=== 评论系统初始化 ===');
+            Utils.log('=== 评论系统初始化 ===');
 
-            if (!$('#comments-section').length) {
+            if (!$(Config.selectors.commentBox).length) {
+                Utils.log('评论区不存在，跳过初始化');
                 return;
             }
 
+            AuthManager.init();
             EventManager.bindEvents();
 
-            const pageId = $('#comments-list').attr('data-page-id');
+            const pageId = $(Config.selectors.commentsList).attr('data-page-id');
             if (pageId) {
                 CommentLoader.loadComments(1, 'hot');
             }
 
-            console.log('=== 初始化完成 ===');
+            Utils.log('=== 初始化完成 ===');
         }
     };
 
+    // 公开 API
     return {
-        init: Controller.init.bind(Controller),
+        init: Controller.init,
         loadComments: CommentLoader.loadComments.bind(CommentLoader),
-        isAuthenticated: AuthManager.isAuthenticated.bind(AuthManager)
+        isAuthenticated: AuthManager.isAuthenticated.bind(AuthManager),
+        // 暴露配置以便外部自定义
+        config: Config
     };
 })();
 
